@@ -8,20 +8,11 @@ import ProfilePage from './pages/ProfilePage';
 import ProfileCouponsPage from './pages/ProfileCouponsPage';
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import CardsPage from "./pages/CardsPage"
-
-//
-// 
-// import EventsAttendancePage from './pages/EventsAttendancePage';
+import EventsPage from './pages/Event/EventsPage';
+import EventsAttendancePage from './pages/Event/EventsAttendancePage';
 // import EventsCloverPage from './pages/EventsCloverPage';
 // import EventsCouponPage from './pages/EventsCouponPage';
 // import EventsInvitePage from './pages/EventsInvitePage';
-// 
-// 
-// 
-// 
-// 
-// import StoresPage from './pages/StoresPage';
-// 
 
 function App() {
   return (
@@ -38,19 +29,17 @@ function App() {
         <Route path="/profile/coupons" element={<ProfileCouponsPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/cards" element={<CardsPage />} />
+        <Route path="/events" element={<EventsPage />} />
+        <Route path="/events/attendance" element={<EventsAttendancePage />} />
         {/* 
         
         
-        <Route path="/events/attendance" element={<EventsAttendancePage />} />
+        
         <Route path="/events/clover" element={<EventsCloverPage />} />
         <Route path="/events/coupon" element={<EventsCouponPage />} />
         <Route path="/events/invite" element={<EventsInvitePage />} />
 
         
-        
-        
-
-        <Route path="/stores" element={<StoresPage />} />
         */}
       </Routes>
     </div>
