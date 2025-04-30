@@ -1,6 +1,5 @@
 import React from 'react';
 import logo from './logo.svg';
-import './App.css';
 import { Routes, Route } from 'react-router-dom';
 import WelcomePage from './pages/WelcomePage';
 import SignupPage from './pages/SignupPage';
@@ -8,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import MapPage from './pages/MapPage';
 import ProfilePage from './pages/ProfilePage';
 import ProfileCouponsPage from './pages/ProfileCouponsPage';
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 
 //
 // import CardsPage from './pages/CardsPage';
@@ -36,6 +36,7 @@ function App() {
         <Route path="/map" element={<MapPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/coupons" element={<ProfileCouponsPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         {/* 
         
         <Route path="/cards" element={<CardsPage />} />
