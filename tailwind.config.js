@@ -16,6 +16,9 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        gmarket: ["'Inter'", "sans-serif"], // 혹은 GmarketSans를 직접 설정
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

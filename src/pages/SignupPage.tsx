@@ -5,6 +5,7 @@ import { Input } from "../components/ui/input"; // 실제 경로에 맞게 수�
 import { Label } from "../components/ui/label"; // 실제 경로에 맞게 수정
 import { useToast } from "../hooks/use-toast"; // 실제 useToast 훅의 경로 확인
 import { CoffeeIcon as KakaoTalk } from "lucide-react"; // lucide-react 설치 필요
+import rabbitClover from '../images/rabbit-clover.png';
 
 interface SignupPageProps { }
 
@@ -85,16 +86,8 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                 {/* 로고 및 캐릭터 */}
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-20 h-20 bg-gradient-to-r from-[#75CB3B] to-[#00B959] rounded-full flex items-center justify-center">
-                        {/* <Image
-              src="/images/rabbit-clover.png"
-              alt="혜택클로버 캐릭터"
-              width={60}
-              height={60}
-              className="rounded-full"
-              priority
-            /> */}
                         <img
-                            src="../images/rabbit-clover.png" // public 폴더 기준 경로
+                            src={rabbitClover} // public 폴더 기준 경로
                             alt="혜택클로버 캐릭터"
                             className="rounded-full"
                             width={60}
