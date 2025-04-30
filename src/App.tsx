@@ -8,11 +8,12 @@ import ProfilePage from './pages/ProfilePage';
 import ProfileCouponsPage from './pages/ProfileCouponsPage';
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import CardsPage from "./pages/CardsPage"
+
 import EventsPage from './pages/Event/EventsPage';
 import EventsAttendancePage from './pages/Event/EventsAttendancePage';
-// import EventsCloverPage from './pages/EventsCloverPage';
-// import EventsCouponPage from './pages/EventsCouponPage';
-// import EventsInvitePage from './pages/EventsInvitePage';
+import EventsInvitePage from './pages/Event/EventsInvitePage';
+import EventsCloverPage from './pages/Event/EventsCloverPage';
+import EventsCouponPage from './pages/Event/EventsCouponPage';
 
 function App() {
   return (
@@ -31,16 +32,9 @@ function App() {
         <Route path="/cards" element={<CardsPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/attendance" element={<EventsAttendancePage />} />
-        {/* 
-        
-        
-        
+        <Route path="/events/invite" element={<EventsInvitePage />} />
         <Route path="/events/clover" element={<EventsCloverPage />} />
         <Route path="/events/coupon" element={<EventsCouponPage />} />
-        <Route path="/events/invite" element={<EventsInvitePage />} />
-
-        
-        */}
       </Routes>
     </div>
   );
