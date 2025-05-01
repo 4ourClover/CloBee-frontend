@@ -4,10 +4,6 @@ import { useNavigate } from "react-router-dom"
 import {
     ChevronLeft,
     Plus,
-    CreditCard,
-    MapPin,
-    User,
-    Calendar,
     Trash2,
     Edit,
     Camera,
@@ -31,6 +27,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { useToast } from "../hooks/use-toast"
 import { Badge } from "../components/ui/badge"
+import BottomNavigation from "../components/bottom-navigation"
 
 export default function CardsPage() {
     const [activeTab, setActiveTab] = useState("my-cards")
@@ -436,208 +433,188 @@ export default function CardsPage() {
 
 
             {/* 하단 네비게이션 */}
-            <div className="bg-white border-t py-1.5 px-4 flex justify-around relative">
-                {/* 카드 추가 버튼 - 오른쪽 하단에 배치 */}
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button className="absolute -top-14 right-4 h-14 w-14 rounded-full shadow-md bg-white hover:bg-gray-100 z-30 p-0 overflow-hidden">
-                            <img
-                                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-knhlHRBh7Yde8QtKPul45zdTK5iYJr.png"
-                                alt="카드 연결"
-                                width={56}
-                                height={56}
-                                className="object-cover"
-                            />
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-sm mx-auto">
-                        <DialogHeader>
-                            <DialogTitle>카드 추가하기</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="card-type-modal">카드 종류</Label>
-                                <Select defaultValue="credit">
-                                    <SelectTrigger id="card-type-modal">
-                                        <SelectValue placeholder="카드 종류 선택" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="credit">신용카드</SelectItem>
-                                        <SelectItem value="debit">체크카드</SelectItem>
-                                        <SelectItem value="prepaid">선불카드</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="card-company-modal">카드사</Label>
-                                <Select>
-                                    <SelectTrigger id="card-company-modal">
-                                        <SelectValue placeholder="카드사 선택" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="shinhan">신한카드</SelectItem>
-                                        <SelectItem value="samsung">삼성카드</SelectItem>
-                                        <SelectItem value="hyundai">현대카드</SelectItem>
-                                        <SelectItem value="kb">KB국민카드</SelectItem>
-                                        <SelectItem value="woori">우리카드</SelectItem>
-                                        <SelectItem value="hana">하나카드</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="card-number-modal">카드 번호</Label>
-                                <Input id="card-number-modal" placeholder="0000-0000-0000-0000" />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="expiry-date-modal">유효기간</Label>
-                                    <Input id="expiry-date-modal" placeholder="MM/YY" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="cvc-modal">CVC</Label>
-                                    <Input id="cvc-modal" placeholder="000" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>카드 이미지</Label>
-                                <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                                    <Button variant="outline" className="w-full">
-                                        <Camera className="h-4 w-4 mr-2" />
-                                        카드 촬영하기 (OCR)
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button variant="outline">취소</Button>
-                            </DialogClose>
-                            <Button
-                                className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
-                                onClick={handleAddCard}
-                            >
-                                추가하기
+            {/* 카드 추가 버튼 - 오른쪽 하단에 배치 
+            //h-12 w-12 rounded-full shadow-md bg-white hover:bg-gray-100*/}
+            <BottomNavigation
+                floatingActionButton={
+                    < Dialog >
+                        <DialogTrigger asChild>
+                            <Button className="h-14 w-14 rounded-full shadow-md bg-white hover:bg-gray-100 p-0 overflow-hidden">
+                                <img
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-knhlHRBh7Yde8QtKPul45zdTK5iYJr.png"
+                                    alt="카드 연결"
+                                    width={56}
+                                    height={56}
+                                    className="object-cover"
+                                />
                             </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-sm mx-auto">
+                            <DialogHeader>
+                                <DialogTitle>카드 추가하기</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="card-type-modal">카드 종류</Label>
+                                    <Select defaultValue="credit">
+                                        <SelectTrigger id="card-type-modal">
+                                            <SelectValue placeholder="카드 종류 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="credit">신용카드</SelectItem>
+                                            <SelectItem value="debit">체크카드</SelectItem>
+                                            <SelectItem value="prepaid">선불카드</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
+                                <div className="space-y-2">
+                                    <Label htmlFor="card-company-modal">카드사</Label>
+                                    <Select>
+                                        <SelectTrigger id="card-company-modal">
+                                            <SelectValue placeholder="카드사 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="shinhan">신한카드</SelectItem>
+                                            <SelectItem value="samsung">삼성카드</SelectItem>
+                                            <SelectItem value="hyundai">현대카드</SelectItem>
+                                            <SelectItem value="kb">KB국민카드</SelectItem>
+                                            <SelectItem value="woori">우리카드</SelectItem>
+                                            <SelectItem value="hana">하나카드</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                <Link to="/map">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1 rounded-full">
-                        <MapPin className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">지도</span>
-                    </Button>
-                </Link>
-                <Link to="/cards">
-                    <Button variant="ghost" className="flex flex-col items-center text-[#00A949] h-auto py-1 rounded-full">
-                        <CreditCard className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">내 카드</span>
-                    </Button>
-                </Link>
-                <Link to="/events">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1 rounded-full">
-                        <Calendar className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">이벤트</span>
-                    </Button>
-                </Link>
-                <Link to="/profile">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1 rounded-full">
-                        <User className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">내 정보</span>
-                    </Button>
-                </Link>
-            </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="card-number-modal">카드 번호</Label>
+                                    <Input id="card-number-modal" placeholder="0000-0000-0000-0000" />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="expiry-date-modal">유효기간</Label>
+                                        <Input id="expiry-date-modal" placeholder="MM/YY" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="cvc-modal">CVC</Label>
+                                        <Input id="cvc-modal" placeholder="000" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>카드 이미지</Label>
+                                    <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                                        <Button variant="outline" className="w-full">
+                                            <Camera className="h-4 w-4 mr-2" />
+                                            카드 촬영하기 (OCR)
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="outline">취소</Button>
+                                </DialogClose>
+                                <Button
+                                    className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                                    onClick={handleAddCard}
+                                >
+                                    추가하기
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                }
+            />
+
 
             {/* 카드 상세 정보 모달 */}
-            {showCardDetail && selectedCard && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
-                    <div className="bg-white rounded-t-lg sm:rounded-lg w-full max-w-sm max-h-[80vh] overflow-hidden flex flex-col">
-                        {/* 헤더 */}
-                        <div className="p-3 border-b flex justify-between items-center bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white">
-                            <h2 className="font-bold text-lg">{selectedCard.name} 혜택</h2>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-white hover:bg-white/10"
-                                onClick={() => setShowCardDetail(false)}
-                            >
-                                <X className="h-5 w-5" />
-                            </Button>
-                        </div>
-
-                        {/* 카드 이미지 */}
-                        <div className="relative h-48 bg-gray-100">
-                            <img
-                                src={selectedCard.image || "/placeholder.svg"}
-                                alt={selectedCard.name}
-                                className="w-full h-full object-contain p-4"
-                            />
-                        </div>
-
-                        {/* 카드 정보 */}
-                        <div className="p-4 space-y-2">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <h3 className="font-bold text-lg">{selectedCard.name}</h3>
-                                    <p className="text-sm text-gray-500">
-                                        {selectedCard.cardCompany} | {selectedCard.cardType}
-                                    </p>
-                                </div>
-                                <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">
-                                    실적 {selectedCard.spendingGoal.toLocaleString()}원
-                                </Badge>
+            {
+                showCardDetail && selectedCard && (
+                    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
+                        <div className="bg-white rounded-t-lg sm:rounded-lg w-full max-w-sm max-h-[80vh] overflow-hidden flex flex-col">
+                            {/* 헤더 */}
+                            <div className="p-3 border-b flex justify-between items-center bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white">
+                                <h2 className="font-bold text-lg">{selectedCard.name} 혜택</h2>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-white hover:bg-white/10"
+                                    onClick={() => setShowCardDetail(false)}
+                                >
+                                    <X className="h-5 w-5" />
+                                </Button>
                             </div>
 
-                            <div className="space-y-1 mt-2">
-                                <div className="flex justify-between text-sm">
-                                    <span>이번 달 실적</span>
-                                    <span className="font-medium">
-                                        {selectedCard.currentSpending.toLocaleString()}원 / {selectedCard.spendingGoal.toLocaleString()}원
-                                    </span>
-                                </div>
-                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-[#75CB3B] to-[#00B959]"
-                                        style={{ width: `${(selectedCard.currentSpending / selectedCard.spendingGoal) * 100}%` }}
-                                    ></div>
-                                </div>
+                            {/* 카드 이미지 */}
+                            <div className="relative h-48 bg-gray-100">
+                                <img
+                                    src={selectedCard.image || "/placeholder.svg"}
+                                    alt={selectedCard.name}
+                                    className="w-full h-full object-contain p-4"
+                                />
                             </div>
-                        </div>
 
-                        {/* 상세 혜택 */}
-                        <div className="flex-1 overflow-auto p-4 pt-0">
-                            <h4 className="font-medium text-[#5A3D2B] mt-4 mb-2">상세 혜택</h4>
-                            <div className="space-y-3">
-                                {selectedCard.detailedBenefits.map((benefit: any, index: number) => (
-                                    <div key={index} className="bg-gray-50 rounded-lg p-3">
-                                        <div className="flex justify-between items-start">
-                                            <h5 className="font-medium text-[#00A949]">{benefit.category}</h5>
-                                            <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">{benefit.limit}</Badge>
-                                        </div>
-                                        <p className="text-sm text-gray-700 mt-1">{benefit.description}</p>
-                                        <p className="text-xs text-gray-500 mt-1">{benefit.condition}</p>
+                            {/* 카드 정보 */}
+                            <div className="p-4 space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h3 className="font-bold text-lg">{selectedCard.name}</h3>
+                                        <p className="text-sm text-gray-500">
+                                            {selectedCard.cardCompany} | {selectedCard.cardType}
+                                        </p>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
+                                    <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">
+                                        실적 {selectedCard.spendingGoal.toLocaleString()}원
+                                    </Badge>
+                                </div>
 
-                        {/* 하단 버튼 */}
-                        <div className="p-4 border-t">
-                            <Button
-                                className="w-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
-                                onClick={() => setShowCardDetail(false)}
-                            >
-                                확인
-                            </Button>
+                                <div className="space-y-1 mt-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span>이번 달 실적</span>
+                                        <span className="font-medium">
+                                            {selectedCard.currentSpending.toLocaleString()}원 / {selectedCard.spendingGoal.toLocaleString()}원
+                                        </span>
+                                    </div>
+                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-[#75CB3B] to-[#00B959]"
+                                            style={{ width: `${(selectedCard.currentSpending / selectedCard.spendingGoal) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 상세 혜택 */}
+                            <div className="flex-1 overflow-auto p-4 pt-0">
+                                <h4 className="font-medium text-[#5A3D2B] mt-4 mb-2">상세 혜택</h4>
+                                <div className="space-y-3">
+                                    {selectedCard.detailedBenefits.map((benefit: any, index: number) => (
+                                        <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                            <div className="flex justify-between items-start">
+                                                <h5 className="font-medium text-[#00A949]">{benefit.category}</h5>
+                                                <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">{benefit.limit}</Badge>
+                                            </div>
+                                            <p className="text-sm text-gray-700 mt-1">{benefit.description}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{benefit.condition}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 하단 버튼 */}
+                            <div className="p-4 border-t">
+                                <Button
+                                    className="w-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
+                                    onClick={() => setShowCardDetail(false)}
+                                >
+                                    확인
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </main>
+                )
+            }
+        </main >
     )
 }

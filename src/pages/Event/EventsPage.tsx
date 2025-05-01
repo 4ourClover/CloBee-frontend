@@ -4,10 +4,6 @@ import { Button } from "../../components/ui/button"
 import { useNavigate } from "react-router-dom"
 import {
     ChevronLeft,
-    MapPin,
-    CreditCard,
-    Calendar,
-    User,
     Gift,
     Clover,
     Check,
@@ -19,7 +15,7 @@ import { Link } from "react-router-dom"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/tabs"
 import { Badge } from "../../components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover"
-
+import BottomNavigation from "../../components/bottom-navigation"
 
 export default function EventsPage() {
     const [activeTab, setActiveTab] = useState("app")
@@ -241,33 +237,7 @@ export default function EventsPage() {
             </Tabs>
 
             {/* 하단 내비게이션 - 앱 이벤트 탭에만 표시 */}
-
-            <div className="bg-white border-t py-1.5 px-4 flex justify-around">
-                <Link to="/map">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1">
-                        <MapPin className="h-5 w-5" />
-                        <span className="text-[10px] mt-0.5">지도</span>
-                    </Button>
-                </Link>
-                <Link to="/cards">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1">
-                        <CreditCard className="h-5 w-5" />
-                        <span className="text-[10px] mt-0.5">내 카드</span>
-                    </Button>
-                </Link>
-                <Link to="/events">
-                    <Button variant="ghost" className="flex flex-col items-center text-[#00A949] h-auto py-1">
-                        <Calendar className="h-5 w-5" />
-                        <span className="text-[10px] mt-0.5">이벤트</span>
-                    </Button>
-                </Link>
-                <Link to="/profile">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1">
-                        <User className="h-5 w-5" />
-                        <span className="text-[10px] mt-0.5">내 정보</span>
-                    </Button>
-                </Link>
-            </div>
+            <BottomNavigation />
 
         </main>
     )

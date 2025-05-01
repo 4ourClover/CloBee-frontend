@@ -2,10 +2,6 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import {
     ChevronLeft,
-    MapPin,
-    CreditCard,
-    Calendar,
-    User,
     Clover,
     Gift,
 } from "lucide-react"
@@ -13,6 +9,7 @@ import { Button } from "../../components/ui/button"       // '@/components/...' 
 import { useToast } from "../../hooks/use-toast"          // '@/hooks/...' → '../hooks/...'
 // @ts-ignore
 import confetti from "canvas-confetti"
+import BottomNavigation from "../../components/bottom-navigation"
 
 export default function CloverGamePage() {
     const [clovers, setClovers] = useState<Array<{ id: number; isLucky: boolean; isFlipped: boolean }>>([])
@@ -200,32 +197,7 @@ export default function CloverGamePage() {
             </div>
 
             {/* 하단 내비게이션 */}
-            <div className="bg-white border-t py-2 px-4 flex justify-around">
-                <Link to="/map">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1 rounded-full">
-                        <MapPin className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">지도</span>
-                    </Button>
-                </Link>
-                <Link to="/cards">
-                    <Button variant="ghost" className="flex flex-col items-center text-[#00A949] h-auto py-1 rounded-full">
-                        <CreditCard className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">내 카드</span>
-                    </Button>
-                </Link>
-                <Link to="/events">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1 rounded-full">
-                        <Calendar className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">이벤트</span>
-                    </Button>
-                </Link>
-                <Link to="/profile">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1 rounded-full">
-                        <User className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">내 정보</span>
-                    </Button>
-                </Link>
-            </div>
+            <BottomNavigation />
         </main>
     )
 }
