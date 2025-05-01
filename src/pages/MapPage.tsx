@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { MapPin, Search, CreditCard, ChevronLeft, X, Filter, User, Calendar, Bell } from "lucide-react"
+import { MapPin, Search, CreditCard, ChevronLeft, X, Filter, Bell } from "lucide-react"
 
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -14,6 +14,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "../components/ui/popove
 import CardBenefitModal from "../components/card-benefit-modal"
 import CategoryBar from "../components/category-bar"
 import { useToast } from "../hooks/use-toast"
+import BottomNavigation from "../components/bottom-navigation"
 
 export default function MapPage() {
     const [searchQuery, setSearchQuery] = useState("")
@@ -321,41 +322,20 @@ export default function MapPage() {
                 </div>
             </div>
 
-            {/* 하단 네비게이션 */}
-            <div className="bg-white border-t py-1.5 px-4 flex justify-around relative">
-                <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute -top-14 right-4 h-12 w-12 rounded-full shadow-md bg-white hover:bg-gray-100 z-30"
-                >
-                    <MapPin className="h-5 w-5 text-[#00A949]" />
-                </Button>
 
-                <Link to="/map">
-                    <Button variant="ghost" className="flex flex-col items-center text-[#00A949] h-auto py-1 rounded-full">
-                        <MapPin className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">지도</span>
+            {/* 하단 네비게이션 */}
+            <BottomNavigation
+                floatingActionButton={
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-14 w-14 rounded-full shadow-md bg-white hover:bg-gray-100"
+                    >
+                        <MapPin className="h-5 w-5 text-[#00A949]" />
                     </Button>
-                </Link>
-                <Link to="/cards">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1 rounded-full">
-                        <CreditCard className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">내 카드</span>
-                    </Button>
-                </Link>
-                <Link to="/events">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1 rounded-full">
-                        <Calendar className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">이벤트</span>
-                    </Button>
-                </Link>
-                <Link to="/profile">
-                    <Button variant="ghost" className="flex flex-col items-center h-auto py-1 rounded-full">
-                        <User className="h-6 w-6" />
-                        <span className="text-[10px] mt-0.5">내 정보</span>
-                    </Button>
-                </Link>
-            </div>
+                }
+            />
+
 
             {/* 카드 혜택 모달 */}
             {showCardModal && selectedStore && (
