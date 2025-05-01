@@ -35,6 +35,7 @@ function App() {
         <Route path="/events/invite" element={<EventsInvitePage />} />
         <Route path="/events/clover" element={<EventsCloverPage />} />
         <Route path="/events/coupon" element={<EventsCouponPage />} />
+
       </Routes>
     </div>
   );
