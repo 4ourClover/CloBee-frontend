@@ -33,8 +33,8 @@ export default function MapPage() {
             address: "서울시 강남구 테헤란로 123",
             bestCard: "신한카드 Deep Dream",
             discount: "30%",
-            lat: 37.498095,
-            lng: 127.02761,
+            lat: 37.583,
+            lng: 126.8838,
             hasEvent: true,
         },
         {
@@ -44,8 +44,8 @@ export default function MapPage() {
             address: "서울시 강남구 역삼로 45",
             bestCard: "현대카드 The Green",
             discount: "20%",
-            lat: 37.49944,
-            lng: 127.029351,
+            lat: 37.584554,
+            lng: 126.878736,
             hasEvent: false,
         },
         {
@@ -55,8 +55,8 @@ export default function MapPage() {
             address: "서울시 강남구 역삼동 814-6",
             bestCard: "삼성카드 taptap O",
             discount: "최대 8천원",
-            lat: 37.500536,
-            lng: 127.026318,
+            lat: 37.586412,
+            lng: 126.878890,
             hasEvent: true,
         },
         {
@@ -77,8 +77,8 @@ export default function MapPage() {
             address: "서울시 강남구 역삼동 735-22",
             bestCard: "우리카드 카드의정석",
             discount: "최대 5천원",
-            lat: 37.5011,
-            lng: 127.036794,
+            lat: 37.583094,
+            lng: 126.880392,
             hasEvent: true,
         },
     ]
@@ -173,6 +173,40 @@ export default function MapPage() {
                 // 필요하다면 CustomOverlay를 지도에 표시
                 customOverlay.setMap(map);
 
+
+
+                // 매장 마커 (CustomOverlay 사용)
+                nearbyStores.forEach((store) => {
+                    const storePosition = new window.kakao.maps.LatLng(store.lat, store.lng);
+                    const storeOverlayRoot = document.createElement('div');
+                    const storeMarkerContent = (
+                        <div
+                            className="flex flex-col items-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
+                            onClick={() => handleMapClick(store.id)}
+                            onDoubleClick={() => handleStoreSelect(store)}
+                        >
+                            <div className="p-2 rounded-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] shadow-md relative">
+                                <MapPin className="h-5 w-5 text-white" />
+                                {store.hasEvent && (
+                                    <span className="absolute -top-1 -right-1 bg-red-500 w-2 h-2 rounded-full"></span>
+                                )}
+                            </div>
+                            <div className="mt-1 px-2 py-1 bg-white rounded-md shadow-sm text-xs max-w-[100px] text-center">
+                                {store.name}
+                            </div>
+                        </div>
+                    );
+                    const storeRoot = createRoot(storeOverlayRoot);
+                    storeRoot.render(storeMarkerContent);
+                    const storeOverlay = new window.kakao.maps.CustomOverlay({
+                        position: storePosition,
+                        content: storeOverlayRoot,
+                        map: map
+                    });
+                    storeOverlay.setMap(map);
+                });
+
+
                 console.log("카카오 지도 로드/재조정 완료:", lat, lng);
             } else {
                 console.error("지도를 표시할 컨테이너('#map')를 찾을 수 없습니다.");
@@ -181,7 +215,7 @@ export default function MapPage() {
             console.error("Kakao Maps API가 로드되지 않았습니다.");
             setTimeout(() => loadKakaoMap(lat, lng), 500);
         }
-    }, [currentPositionMarker]); // currentPositionMarker 의존성 추가
+    }, [currentPositionMarker, nearbyStores, handleMapClick, handleStoreSelect]); // 의존성 배열 업데이트
 
 
     // MapRefresh 버튼 클릭 핸들러
@@ -227,7 +261,7 @@ export default function MapPage() {
                 </div>
 
                 {/* 매장 마커 */}
-                {nearbyStores.map((store, index) => (
+                {/* {nearbyStores.map((store, index) => (
                     <div
                         key={store.id}
                         className="absolute z-10 cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
@@ -249,7 +283,7 @@ export default function MapPage() {
                                 {store.name}
                             </div>
 
-                            {/* 혜택 툴팁 */}
+
                             {showBenefitTooltip === store.id && (
                                 <Card className="absolute top-0 -mt-16 bg-white shadow-lg rounded-lg p-2 text-xs whitespace-nowrap max-w-[150px] border-none z-20">
                                     <div className="flex items-center gap-1 mb-1">
@@ -264,7 +298,7 @@ export default function MapPage() {
                             )}
                         </div>
                     </div>
-                ))}
+                ))} */}
 
             </div>
 
