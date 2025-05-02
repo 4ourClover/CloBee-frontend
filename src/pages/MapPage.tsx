@@ -1,20 +1,28 @@
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect, useCallback } from "react"
+import { createRoot } from 'react-dom/client';
 import { MapPin, CreditCard } from "lucide-react"
 
-import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
 import CardBenefitModal from "../components/card-benefit-modal"
 import CategoryBar from "../components/category-bar"
 import BottomNavigation from "../components/bottom-navigation"
 import MapHeader from "../components/map/map-header"
-import KakaoMap from "../components/map/kakao-map"
+import MapRefresh from "../components/map/map-refresh"
+
+declare global {
+    interface Window {
+        kakao: any;
+    }
+}
 
 export default function MapPage() {
     const [showCardModal, setShowCardModal] = useState(false)
     const [selectedStore, setSelectedStore] = useState<any>(null)
     const [radius, setRadius] = useState(500) // 기본 반경 500m
     const [showBenefitTooltip, setShowBenefitTooltip] = useState<number | null>(null)
+    const [currentLocation, setCurrentLocation] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
+    const [kakaoMapInstance, setKakaoMapInstance] = useState<any>(null); // 지도 인스턴스 저장
+    const [currentPositionMarker, setCurrentPositionMarker] = useState<any>(null); // 현재 위치 마커 상태
 
     // 주변 매장 더미 데이터
     const nearbyStores = [
@@ -87,6 +95,116 @@ export default function MapPage() {
         }, 3000)
     }
 
+    useEffect(() => {
+        // Geolocation API를 지원하는지 확인
+        if (navigator.geolocation) {
+            // 현재 위치 가져오기 시도
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // 성공 시: 위도, 경도 가져오기
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    console.log("현재 위치:", lat, lng);
+                    setCurrentLocation({ lat, lng }); // 현재 위치 상태 업데이트
+                    loadKakaoMap(lat, lng); // 현재 위치로 지도 로드
+                },
+                (error) => {
+                    // 실패 시: 에러 처리 및 기본 위치로 지도 로드
+                    console.error("Geolocation 에러:", error);
+                    alert("현재 위치를 가져올 수 없습니다. 기본 위치로 지도를 표시합니다.");
+                    // 기본 좌표 (예: 카카오 본사)
+                    const defaultLat = 33.450701;
+                    const defaultLng = 126.570667;
+                    setCurrentLocation({ lat: defaultLat, lng: defaultLng });
+                    loadKakaoMap(defaultLat, defaultLng);
+                }, {
+                enableHighAccuracy: true, // 높은 정확도 요청 활성화
+                timeout: 10000,          // 위치 정보를 가져오는 최대 허용 시간 (10초)
+                maximumAge: 0            // 캐시된 위치 정보 사용 안 함 (항상 최신 정보 요청)
+            }
+            );
+        } else {
+            // Geolocation API 미지원 시: 기본 위치로 지도 로드
+            console.error("브라우저가 Geolocation을 지원하지 않습니다.");
+            alert("브라우저가 위치 정보 기능을 지원하지 않습니다. 기본 위치로 지도를 표시합니다.");
+            const defaultLat = 33.450701;
+            const defaultLng = 126.570667;
+            setCurrentLocation({ lat: defaultLat, lng: defaultLng });
+            loadKakaoMap(defaultLat, defaultLng);
+        }
+    }, []); // 컴포넌트 마운트 시 1회만 실행
+
+    // 지도 로드 함수 (위도, 경도 받아서 처리)
+    const loadKakaoMap = useCallback((lat: number, lng: number) => {
+        if (window.kakao && window.kakao.maps) {
+            const container = document.getElementById("map");
+            if (container) {
+                const options = {
+                    center: new window.kakao.maps.LatLng(lat, lng),
+                    level: 3,
+                };
+                const map = new window.kakao.maps.Map(container, options);
+                setKakaoMapInstance(map);
+
+                const currentPosition = new window.kakao.maps.LatLng(lat, lng);
+
+                // React 요소를 CustomOverlay의 content로 사용하기 위한 div 생성
+                const overlayRoot = document.createElement('div');
+
+                // React 요소
+                const currentMarker = (
+                    <div className="absolute left-1/2 top-1/2 z-20 transform -translate-x-1/2 -translate-y-1/2">
+                        <div className="p-2 rounded-full bg-blue-500 border-2 border-white shadow-md">
+                            <div className="h-3 w-3 bg-white rounded-full"></div>
+                        </div>
+                    </div>
+                );
+
+                // React 18 이상에서는 createRoot를 사용합니다.
+                const root = createRoot(overlayRoot);
+                root.render(currentMarker);
+
+                var customOverlay = new window.kakao.maps.CustomOverlay({
+                    position: currentPosition,
+                    content: overlayRoot, // 렌더링된 DOM 컨테이너를 content로 설정
+                    map: map // CustomOverlay를 지도에 설정 (초기 생성 시)
+                });
+
+                // 필요하다면 CustomOverlay를 지도에 표시
+                customOverlay.setMap(map);
+
+                console.log("카카오 지도 로드/재조정 완료:", lat, lng);
+            } else {
+                console.error("지도를 표시할 컨테이너('#map')를 찾을 수 없습니다.");
+            }
+        } else {
+            console.error("Kakao Maps API가 로드되지 않았습니다.");
+            setTimeout(() => loadKakaoMap(lat, lng), 500);
+        }
+    }, [currentPositionMarker]); // currentPositionMarker 의존성 추가
+
+
+    // MapRefresh 버튼 클릭 핸들러
+    const handleRefreshMap = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    setCurrentLocation({ lat, lng });
+                    loadKakaoMap(lat, lng); // 현재 위치로 지도 재로드
+                },
+                (error) => {
+                    console.error("Geolocation 에러:", error);
+                    alert("현재 위치를 가져올 수 없습니다.");
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            alert("브라우저가 위치 정보 기능을 지원하지 않습니다.");
+        }
+    };
+
 
     return (
         <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-auto font-gmarket">
@@ -105,7 +223,7 @@ export default function MapPage() {
 
                 {/* 지도 배경 */}
                 <div className="absolute inset-0 bg-[#e8f4f8]" onClick={() => setShowBenefitTooltip(null)}>
-                    <KakaoMap />
+                    <div id="map" style={{ width: "100%", height: "100%" }} />
                 </div>
 
                 {/* 매장 마커 */}
@@ -148,25 +266,13 @@ export default function MapPage() {
                     </div>
                 ))}
 
-                {/* 현재 위치 표시 */}
-                <div className="absolute left-1/2 top-1/2 z-20 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="p-2 rounded-full bg-blue-500 border-2 border-white shadow-md">
-                        <div className="h-3 w-3 bg-white rounded-full"></div>
-                    </div>
-                </div>
             </div>
 
 
             {/* 하단 네비게이션 */}
             <BottomNavigation
                 floatingActionButton={
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-14 w-14 rounded-full shadow-md bg-white hover:bg-gray-100"
-                    >
-                        <MapPin className="h-5 w-5 text-[#00A949]" />
-                    </Button>
+                    <MapRefresh onClick={handleRefreshMap} />
                 }
             />
 
