@@ -1,5 +1,7 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { fetchAllCards } from "../lib/card/cardApi"
+import { CardListDTO, CardPageDTO } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
 import {
     ChevronLeft,
@@ -111,45 +113,28 @@ export default function CardsPage() {
         },
     ]
 
-    // 더미 데이터: 전체 카드 목록
-    const allCards = [
-        {
-            id: 101,
-            name: "삼성카드 taptap O",
-            cardCompany: "삼성카드",
-            benefits: ["편의점 20%", "카페 30%", "영화 최대 8천원"],
-            annualFee: "20,000원",
-            image: "/placeholder.svg?height=200&width=320",
-            applyUrl: "https://www.samsungcard.com/personal/card/simple-application/UHPPCA0101M0.jsp",
-        },
-        {
-            id: 102,
-            name: "KB국민카드 가온",
-            cardCompany: "KB국민카드",
-            benefits: ["마트 10%", "쇼핑 15%", "도서 20%"],
-            annualFee: "15,000원",
-            image: "/placeholder.svg?height=200&width=320",
-            applyUrl: "https://card.kbcard.com/CRD/DVIEW/HCAMCXPRICAC0076",
-        },
-        {
-            id: 103,
-            name: "우리카드 카드의정석",
-            cardCompany: "우리카드",
-            benefits: ["외식 20%", "주유 리터당 80원", "대중교통 10%"],
-            annualFee: "30,000원",
-            image: "/placeholder.svg?height=200&width=320",
-            applyUrl: "https://pc.wooricard.com/dcpc/yh1/wcd/app/wcd/appCard/appCardMain.do",
-        },
-        {
-            id: 104,
-            name: "하나카드 원더카드",
-            cardCompany: "하나카드",
-            benefits: ["통신비 10%", "스트리밍 20%", "배달앱 15%"],
-            annualFee: "17,000원",
-            image: "/placeholder.svg?height=200&width=320",
-            applyUrl: "https://www.hanacard.co.kr/OPI41000000D.web",
-        },
-    ]
+    // 전체 카드 목록
+    const [allCards, setAllCards] = useState<CardListDTO[]>([])
+    const [totalCount, setTotalCount] = useState(0)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [selectedCardType, setSelectedCardType] = useState("credit")
+
+    useEffect(() => {
+        setCurrentPage((prev) => (prev === 1 ? 2 : 1))
+    }, [selectedCardType])
+
+    useEffect(() => {
+        if (activeTab === "all-cards") {
+            fetchAllCards(selectedCardType, currentPage, 10)
+                .then((data) => {
+                    setAllCards(data.cardPageList)
+                    setTotalCount(data.totalCount)
+                })
+                .catch((err) => {
+                    console.error("카드 데이터 로딩 실패", err)
+                })
+        }
+    }, [activeTab, currentPage])
 
     // 카드 추가 핸들러
     const handleAddCard = () => {
@@ -319,7 +304,7 @@ export default function CardsPage() {
                                             <div className="flex justify-between">
                                                 <h3 className="font-bold text-sm">{card.name}</h3>
                                                 <div className="flex gap-1">
-                                                    <Button
+                                                    {/* <Button
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-6 w-6 text-[#00A949]"
@@ -328,7 +313,7 @@ export default function CardsPage() {
                                                         }}
                                                     >
                                                         <Edit className="h-3 w-3" />
-                                                    </Button>
+                                                    </Button> */}
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
@@ -380,14 +365,30 @@ export default function CardsPage() {
                             />
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#00A949]" />
                         </div>
-
+                        <div className="space-y-2">
+                            <Label htmlFor="card-type-select">카드 종류</Label>
+                            <Select
+                                value={selectedCardType}
+                                onValueChange={(value) => {
+                                    setSelectedCardType(value)  // ✅ 선택 시 상태 변경
+                                }}
+                            >
+                                <SelectTrigger id="card-type-select" className="w-full">
+                                    <SelectValue placeholder="카드 종류 선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="credit">신용카드</SelectItem>
+                                    <SelectItem value="check">체크카드</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         {allCards.map((card) => (
-                            <div key={card.id} className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100">
+                            <div key={card.cardInfoId} className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100">
                                 <div className="flex">
                                     <div className="w-1/3 relative">
                                         <img
-                                            src={card.image || "/placeholder.svg"}
-                                            alt={card.name}
+                                            src={card.cardImageUrl || "/placeholder.svg"}
+                                            alt={card.cardName}
                                             width={120}
                                             height={80}
                                             className="w-full h-full object-cover"
@@ -395,21 +396,25 @@ export default function CardsPage() {
                                     </div>
                                     <div className="w-2/3 p-3 space-y-2">
                                         <div>
-                                            <h3 className="font-bold text-sm">{card.name}</h3>
+                                            <h3 className="font-bold text-sm">{card.cardName}</h3>
                                             <p className="text-xs text-gray-500">
-                                                {card.cardCompany} | 연회비 {card.annualFee}
+                                                {card.cardBrand}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                연회비 : 국내전용 {card.cardDomesticAnnualFee} | 해외겸용 {card.cardGlobalAnnualFee}
                                             </p>
                                         </div>
 
+                                        {/* 상세보기, 신청하기 버튼쪽
                                         <div className="flex flex-wrap gap-1">
                                             {card.benefits.map((benefit, index) => (
                                                 <span key={index} className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full">
                                                     {benefit}
                                                 </span>
                                             ))}
-                                        </div>
+                                        </div> */}
 
-                                        <div className="flex gap-1 mt-1">
+                                        {/* <div className="flex gap-1 mt-1">
                                             <Button
                                                 variant="outline"
                                                 className="flex-1 text-xs py-1 h-7 text-[#00A949] border-[#75CB3B]/30 hover:bg-[#75CB3B]/10 hover:border-[#75CB3B]/50"
@@ -422,11 +427,27 @@ export default function CardsPage() {
                                             >
                                                 카드 신청하기
                                             </Button>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             </div>
                         ))}
+
+                        {/* ✅ 페이지네이션 */}
+                        <div className="flex justify-center pt-4 gap-2">
+                            {Array.from({ length: Math.ceil(totalCount / 10) }, (_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => setCurrentPage(i + 1)}
+                                    className={`px-3 py-1 rounded-md text-sm ${currentPage === i + 1
+                                        ? "bg-[#00A949] text-white font-semibold"
+                                        : "bg-white text-[#00A949] border border-[#00A949] hover:bg-[#F0FFF5]"
+                                        }`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
