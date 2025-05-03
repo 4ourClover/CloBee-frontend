@@ -1,8 +1,22 @@
+import React from 'react';
 import { useState, useEffect, useCallback } from "react"
 import { createRoot } from 'react-dom/client';
-import { MapPin, CreditCard } from "lucide-react"
+import { Button } from "../components/ui/button"
+import { Sheet, SheetContent } from "../components/ui/sheet"
+import {
+    Coffee,
+    Utensils,
+    ShoppingCart,
+    Building,
+    Train,
+    Car,
+    Scissors,
+    ThumbsUp,
+    ThumbsDown,
+    Film,
+} from "lucide-react"
 
-import { Card } from "../components/ui/card"
+import { Badge } from "../components/ui/badge";
 import CardBenefitModal from "../components/card-benefit-modal"
 import CategoryBar from "../components/category-bar"
 import BottomNavigation from "../components/bottom-navigation"
@@ -15,17 +29,62 @@ declare global {
     }
 }
 
+// 카테고리 타입 정의
+type StoreCategory = "restaurant" | "cafe" | "transportation" | "gas" | "shopping" | "movie" | "convenience" | "beauty"
+
+// 카테고리별 색상 및 아이콘 정의
+const categoryConfig: Record<StoreCategory, { color: string; icon: React.ElementType }> = {
+    restaurant: { color: "#FF9E40", icon: Utensils },
+    cafe: { color: "#8B4513", icon: Coffee },
+    transportation: { color: "#4A90E2", icon: Train },
+    gas: { color: "#FFD700", icon: Car },
+    shopping: { color: "#FF66B3", icon: ShoppingCart },
+    movie: { color: "#FF0000", icon: Film },
+    convenience: { color: "#87CEEB", icon: Building },
+    beauty: { color: "#9370DB", icon: Scissors },
+}
+
+// 카테고리 한글명 매핑
+const categoryNames: Record<StoreCategory, string> = {
+    restaurant: "음식점",
+    cafe: "카페",
+    transportation: "대중교통",
+    gas: "주유소",
+    shopping: "쇼핑",
+    movie: "영화관",
+    convenience: "편의점",
+    beauty: "헤어샵",
+}
+
+interface Store {
+    id: number
+    name: string
+    distance: number
+    address: string
+    bestCard: string
+    discount: string
+    lat: number
+    lng: number
+    hasEvent: boolean
+    category: StoreCategory
+    image: string
+    likes: number
+    dislikes: number
+}
+
 export default function MapPage() {
     const [showCardModal, setShowCardModal] = useState(false)
-    const [selectedStore, setSelectedStore] = useState<any>(null)
+    const [selectedStore, setSelectedStore] = useState<Store | null>(null)
     const [radius, setRadius] = useState(500) // 기본 반경 500m
-    const [showBenefitTooltip, setShowBenefitTooltip] = useState<number | null>(null)
     const [currentLocation, setCurrentLocation] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
     const [kakaoMapInstance, setKakaoMapInstance] = useState<any>(null); // 지도 인스턴스 저장
     const [currentPositionMarker, setCurrentPositionMarker] = useState<any>(null); // 현재 위치 마커 상태
+    const [showStoreInfo, setShowStoreInfo] = useState(false)
 
-    // 주변 매장 더미 데이터
-    const nearbyStores = [
+
+
+    // 더미 데이터: 주변 매장
+    const nearbyStores: Store[] = [
         {
             id: 1,
             name: "스타벅스 강남점",
@@ -33,9 +92,13 @@ export default function MapPage() {
             address: "서울시 강남구 테헤란로 123",
             bestCard: "신한카드 Deep Dream",
             discount: "30%",
-            lat: 37.583,
-            lng: 126.8838,
+            lat: 36.510046,
+            lng: 128.300269,
             hasEvent: true,
+            category: "cafe",
+            image: "/placeholder.svg?height=80&width=80",
+            likes: 42,
+            dislikes: 3,
         },
         {
             id: 2,
@@ -44,9 +107,13 @@ export default function MapPage() {
             address: "서울시 강남구 역삼로 45",
             bestCard: "현대카드 The Green",
             discount: "20%",
-            lat: 37.584554,
-            lng: 126.878736,
+            lat: 36.509751,
+            lng: 128.300033,
             hasEvent: false,
+            category: "shopping",
+            image: "/placeholder.svg?height=80&width=80",
+            likes: 28,
+            dislikes: 5,
         },
         {
             id: 3,
@@ -55,9 +122,13 @@ export default function MapPage() {
             address: "서울시 강남구 역삼동 814-6",
             bestCard: "삼성카드 taptap O",
             discount: "최대 8천원",
-            lat: 37.586412,
-            lng: 126.878890,
+            lat: 36.394664,
+            lng: 128.391894,
             hasEvent: true,
+            category: "movie",
+            image: "/placeholder.svg?height=80&width=80",
+            likes: 56,
+            dislikes: 8,
         },
         {
             id: 4,
@@ -66,9 +137,13 @@ export default function MapPage() {
             address: "서울시 강남구 테헤란로 152",
             bestCard: "KB국민카드 가온",
             discount: "15%",
-            lat: 37.504476,
-            lng: 127.024761,
+            lat: 36.402505,
+            lng: 128.393653,
             hasEvent: false,
+            category: "shopping",
+            image: "/placeholder.svg?height=80&width=80",
+            likes: 35,
+            dislikes: 2,
         },
         {
             id: 5,
@@ -77,26 +152,116 @@ export default function MapPage() {
             address: "서울시 강남구 역삼동 735-22",
             bestCard: "우리카드 카드의정석",
             discount: "최대 5천원",
-            lat: 37.583094,
-            lng: 126.880392,
+            lat: 36.395130,
+            lng: 128.396631,
             hasEvent: true,
+            category: "restaurant",
+            image: "/placeholder.svg?height=80&width=80",
+            likes: 47,
+            dislikes: 6,
+        },
+        {
+            id: 6,
+            name: "강남역 2번 출구",
+            distance: 180,
+            address: "서울시 강남구 강남대로 396",
+            bestCard: "신한카드 Deep Dream",
+            discount: "교통비 10%",
+            lat: 36.401285,
+            lng: 128.397997,
+            hasEvent: false,
+            category: "transportation",
+            image: "/placeholder.svg?height=80&width=80",
+            likes: 22,
+            dislikes: 1,
+        },
+        {
+            id: 7,
+            name: "GS25 역삼점",
+            distance: 150,
+            address: "서울시 강남구 역삼동 825-20",
+            bestCard: "KB국민카드 가온",
+            discount: "결제금액 10%",
+            lat: 36.394763,
+            lng: 128.397177,
+            hasEvent: true,
+            category: "convenience",
+            image: "/placeholder.svg?height=80&width=80",
+            likes: 18,
+            dislikes: 4,
+        },
+        {
+            id: 8,
+            name: "SK주유소 테헤란로점",
+            distance: 320,
+            address: "서울시 강남구 테헤란로 152",
+            bestCard: "현대카드 The Green",
+            discount: "리터당 80원",
+            lat: 36.391734,
+            lng: 128.391108,
+            hasEvent: false,
+            category: "gas",
+            image: "/placeholder.svg?height=80&width=80",
+            likes: 31,
+            dislikes: 7,
         },
     ]
 
+    const [storeReactions, setStoreReactions] = useState<Record<number, { liked: boolean; disliked: boolean }>>({})
+
+
     const handleStoreSelect = (store: any) => {
+        console.log("매장 자세히 보기");
         setSelectedStore(store)
         setShowCardModal(true)
     }
 
+    // 지도 클릭 핸들러
     const handleMapClick = (storeId: number) => {
-        setShowBenefitTooltip(storeId)
-        setTimeout(() => {
-            setShowBenefitTooltip(null)
-        }, 3000)
+        const store = nearbyStores.find((s) => s.id === storeId)
+        if (store) {
+            setSelectedStore(store)
+
+            // 바텀 시트 표시
+            setShowStoreInfo(true)
+        }
+    }
+
+    // 좋아요/싫어요 핸들러
+    const handleReaction = (storeId: number, reaction: "like" | "dislike") => {
+        setStoreReactions((prev) => {
+            const currentReaction = prev[storeId] || { liked: false, disliked: false }
+
+            if (reaction === "like") {
+                // 이미 좋아요를 눌렀으면 취소, 아니면 좋아요 설정 (싫어요는 취소)
+                return {
+                    ...prev,
+                    [storeId]: {
+                        liked: !currentReaction.liked,
+                        disliked: false,
+                    },
+                }
+            } else {
+                // 이미 싫어요를 눌렀으면 취소, 아니면 싫어요 설정 (좋아요는 취소)
+                return {
+                    ...prev,
+                    [storeId]: {
+                        liked: false,
+                        disliked: !currentReaction.disliked,
+                    },
+                }
+            }
+        })
+    }
+
+    // 카테고리에 따른 아이콘 컴포넌트 반환
+    const getCategoryIcon = (category: StoreCategory) => {
+        const IconComponent = categoryConfig[category].icon
+        return <IconComponent className="h-4 w-4" />
     }
 
     useEffect(() => {
-        // Geolocation API를 지원하는지 확인
+        console.log("맵 로딩");
         if (navigator.geolocation) {
             // 현재 위치 가져오기 시도
             navigator.geolocation.getCurrentPosition(
@@ -136,90 +301,104 @@ export default function MapPage() {
 
     // 지도 로드 함수 (위도, 경도 받아서 처리)
     const loadKakaoMap = useCallback((lat: number, lng: number) => {
-        if (window.kakao && window.kakao.maps) {
-            const container = document.getElementById("map");
-            if (container) {
-                const options = {
-                    center: new window.kakao.maps.LatLng(lat, lng),
-                    level: 3,
-                };
-                const map = new window.kakao.maps.Map(container, options);
-                setKakaoMapInstance(map);
-
-                const currentPosition = new window.kakao.maps.LatLng(lat, lng);
-
-                // React 요소를 CustomOverlay의 content로 사용하기 위한 div 생성
-                const overlayRoot = document.createElement('div');
-
-                // React 요소
-                const currentMarker = (
-                    <div className="absolute left-1/2 top-1/2 z-20 transform -translate-x-1/2 -translate-y-1/2">
-                        <div className="p-2 rounded-full bg-blue-500 border-2 border-white shadow-md">
-                            <div className="h-3 w-3 bg-white rounded-full"></div>
-                        </div>
-                    </div>
-                );
-
-                // React 18 이상에서는 createRoot를 사용합니다.
-                const root = createRoot(overlayRoot);
-                root.render(currentMarker);
-
-                var customOverlay = new window.kakao.maps.CustomOverlay({
-                    position: currentPosition,
-                    content: overlayRoot, // 렌더링된 DOM 컨테이너를 content로 설정
-                    map: map // CustomOverlay를 지도에 설정 (초기 생성 시)
-                });
-
-                // 필요하다면 CustomOverlay를 지도에 표시
-                customOverlay.setMap(map);
-
-
-
-                // 매장 마커 (CustomOverlay 사용)
-                nearbyStores.forEach((store) => {
-                    const storePosition = new window.kakao.maps.LatLng(store.lat, store.lng);
-                    const storeOverlayRoot = document.createElement('div');
-                    const storeMarkerContent = (
-                        <div
-                            className="flex flex-col items-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
-                            onClick={() => handleMapClick(store.id)}
-                            onDoubleClick={() => handleStoreSelect(store)}
-                        >
-                            <div className="p-2 rounded-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] shadow-md relative">
-                                <MapPin className="h-5 w-5 text-white" />
-                                {store.hasEvent && (
-                                    <span className="absolute -top-1 -right-1 bg-red-500 w-2 h-2 rounded-full"></span>
-                                )}
-                            </div>
-                            <div className="mt-1 px-2 py-1 bg-white rounded-md shadow-sm text-xs max-w-[100px] text-center">
-                                {store.name}
-                            </div>
-                        </div>
-                    );
-                    const storeRoot = createRoot(storeOverlayRoot);
-                    storeRoot.render(storeMarkerContent);
-                    const storeOverlay = new window.kakao.maps.CustomOverlay({
-                        position: storePosition,
-                        content: storeOverlayRoot,
-                        map: map
-                    });
-                    storeOverlay.setMap(map);
-                });
-
-
-                console.log("카카오 지도 로드/재조정 완료:", lat, lng);
-            } else {
-                console.error("지도를 표시할 컨테이너('#map')를 찾을 수 없습니다.");
-            }
-        } else {
+        console.log("위치 표시");
+        if (!window.kakao?.maps) {
             console.error("Kakao Maps API가 로드되지 않았습니다.");
             setTimeout(() => loadKakaoMap(lat, lng), 500);
+            return;
         }
-    }, [currentPositionMarker, nearbyStores, handleMapClick, handleStoreSelect]); // 의존성 배열 업데이트
+
+        const container = document.getElementById("map");
+        if (!container) {
+            console.error("지도를 표시할 컨테이너('#map')를 찾을 수 없습니다.");
+            return;
+        }
+
+        //맵 생성
+        const options = {
+            center: new window.kakao.maps.LatLng(lat, lng),
+            level: 3,
+        };
+        const map = new window.kakao.maps.Map(container, options);
+        setKakaoMapInstance(map);
+
+        // 현재 위치 마커
+        const currentPosition = new window.kakao.maps.LatLng(lat, lng);
+        const currentMarkerContent = (
+            <div className="absolute left-1/2 top-1/2 z-20 transform -translate-x-1/2 -translate-y-1/2">
+                <div className="p-2 rounded-full bg-blue-500 border-2 border-white shadow-md">
+                    <div className="h-3 w-3 bg-white rounded-full"></div>
+                </div>
+            </div>
+        );
+        const currentOverlayRoot = document.createElement('div');
+        createRoot(currentOverlayRoot).render(currentMarkerContent);
+        const currentOverlay = new window.kakao.maps.CustomOverlay({
+            position: currentPosition,
+            content: currentOverlayRoot,
+            map: map,
+            clickable: true, // 클릭 가능하도록 설정
+        });
+        currentOverlay.setMap(map);
+
+
+        //매장 마커
+        nearbyStores.forEach((store) => {
+            const storePosition = new window.kakao.maps.LatLng(store.lat, store.lng);
+            const storeMarkerContent = (
+                <div
+                    className="flex flex-col items-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
+                    onClick={() => handleMapClick(store.id)}
+                >
+                    {/* <Card
+                        key={`tooltip-${store.id}`}
+                        className="bg-white shadow-lg rounded-lg p-1 text-xs whitespace-nowrap max-w-[150px] border-none z-30"
+                    >
+                        <div className="flex justify-between items-center">
+                            <CreditCard className="h-3 w-3 text-[#00A949]" />
+                            <span className="font-bold text-[#5A3D2B]">{store.bestCard}</span>
+                            <span className="font-bold text-[#00A949]">{store.discount}</span>
+                        </div>
+                    </Card> */}
+                    {/* <div className="p-2 rounded-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] shadow-md relative">
+                        <MapPin className="h-5 w-5 text-white" />
+                        {store.hasEvent && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 w-2 h-2 rounded-full"></span>
+                        )}
+                    </div> */}
+                    <div
+                        className="p-2 rounded-full shadow-md relative"
+                        style={{
+                            background: categoryConfig[store.category].color,
+                        }}
+                    >
+                        {React.createElement(categoryConfig[store.category].icon, { className: "h-5 w-5 text-white" })}
+                    </div>
+                    <div className="mt-1 px-2 py-1 bg-transparent rounded-md text-xs max-w-[100px] text-center font-bold border border-white">
+                        {store.name}
+                    </div>
+                </div>
+            );
+            const storeOverlayRoot = document.createElement('div');
+            createRoot(storeOverlayRoot).render(storeMarkerContent);
+            const storeOverlay = new window.kakao.maps.CustomOverlay({
+                position: storePosition,
+                content: storeOverlayRoot,
+                map: map,
+                clickable: true// 클릭 가능하도록 설정
+            });
+            storeOverlay.setMap(map);
+
+        });
+
+        console.log("카카오 지도 로드/재조정 완료:", lat, lng);
+
+    }, [nearbyStores, handleMapClick, handleStoreSelect]); // 의존성 배열 업데이트
 
 
     // MapRefresh 버튼 클릭 핸들러
     const handleRefreshMap = () => {
+        console.log("맵 새로고침 클릭");
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -239,9 +418,10 @@ export default function MapPage() {
         }
     };
 
+    console.log("MyComponent 렌더링 시작:");
 
     return (
-        <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-auto font-gmarket">
+        <main className="flex flex-col h-full w-full mx-auto overflow-auto font-gmarket">
             {/* 헤더 */}
             <MapHeader />
 
@@ -251,54 +431,14 @@ export default function MapPage() {
             {/* 지도 부분 */}
             <div className="flex-1 relative bg-[#f2f2f2] overflow-hidden">
                 {/* 반경 표시 */}
-                <div className="absolute top-14 left-1/2 transform -translate-x-1/2 z-30 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md text-sm font-medium text-[#00A949]">
+                {/* <div className="absolute top-14 left-1/2 transform -translate-x-1/2 z-30 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md text-sm font-medium text-[#00A949]">
                     반경 {radius}m
-                </div>
+                </div> */}
 
                 {/* 지도 배경 */}
-                <div className="absolute inset-0 bg-[#e8f4f8]" onClick={() => setShowBenefitTooltip(null)}>
+                <div className="absolute inset-0 bg-[#e8f4f8]">
                     <div id="map" style={{ width: "100%", height: "100%" }} />
                 </div>
-
-                {/* 매장 마커 */}
-                {/* {nearbyStores.map((store, index) => (
-                    <div
-                        key={store.id}
-                        className="absolute z-10 cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
-                        style={{
-                            left: `${20 + index * 15}%`,
-                            top: `${30 + index * 10}%`,
-                        }}
-                        onClick={() => handleMapClick(store.id)}
-                        onDoubleClick={() => handleStoreSelect(store)}
-                    >
-                        <div className="flex flex-col items-center">
-                            <div className="p-2 rounded-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] shadow-md relative">
-                                <MapPin className="h-5 w-5 text-white" />
-                                {store.hasEvent && (
-                                    <span className="absolute -top-1 -right-1 bg-red-500 w-2 h-2 rounded-full"></span>
-                                )}
-                            </div>
-                            <div className="mt-1 px-2 py-1 bg-white rounded-md shadow-sm text-xs max-w-[100px] text-center">
-                                {store.name}
-                            </div>
-
-
-                            {showBenefitTooltip === store.id && (
-                                <Card className="absolute top-0 -mt-16 bg-white shadow-lg rounded-lg p-2 text-xs whitespace-nowrap max-w-[150px] border-none z-20">
-                                    <div className="flex items-center gap-1 mb-1">
-                                        <CreditCard className="h-3 w-3 text-[#00A949]" />
-                                        <span className="font-bold text-[#5A3D2B]">{store.bestCard}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[#5A3D2B]">{store.name}</span>
-                                        <span className="font-bold text-[#00A949]">{store.discount}</span>
-                                    </div>
-                                </Card>
-                            )}
-                        </div>
-                    </div>
-                ))} */}
 
             </div>
 
@@ -315,6 +455,97 @@ export default function MapPage() {
             {showCardModal && selectedStore && (
                 <CardBenefitModal store={selectedStore} onClose={() => setShowCardModal(false)} />
             )}
+
+            <div className="w-full">
+                {/* 매장 정보 바텀 시트 */}
+                <Sheet open={showStoreInfo} onOpenChange={setShowStoreInfo}>
+                    <SheetContent side="bottom" className="p-0 rounded-t-xl mx-auto w-full ">
+
+                        {selectedStore && (
+                            <div className="flex flex-col">
+                                {/* 헤더 */}
+                                <div className="p-4 border-b">
+                                    <div className="flex items-start gap-4">
+                                        {/* 매장 로고/이미지 */}
+                                        <div className="relative w-16 h-16 rounded-full overflow-hidden border">
+                                            <img
+                                                src={selectedStore.image || "/placeholder.svg"}
+                                                alt={selectedStore.name}
+                                                className="object-cover"
+                                            />
+                                        </div>
+
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <h2 className="font-bold text-lg text-[#5A3D2B]">{selectedStore.name}</h2>
+                                                <Badge
+                                                    className="flex items-center gap-1 py-1"
+                                                    style={{
+                                                        backgroundColor: `${categoryConfig[selectedStore.category].color}20`,
+                                                        color: categoryConfig[selectedStore.category].color,
+                                                    }}
+                                                >
+                                                    {getCategoryIcon(selectedStore.category)}
+                                                    <span>{categoryNames[selectedStore.category]}</span>
+                                                </Badge>
+                                            </div>
+
+                                            <p className="text-sm text-[#5A3D2B]/70 mt-1">{selectedStore.address}</p>
+
+                                            {/* 좋아요/싫어요 버튼 */}
+                                            <div className="flex items-center gap-4 mt-2">
+                                                <button
+                                                    className={`flex items-center gap-1 ${storeReactions[selectedStore.id]?.liked ? "text-blue-500 font-medium" : "text-gray-500"}`}
+                                                    onClick={() => handleReaction(selectedStore.id, "like")}
+                                                >
+                                                    <ThumbsUp className="h-4 w-4" />
+                                                    <span>{selectedStore.likes + (storeReactions[selectedStore.id]?.liked ? 1 : 0)}</span>
+                                                </button>
+
+                                                <button
+                                                    className={`flex items-center gap-1 ${storeReactions[selectedStore.id]?.disliked ? "text-red-500 font-medium" : "text-gray-500"}`}
+                                                    onClick={() => handleReaction(selectedStore.id, "dislike")}
+                                                >
+                                                    <ThumbsDown className="h-4 w-4" />
+                                                    <span>{selectedStore.dislikes + (storeReactions[selectedStore.id]?.disliked ? 1 : 0)}</span>
+                                                </button>
+
+                                                <Badge className="ml-auto bg-[#75CB3B]/20 text-[#00A949] border-none">
+                                                    {selectedStore.distance}m
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 내용 */}
+                                <div className="p-4 space-y-4">
+                                    <div className="bg-[#f8f9fa] rounded-lg p-4 border border-[#75CB3B]/30">
+                                        <h3 className="font-medium text-[#5A3D2B] mb-2">최고 혜택 카드</h3>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="font-bold text-lg text-[#00A949]">{selectedStore.bestCard}</p>
+                                                <p className="text-sm text-[#5A3D2B]/70">최대 할인</p>
+                                            </div>
+                                            <div className="text-2xl font-bold text-[#00A949]">{selectedStore.discount}</div>
+                                        </div>
+                                    </div>
+
+                                    <Button
+                                        className="w-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                                        onClick={() => {
+                                            setShowStoreInfo(false)
+                                            handleStoreSelect(selectedStore)
+                                        }}
+                                    >
+                                        카드 혜택 자세히 보기
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </SheetContent>
+                </Sheet>
+            </div>
         </main>
     )
 }
