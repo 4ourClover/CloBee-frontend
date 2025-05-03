@@ -1,17 +1,10 @@
-import React, { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import { fetchAllCards } from "../lib/card/cardApi"
-import { CardListDTO, CardPageDTO } from "../lib/card/cardTypes"
+"use client"
+
+import { useEffect, useState } from "react"
+import { fetchAllCards, fetchCardDetail, applyCard } from "../lib/card/cardApi"
+import type { CardListDTO, CardBenefitDetail } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
-import {
-    ChevronLeft,
-    Plus,
-    Trash2,
-    Edit,
-    Camera,
-    Search,
-    X,
-} from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Trash2, Camera, Search, X } from "lucide-react"
 
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -35,6 +28,7 @@ export default function CardsPage() {
     const [activeTab, setActiveTab] = useState("my-cards")
     const [selectedCard, setSelectedCard] = useState<any>(null)
     const [showCardDetail, setShowCardDetail] = useState(false)
+    const [isLoadingDetail, setIsLoadingDetail] = useState(false)
     const { toast } = useToast()
 
     // 더미 데이터: 내 카드 목록
@@ -119,8 +113,9 @@ export default function CardsPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedCardType, setSelectedCardType] = useState("credit")
 
+    // 카드 타입이 변경될 때 항상 1페이지로 이동
     useEffect(() => {
-        setCurrentPage((prev) => (prev === 1 ? 2 : 1))
+        setCurrentPage(1)
     }, [selectedCardType])
 
     useEffect(() => {
@@ -134,7 +129,7 @@ export default function CardsPage() {
                     console.error("카드 데이터 로딩 실패", err)
                 })
         }
-    }, [activeTab, currentPage])
+    }, [activeTab, currentPage, selectedCardType])
 
     // 카드 추가 핸들러
     const handleAddCard = () => {
@@ -154,14 +149,62 @@ export default function CardsPage() {
     }
 
     // 카드 신청 핸들러
-    const handleApplyCard = (url: string) => {
-        window.open(url, "_blank")
+    const handleApplyCard = async (cardInfoId: number, cardBrand: string) => {
+        try {
+            // 카드 브랜드 문자열을 숫자로 변환
+            const cardBrandNum = Number.parseInt(cardBrand, 10)
+            if (isNaN(cardBrandNum)) {
+                throw new Error("유효하지 않은 카드 브랜드입니다.")
+            }
+
+            // 백엔드 API를 통해 카드 신청 URL 가져오기
+            const url = await applyCard(cardInfoId, cardBrandNum)
+
+            // 새 창에서 URL 열기
+            if (url) {
+                window.open(url, "_blank")
+            } else {
+                throw new Error("카드 신청 URL을 가져올 수 없습니다.")
+            }
+        } catch (error) {
+            console.error("카드 신청 실패:", error)
+            toast({
+                title: "카드 신청 실패",
+                description: "카드 신청 페이지로 이동할 수 없습니다.",
+                variant: "destructive",
+            })
+        }
     }
 
     // 카드 상세 정보 보기 핸들러
     const handleViewCardDetail = (card: any) => {
         setSelectedCard(card)
         setShowCardDetail(true)
+    }
+
+    // 카드 상세 정보 가져오기 핸들러
+    const handleFetchCardDetail = async (cardInfoId: number, cardItem: CardListDTO) => {
+        setIsLoadingDetail(true)
+        try {
+            // 데이터베이스에서 카드 상세 정보(혜택) 가져오기
+            const cardBenefits = await fetchCardDetail(cardInfoId)
+
+            // 카드 기본 정보와 혜택 정보를 합쳐서 selectedCard에 설정
+            setSelectedCard({
+                ...cardItem,
+                benefits: cardBenefits,
+            })
+            setShowCardDetail(true)
+        } catch (error) {
+            console.error("카드 상세 정보 로딩 실패", error)
+            toast({
+                title: "카드 상세 정보 로딩 실패",
+                description: "카드 상세 정보를 불러오는 중 오류가 발생했습니다.",
+                variant: "destructive",
+            })
+        } finally {
+            setIsLoadingDetail(false)
+        }
     }
 
     // 실적 그라데이션 계산 함수
@@ -176,12 +219,36 @@ export default function CardsPage() {
         }
     }
 
+    // 연회비 표시 함수
+    const renderAnnualFee = (domestic: number, global: number) => {
+        if (domestic === 0 && global === 0) {
+            return "연회비 없음"
+        }
+
+        const parts = []
+
+        if (domestic > 0) {
+            parts.push(`국내전용 ${domestic.toLocaleString()}원`)
+        }
+
+        if (global > 0) {
+            parts.push(`해외겸용 ${global.toLocaleString()}원`)
+        }
+
+        return parts.join(" | ")
+    }
+
     const navigate = useNavigate()
 
     return (
         <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-hidden font-gmarket">
             <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-1.5 flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-6 w-6" onClick={() => navigate(-1)}>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/10 h-6 w-6"
+                    onClick={() => navigate(-1)}
+                >
                     <ChevronLeft className="h-3.5 w-3.5" />
                 </Button>
                 <h1 className="text-base font-bold flex-1">카드 관리</h1>
@@ -271,8 +338,12 @@ export default function CardsPage() {
             <div className="bg-transparent border-b border-[#00A949]/20">
                 <Tabs defaultValue="my-cards" onValueChange={(v) => setActiveTab(v)}>
                     <TabsList className="w-full grid grid-cols-2 bg-transparent">
-                        <TabsTrigger value="my-cards" className="data-[state=active]:border-b-2 border-[#00A949] rounded-none">내 카드 목록</TabsTrigger>
-                        <TabsTrigger value="all-cards" className="data-[state=active]:border-b-2 border-[#00A949] rounded-none">전체 카드 찾기</TabsTrigger>
+                        <TabsTrigger value="my-cards" className="data-[state=active]:border-b-2 border-[#00A949] rounded-none">
+                            내 카드 목록
+                        </TabsTrigger>
+                        <TabsTrigger value="all-cards" className="data-[state=active]:border-b-2 border-[#00A949] rounded-none">
+                            전체 카드 찾기
+                        </TabsTrigger>
                     </TabsList>
                 </Tabs>
             </div>
@@ -291,13 +362,13 @@ export default function CardsPage() {
                                     onClick={() => handleViewCardDetail(card)}
                                 >
                                     <div className="flex">
-                                        <div className="w-1/3 relative">
+                                        <div className="w-1/3 relative h-[80px] flex items-center justify-center bg-gray-50">
                                             <img
                                                 src={card.image || "/placeholder.svg"}
                                                 alt={card.name}
                                                 width={120}
                                                 height={80}
-                                                className="w-full h-full object-cover"
+                                                className="max-w-full max-h-full object-contain"
                                             />
                                         </div>
                                         <div className="w-2/3 p-3 space-y-2">
@@ -370,7 +441,7 @@ export default function CardsPage() {
                             <Select
                                 value={selectedCardType}
                                 onValueChange={(value) => {
-                                    setSelectedCardType(value)  // ✅ 선택 시 상태 변경
+                                    setSelectedCardType(value) // ✅ 선택 시 상태 변경
                                 }}
                             >
                                 <SelectTrigger id="card-type-select" className="w-full">
@@ -383,82 +454,116 @@ export default function CardsPage() {
                             </Select>
                         </div>
                         {allCards.map((card) => (
-                            <div key={card.cardInfoId} className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100">
+                            <div
+                                key={card.cardInfoId}
+                                className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100"
+                            >
                                 <div className="flex">
-                                    <div className="w-1/3 relative">
+                                    <div className="w-1/3 relative h-[80px] flex items-center justify-center bg-gray-50">
                                         <img
                                             src={card.cardImageUrl || "/placeholder.svg"}
                                             alt={card.cardName}
                                             width={120}
                                             height={80}
-                                            className="w-full h-full object-cover"
+                                            className="max-w-full max-h-full object-contain"
                                         />
                                     </div>
                                     <div className="w-2/3 p-3 space-y-2">
                                         <div>
                                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                                            <p className="text-xs text-gray-500">
-                                                {card.cardBrand}
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                연회비 : 국내전용 {card.cardDomesticAnnualFee} | 해외겸용 {card.cardGlobalAnnualFee}
+                                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
+                                            <p className="text-xs text-gray-500 mt-1.5">
+                                                {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                                             </p>
                                         </div>
 
-                                        {/* 상세보기, 신청하기 버튼쪽
-                                        <div className="flex flex-wrap gap-1">
-                                            {card.benefits.map((benefit, index) => (
-                                                <span key={index} className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full">
-                                                    {benefit}
-                                                </span>
-                                            ))}
-                                        </div> */}
-
-                                        {/* <div className="flex gap-1 mt-1">
+                                        <div className="flex gap-1 mt-2">
                                             <Button
                                                 variant="outline"
                                                 className="flex-1 text-xs py-1 h-7 text-[#00A949] border-[#75CB3B]/30 hover:bg-[#75CB3B]/10 hover:border-[#75CB3B]/50"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleFetchCardDetail(card.cardInfoId, card)
+                                                }}
+                                                disabled={isLoadingDetail}
                                             >
-                                                상세 보기
+                                                {isLoadingDetail ? "로딩 중..." : "상세 보기"}
                                             </Button>
                                             <Button
                                                 className="flex-1 text-xs py-1 h-7 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
-                                                onClick={() => handleApplyCard(card.applyUrl)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleApplyCard(card.cardInfoId, card.cardBrand)
+                                                }}
                                             >
                                                 카드 신청하기
                                             </Button>
-                                        </div> */}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         ))}
 
                         {/* ✅ 페이지네이션 */}
-                        <div className="flex justify-center pt-4 gap-2">
-                            {Array.from({ length: Math.ceil(totalCount / 10) }, (_, i) => (
-                                <button
-                                    key={i + 1}
-                                    onClick={() => setCurrentPage(i + 1)}
-                                    className={`px-3 py-1 rounded-md text-sm ${currentPage === i + 1
-                                        ? "bg-[#00A949] text-white font-semibold"
-                                        : "bg-white text-[#00A949] border border-[#00A949] hover:bg-[#F0FFF5]"
-                                        }`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
+                        <div className="flex justify-center items-center pt-4 gap-1">
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 disabled:opacity-50"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </button>
+
+                            {Array.from({ length: Math.min(5, Math.ceil(totalCount / 10)) }, (_, i) => {
+                                // Calculate page number based on current page to show 5 pages at a time
+                                let pageNum: number
+                                const totalPages = Math.ceil(totalCount / 10)
+
+                                if (totalPages <= 5) {
+                                    // If total pages are 5 or less, show all pages
+                                    pageNum = i + 1
+                                } else {
+                                    // If more than 5 pages, create a sliding window
+                                    let startPage = Math.max(1, currentPage - 2)
+                                    const endPage = Math.min(totalPages, startPage + 4)
+
+                                    // Adjust start page if we're near the end
+                                    startPage = Math.max(1, endPage - 4)
+                                    pageNum = startPage + i
+                                }
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium ${currentPage === pageNum
+                                            ? "bg-[#00A949] text-white"
+                                            : "bg-white text-[#00A949] border border-gray-200 hover:bg-[#F0FFF5]"
+                                            }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                )
+                            })}
+
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(totalCount / 10)))}
+                                disabled={currentPage === Math.ceil(totalCount / 10)}
+                                className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 disabled:opacity-50"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </button>
                         </div>
                     </div>
                 )}
             </div>
-
 
             {/* 하단 네비게이션 */}
             {/* 카드 추가 버튼 - 오른쪽 하단에 배치 
             //h-12 w-12 rounded-full shadow-md bg-white hover:bg-gray-100*/}
             <BottomNavigation
                 floatingActionButton={
-                    < Dialog >
+                    <Dialog>
                         <DialogTrigger asChild>
                             <Button className="h-14 w-14 rounded-full shadow-md bg-white hover:bg-gray-100 p-0 overflow-hidden">
                                 <img
@@ -548,48 +653,49 @@ export default function CardsPage() {
                 }
             />
 
-
             {/* 카드 상세 정보 모달 */}
-            {
-                showCardDetail && selectedCard && (
-                    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
-                        <div className="bg-white rounded-t-lg sm:rounded-lg w-full max-w-sm max-h-[80vh] overflow-hidden flex flex-col">
-                            {/* 헤더 */}
-                            <div className="p-3 border-b flex justify-between items-center bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white">
-                                <h2 className="font-bold text-lg">{selectedCard.name} 혜택</h2>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="text-white hover:bg-white/10"
-                                    onClick={() => setShowCardDetail(false)}
-                                >
-                                    <X className="h-5 w-5" />
-                                </Button>
-                            </div>
+            {showCardDetail && selectedCard && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
+                    <div className="bg-white rounded-t-lg sm:rounded-lg w-full max-w-sm max-h-[80vh] overflow-hidden flex flex-col">
+                        {/* 헤더 */}
+                        <div className="p-3 border-b flex justify-between items-center bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white">
+                            <h2 className="font-bold text-lg">{selectedCard.name || selectedCard.cardName} 혜택</h2>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-white hover:bg-white/10"
+                                onClick={() => setShowCardDetail(false)}
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
 
-                            {/* 카드 이미지 */}
-                            <div className="relative h-48 bg-gray-100">
-                                <img
-                                    src={selectedCard.image || "/placeholder.svg"}
-                                    alt={selectedCard.name}
-                                    className="w-full h-full object-contain p-4"
-                                />
-                            </div>
+                        {/* 카드 이미지 */}
+                        <div className="relative h-48 bg-gray-100">
+                            <img
+                                src={selectedCard.image || selectedCard.cardImageUrl || "/placeholder.svg"}
+                                alt={selectedCard.name || selectedCard.cardName}
+                                className="w-full h-full object-contain p-4"
+                            />
+                        </div>
 
-                            {/* 카드 정보 */}
-                            <div className="p-4 space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <h3 className="font-bold text-lg">{selectedCard.name}</h3>
-                                        <p className="text-sm text-gray-500">
-                                            {selectedCard.cardCompany} | {selectedCard.cardType}
-                                        </p>
-                                    </div>
-                                    <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">
-                                        실적 {selectedCard.spendingGoal.toLocaleString()}원
-                                    </Badge>
+                        {/* 카드 정보 */}
+                        <div className="p-4 space-y-2">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h3 className="font-bold text-lg">{selectedCard.name || selectedCard.cardName}</h3>
+                                    <p className="text-sm text-gray-500">
+                                        {selectedCard.cardCompany || selectedCard.cardBrand} | {selectedCard.cardType}
+                                    </p>
                                 </div>
+                                <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">
+                                    {selectedCard.spendingGoal
+                                        ? `실적 ${selectedCard.spendingGoal.toLocaleString()}원`
+                                        : renderAnnualFee(selectedCard.cardDomesticAnnualFee || 0, selectedCard.cardGlobalAnnualFee || 0)}
+                                </Badge>
+                            </div>
 
+                            {selectedCard.currentSpending !== undefined && (
                                 <div className="space-y-1 mt-2">
                                     <div className="flex justify-between text-sm">
                                         <span>이번 달 실적</span>
@@ -604,38 +710,53 @@ export default function CardsPage() {
                                         ></div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
+                        </div>
 
-                            {/* 상세 혜택 */}
-                            <div className="flex-1 overflow-auto p-4 pt-0">
-                                <h4 className="font-medium text-[#5A3D2B] mt-4 mb-2">상세 혜택</h4>
-                                <div className="space-y-3">
-                                    {selectedCard.detailedBenefits.map((benefit: any, index: number) => (
-                                        <div key={index} className="bg-gray-50 rounded-lg p-3">
+                        {/* 상세 혜택 */}
+                        <div className="flex-1 overflow-auto p-4 pt-0">
+                            <h4 className="font-medium text-[#5A3D2B] mt-4 mb-2">상세 혜택</h4>
+                            <div className="space-y-3">
+                                {selectedCard.benefits && selectedCard.benefits.length > 0 ? (
+                                    selectedCard.benefits.map((benefit: CardBenefitDetail) => (
+                                        <div key={benefit.cardBenefitId} className="bg-gray-50 rounded-lg p-3">
                                             <div className="flex justify-between items-start">
-                                                <h5 className="font-medium text-[#00A949]">{benefit.category}</h5>
-                                                <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">{benefit.limit}</Badge>
+                                                <h5 className="font-medium text-[#00A949]">{benefit.cardBenefitTitle}</h5>
+                                                <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">
+                                                    {benefit.cardBenefitDiscntRate > 0
+                                                        ? `${benefit.cardBenefitDiscntRate}% 할인`
+                                                        : benefit.cardBenefitDiscntPrice > 0
+                                                            ? `${benefit.cardBenefitDiscntPrice.toLocaleString()}원 할인`
+                                                            : "혜택"}
+                                                </Badge>
                                             </div>
-                                            <p className="text-sm text-gray-700 mt-1">{benefit.description}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{benefit.condition}</p>
+                                            <p className="text-sm text-gray-700 mt-1">{benefit.cardBenefitDesc}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{benefit.cardBenefitCondition}</p>
+                                            {benefit.cardBenefitStore && (
+                                                <p className="text-xs text-[#00A949] mt-1">적용 매장: {benefit.cardBenefitStore}</p>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* 하단 버튼 */}
-                            <div className="p-4 border-t">
-                                <Button
-                                    className="w-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
-                                    onClick={() => setShowCardDetail(false)}
-                                >
-                                    확인
-                                </Button>
+                                    ))
+                                ) : (
+                                    <div className="text-center text-gray-500 py-4">
+                                        {isLoadingDetail ? "혜택 정보를 불러오는 중..." : "혜택 정보가 없습니다."}
+                                    </div>
+                                )}
                             </div>
                         </div>
+
+                        {/* 하단 버튼 */}
+                        <div className="p-4 border-t">
+                            <Button
+                                className="w-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
+                                onClick={() => setShowCardDetail(false)}
+                            >
+                                확인
+                            </Button>
+                        </div>
                     </div>
-                )
-            }
-        </main >
+                </div>
+            )}
+        </main>
     )
 }
