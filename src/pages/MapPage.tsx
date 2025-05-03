@@ -1,27 +1,13 @@
 import React from 'react';
 import { useState, useEffect, useCallback } from "react"
 import { createRoot } from 'react-dom/client';
-import { Button } from "../components/ui/button"
-import { Sheet, SheetContent } from "../components/ui/sheet"
-import {
-    Coffee,
-    Utensils,
-    ShoppingCart,
-    Building,
-    Train,
-    Car,
-    Scissors,
-    ThumbsUp,
-    ThumbsDown,
-    Film,
-} from "lucide-react"
-
-import { Badge } from "../components/ui/badge";
 import CardBenefitModal from "../components/card-benefit-modal"
-import CategoryBar from "../components/category-bar"
+import CategoryBar from "../components/map/category-bar"
 import BottomNavigation from "../components/bottom-navigation"
 import MapHeader from "../components/map/map-header"
 import MapRefresh from "../components/map/map-refresh"
+import BottomSheet from "../components/map/bottom-sheet"
+import { Store, StoreCategory, categoryConfig, categoryNames } from '../types/store';
 
 declare global {
     interface Window {
@@ -29,58 +15,12 @@ declare global {
     }
 }
 
-// 카테고리 타입 정의
-type StoreCategory = "restaurant" | "cafe" | "transportation" | "gas" | "shopping" | "movie" | "convenience" | "beauty"
-
-// 카테고리별 색상 및 아이콘 정의
-const categoryConfig: Record<StoreCategory, { color: string; icon: React.ElementType }> = {
-    restaurant: { color: "#FF9E40", icon: Utensils },
-    cafe: { color: "#8B4513", icon: Coffee },
-    transportation: { color: "#4A90E2", icon: Train },
-    gas: { color: "#FFD700", icon: Car },
-    shopping: { color: "#FF66B3", icon: ShoppingCart },
-    movie: { color: "#FF0000", icon: Film },
-    convenience: { color: "#87CEEB", icon: Building },
-    beauty: { color: "#9370DB", icon: Scissors },
-}
-
-// 카테고리 한글명 매핑
-const categoryNames: Record<StoreCategory, string> = {
-    restaurant: "음식점",
-    cafe: "카페",
-    transportation: "대중교통",
-    gas: "주유소",
-    shopping: "쇼핑",
-    movie: "영화관",
-    convenience: "편의점",
-    beauty: "헤어샵",
-}
-
-interface Store {
-    id: number
-    name: string
-    distance: number
-    address: string
-    bestCard: string
-    discount: string
-    lat: number
-    lng: number
-    hasEvent: boolean
-    category: StoreCategory
-    image: string
-    likes: number
-    dislikes: number
-}
-
 export default function MapPage() {
     const [showCardModal, setShowCardModal] = useState(false)
     const [selectedStore, setSelectedStore] = useState<Store | null>(null)
-    const [radius, setRadius] = useState(500) // 기본 반경 500m
     const [currentLocation, setCurrentLocation] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
     const [kakaoMapInstance, setKakaoMapInstance] = useState<any>(null); // 지도 인스턴스 저장
-    const [currentPositionMarker, setCurrentPositionMarker] = useState<any>(null); // 현재 위치 마커 상태
     const [showStoreInfo, setShowStoreInfo] = useState(false)
-
 
 
     // 더미 데이터: 주변 매장
@@ -207,8 +147,6 @@ export default function MapPage() {
         },
     ]
 
-    const [storeReactions, setStoreReactions] = useState<Record<number, { liked: boolean; disliked: boolean }>>({})
-
 
     const handleStoreSelect = (store: any) => {
         console.log("매장 자세히 보기");
@@ -225,33 +163,6 @@ export default function MapPage() {
             // 바텀 시트 표시
             setShowStoreInfo(true)
         }
-    }
-
-    // 좋아요/싫어요 핸들러
-    const handleReaction = (storeId: number, reaction: "like" | "dislike") => {
-        setStoreReactions((prev) => {
-            const currentReaction = prev[storeId] || { liked: false, disliked: false }
-
-            if (reaction === "like") {
-                // 이미 좋아요를 눌렀으면 취소, 아니면 좋아요 설정 (싫어요는 취소)
-                return {
-                    ...prev,
-                    [storeId]: {
-                        liked: !currentReaction.liked,
-                        disliked: false,
-                    },
-                }
-            } else {
-                // 이미 싫어요를 눌렀으면 취소, 아니면 싫어요 설정 (좋아요는 취소)
-                return {
-                    ...prev,
-                    [storeId]: {
-                        liked: false,
-                        disliked: !currentReaction.disliked,
-                    },
-                }
-            }
-        })
     }
 
     // 카테고리에 따른 아이콘 컴포넌트 반환
@@ -442,7 +353,6 @@ export default function MapPage() {
 
             </div>
 
-
             {/* 하단 네비게이션 */}
             <BottomNavigation
                 floatingActionButton={
@@ -450,102 +360,21 @@ export default function MapPage() {
                 }
             />
 
-
             {/* 카드 혜택 모달 */}
             {showCardModal && selectedStore && (
                 <CardBenefitModal store={selectedStore} onClose={() => setShowCardModal(false)} />
             )}
 
-            <div className="w-full">
-                {/* 매장 정보 바텀 시트 */}
-                <Sheet open={showStoreInfo} onOpenChange={setShowStoreInfo}>
-                    <SheetContent side="bottom" className="p-0 rounded-t-xl mx-auto w-full ">
-
-                        {selectedStore && (
-                            <div className="flex flex-col">
-                                {/* 헤더 */}
-                                <div className="p-4 border-b">
-                                    <div className="flex items-start gap-4">
-                                        {/* 매장 로고/이미지 */}
-                                        <div className="relative w-16 h-16 rounded-full overflow-hidden border">
-                                            <img
-                                                src={selectedStore.image || "/placeholder.svg"}
-                                                alt={selectedStore.name}
-                                                className="object-cover"
-                                            />
-                                        </div>
-
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <h2 className="font-bold text-lg text-[#5A3D2B]">{selectedStore.name}</h2>
-                                                <Badge
-                                                    className="flex items-center gap-1 py-1"
-                                                    style={{
-                                                        backgroundColor: `${categoryConfig[selectedStore.category].color}20`,
-                                                        color: categoryConfig[selectedStore.category].color,
-                                                    }}
-                                                >
-                                                    {getCategoryIcon(selectedStore.category)}
-                                                    <span>{categoryNames[selectedStore.category]}</span>
-                                                </Badge>
-                                            </div>
-
-                                            <p className="text-sm text-[#5A3D2B]/70 mt-1">{selectedStore.address}</p>
-
-                                            {/* 좋아요/싫어요 버튼 */}
-                                            <div className="flex items-center gap-4 mt-2">
-                                                <button
-                                                    className={`flex items-center gap-1 ${storeReactions[selectedStore.id]?.liked ? "text-blue-500 font-medium" : "text-gray-500"}`}
-                                                    onClick={() => handleReaction(selectedStore.id, "like")}
-                                                >
-                                                    <ThumbsUp className="h-4 w-4" />
-                                                    <span>{selectedStore.likes + (storeReactions[selectedStore.id]?.liked ? 1 : 0)}</span>
-                                                </button>
-
-                                                <button
-                                                    className={`flex items-center gap-1 ${storeReactions[selectedStore.id]?.disliked ? "text-red-500 font-medium" : "text-gray-500"}`}
-                                                    onClick={() => handleReaction(selectedStore.id, "dislike")}
-                                                >
-                                                    <ThumbsDown className="h-4 w-4" />
-                                                    <span>{selectedStore.dislikes + (storeReactions[selectedStore.id]?.disliked ? 1 : 0)}</span>
-                                                </button>
-
-                                                <Badge className="ml-auto bg-[#75CB3B]/20 text-[#00A949] border-none">
-                                                    {selectedStore.distance}m
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* 내용 */}
-                                <div className="p-4 space-y-4">
-                                    <div className="bg-[#f8f9fa] rounded-lg p-4 border border-[#75CB3B]/30">
-                                        <h3 className="font-medium text-[#5A3D2B] mb-2">최고 혜택 카드</h3>
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="font-bold text-lg text-[#00A949]">{selectedStore.bestCard}</p>
-                                                <p className="text-sm text-[#5A3D2B]/70">최대 할인</p>
-                                            </div>
-                                            <div className="text-2xl font-bold text-[#00A949]">{selectedStore.discount}</div>
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        className="w-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
-                                        onClick={() => {
-                                            setShowStoreInfo(false)
-                                            handleStoreSelect(selectedStore)
-                                        }}
-                                    >
-                                        카드 혜택 자세히 보기
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </SheetContent>
-                </Sheet>
-            </div>
+            {/* 바텀 시트 */}
+            <BottomSheet
+                showStoreInfo={showStoreInfo}
+                setShowStoreInfo={setShowStoreInfo}
+                selectedStore={selectedStore}
+                handleStoreSelect={handleStoreSelect}
+                categoryConfig={categoryConfig}
+                categoryNames={categoryNames}
+                getCategoryIcon={getCategoryIcon}
+            />
         </main>
     )
 }
