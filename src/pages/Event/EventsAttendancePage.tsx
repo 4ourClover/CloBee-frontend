@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "../../components/ui/button" // <-- 상대 경로로 수정
 import { Badge } from "../../components/ui/badge"   // <-- 상대 경로로 수정
 import {
@@ -7,43 +7,34 @@ import {
 } from "lucide-react"
 import { Link } from "react-router-dom" // <-- next/link → react-router-dom
 import BottomNavigation from "../../components/bottom-navigation"
+import { getTotalAttend, addAttend, EventsAttendDetail } from "../../api/event";
 
 export default function AttendanceEventPage() {
+    const detail : EventsAttendDetail = {
+        userId: 1, // 세션 로그인 불러와야 함
+        month: String(new Date().getMonth() + 1).padStart(2, '0')
+    };
+    // 출석체크 상태 (예시 데이터)
+    const [attendanceData, setAttendanceData] = useState<Record<number, boolean>>({ 1: true });
+
     // 현재 날짜 정보
     const currentDate = new Date()
     const currentDay = currentDate.getDate()
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
 
-    // 출석체크 상태 (예시 데이터)
-    const [attendanceData, setAttendanceData] = useState<Record<number, boolean>>({
-        1: true,
-        2: true,
-        3: true,
-        4: true,
-        5: true,
-        6: false,
-        7: true,
-        8: true,
-        9: true,
-        10: true,
-        11: false,
-        12: true,
-        13: true,
-        14: true,
-        15: true,
-    })
-
     // 오늘 출석체크 여부
     const [todayChecked, setTodayChecked] = useState(attendanceData[currentDay] || false)
 
     // 출석체크 핸들러
-    const handleAttendanceCheck = () => {
+    const handleAttendanceCheck = async () => {
         if (!todayChecked) {
+            await addAttend(detail);
             setTodayChecked(true)
             setAttendanceData((prev) => ({
                 ...prev,
                 [currentDay]: true,
             }))
+            setTodayChecked(true);
         }
     }
 
@@ -51,7 +42,24 @@ export default function AttendanceEventPage() {
     const totalCheckedDays = Object.values(attendanceData).filter(Boolean).length
 
     // 달력 데이터 생성
-    const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+    const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    
+    const fetchTotalAttend = async () => {
+        try {
+            const response = await getTotalAttend(detail);
+            setAttendanceData(prev => {
+                const updated = Object.fromEntries((response.data as number[]).map(day => [day, true]));
+                setTodayChecked(!!updated[currentDay]); // 상태 반영 후에 todayChecked 설정
+                return updated;
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    useEffect(() => {
+        fetchTotalAttend();
+    }, [detail.userId]);
 
     return (
         <main className="flex flex-col h-screen max-w-sm mx-auto overflow-hidden">
