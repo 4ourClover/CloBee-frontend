@@ -1,16 +1,7 @@
 import { Button } from "components/ui/button"
 import { X, ThumbsUp } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
-//import Image from "next/image"
-
-interface Store {
-  id: number
-  name: string
-  distance: number
-  address: string
-  bestCard: string
-  discount: string
-}
+import { Store } from "../types/store"
 
 interface CardBenefitModalProps {
   store: Store
@@ -37,8 +28,8 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
   // 더미 데이터: 추천 카드 혜택
   const recommendedCards = [
     {
-      cardName: store.bestCard,
-      discount: store.discount,
+      cardName: "신한카드",
+      discount: "30%",
       maxDiscount: "10,000원",
       isRecommended: true,
       image: "/placeholder.svg?height=200&width=320",
@@ -67,7 +58,7 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
       <div className="bg-white rounded-t-lg sm:rounded-lg w-full max-w-sm max-h-[80vh] overflow-hidden flex flex-col">
         {/* 헤더 */}
         <div className="p-3 border-b flex justify-between items-center">
-          <h2 className="font-bold text-lg text-[#5A3D2B]">{store.name} 혜택</h2>
+          <h2 className="font-bold text-lg text-[#5A3D2B]">{store.place_name} 혜택</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
@@ -76,7 +67,7 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
         {/* 내용 */}
         <div className="flex-1 overflow-auto">
           <div className="p-4 space-y-2">
-            <p className="text-sm text-[#5A3D2B]/70">{store.address}</p>
+            <p className="text-sm text-[#5A3D2B]/70">{store.address_name}</p>
             <div className="flex items-center">
               <span className="text-xs bg-[#75CB3B]/20 text-[#00A949] px-2 py-1 rounded-full">{store.distance}m</span>
             </div>
@@ -106,10 +97,10 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
                 <h3 className="font-medium text-[#5A3D2B] mb-2">최고 혜택 카드</h3>
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-lg text-[#00A949]">{store.bestCard}</p>
+                    <p className="font-bold text-lg text-[#00A949]">{recommendedCards[0].cardName}</p>
                     <p className="text-sm text-[#5A3D2B]/70">최대 할인: {sortedBenefits[0].maxDiscount}</p>
                   </div>
-                  <div className="text-2xl font-bold text-[#00A949]">{store.discount}</div>
+                  <div className="text-2xl font-bold text-[#00A949]">{recommendedCards[0].discount}</div>
                 </div>
               </div>
 

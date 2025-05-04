@@ -6,7 +6,7 @@ import CategoryBar from "../components/map/category-bar"
 import BottomNavigation from "../components/bottom-navigation"
 import MapHeader from "../components/map/map-header"
 import MapRefresh from "../components/map/map-refresh"
-//import BottomSheet from "../components/map/bottom-sheet"
+import BottomSheet from "../components/map/bottom-sheet"
 import { Store, StoreCategory, categoryConfig, categoryNames } from '../types/store';
 import { Content } from '@radix-ui/react-tabs';
 
@@ -23,7 +23,6 @@ export default function MapPage() {
     const [showStoreInfo, setShowStoreInfo] = useState(false)
     const kakaoMapRef = useRef<any>(null); // 지도 인스턴스를 저장할 ref
     const [nearbyStores, setNearbyStores] = useState<Store[]>([]);
-    const nextStoreIdRef = useRef(1);
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | null>(null);
 
     // 카테고리별로 마커를 저장하는 객체
@@ -56,21 +55,6 @@ export default function MapPage() {
     //         likes: 42,
     //         dislikes: 3,
     //     },
-    //     {
-    //         id: 2,
-    //         name: "올리브영 역삼점",
-    //         distance: 230,
-    //         address: "서울시 강남구 역삼로 45",
-    //         bestCard: "현대카드",
-    //         discount: "20%",
-    //         lat: 36.509751,
-    //         lng: 128.300033,
-    //         hasEvent: false,
-    //         category: "shopping",
-    //         image: "/placeholder.svg?height=80&width=80",
-    //         likes: 28,
-    //         dislikes: 5,
-    //     },
     // ]
 
 
@@ -82,7 +66,10 @@ export default function MapPage() {
 
     // 지도 클릭 핸들러
     const handleMapClick = (storeId: number) => {
-        const store = nearbyStores.find((s) => s.id === storeId)
+        console.log("지도 클릭:", typeof storeId, storeId);
+        console.log(nearbyStores);
+        const store = nearbyStores.find((s) => Number(s.id) == Number(storeId))
+        console.log("선택된 매장:", store);
         if (store) {
             setSelectedStore(store)
 
@@ -140,8 +127,6 @@ export default function MapPage() {
 
     // 지도 로드 함수 (위도, 경도 받아서 처리)
     const loadKakaoMap = useCallback((lat: number, lng: number) => {
-
-        console.log("위치 표시");
         if (!window.kakao?.maps) {
             console.error("Kakao Maps API가 로드되지 않았습니다.");
             setTimeout(() => loadKakaoMap(lat, lng), 500);
@@ -186,13 +171,11 @@ export default function MapPage() {
 
         console.log("카카오 지도 로드/재조정 완료:", lat, lng);
 
-    }, [nearbyStores, handleMapClick, handleStoreSelect]); // 의존성 배열 업데이트
+    }, [handleMapClick]); // 의존성 배열 업데이트
 
     // 키워드 검색 완료 시 호출되는 콜백함수 입니다
     function placesSearchCB(data: any, status: any, pagination: any) {
         if (status === window.kakao.maps.services.Status.OK) {
-            console.log("장소 검색 완료:", data);
-
             var bounds = new window.kakao.maps.LatLngBounds();
 
             const storesToAdd: Store[] = [];
@@ -201,7 +184,7 @@ export default function MapPage() {
                 const item = data[i];
 
                 const store: Store = {
-                    id: Number(nextStoreIdRef.current++), // ✅ 문자열 ID 자동 증가
+                    id: item.id,
                     place_name: item.place_name,
                     address_name: item.address_name,
                     road_address_name: item.road_address_name,
@@ -221,18 +204,21 @@ export default function MapPage() {
                 bounds.extend(new window.kakao.maps.LatLng(parseFloat(item.y), parseFloat(item.x)));
             }
 
-            setNearbyStores((prev) => [...prev, ...storesToAdd]);
+            setNearbyStores((prev) => [...prev, ...storesToAdd]); //매장 추가
             kakaoMapRef.current.setBounds(bounds);
         }
     }
 
     // 지도에 마커를 표시하는 함수입니다
     function displayMarker(place: Store) {
-        console.log("마커 표시:", place);
         const storeMarkerContent = (
             <div
+                data-id={place.id}
                 className="flex flex-col items-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
-                onClick={() => handleMapClick(place.id)}
+                onClick={(e) => {
+                    const id = Number((e.currentTarget as HTMLElement).dataset.id);
+                    handleMapClick(id);
+                }}
             >
                 {/* <Card
                         key={`tooltip-${store.id}`}
@@ -269,21 +255,20 @@ export default function MapPage() {
         });
         marker.setMap(kakaoMapRef.current); // 지도에 마커 표시
 
+
         if (categoryMarkersRef.current[place.category_group_code]) {
             categoryMarkersRef.current[place.category_group_code].push(marker);
         }
     }
 
+
+
     function showCategoryMarkers(category: StoreCategory, map: typeof window.kakao.maps.Map) {
-        console.log("카테고리 마커 표시:", category);
         categoryMarkersRef.current[category].forEach((marker) => marker.setMap(map));
-        console.log("카테고리 완료");
     }
 
     function hideAllMarkers() {
-        console.log("모든 마커 숨기기");
         Object.values(categoryMarkersRef.current).forEach((markerList) => {
-            console.log("지워줘");
             markerList.forEach((marker) => marker.setMap(null));
         });
     }
@@ -291,11 +276,9 @@ export default function MapPage() {
     useEffect(() => {
         console.log(categoryMarkersRef.current);
         if (selectedCategory) {
-            console.log("카테고리 변경:");
             hideAllMarkers();
             showCategoryMarkers(selectedCategory, kakaoMapRef.current);
         } else {
-            console.log("모든 카테고리 표시");
             Object.keys(categoryMarkersRef.current).forEach((category) => {
                 categoryMarkersRef.current[category as StoreCategory].forEach((marker) => marker.setMap(kakaoMapRef.current));
             });
@@ -304,7 +287,6 @@ export default function MapPage() {
 
     // MapRefresh 버튼 클릭 핸들러
     const handleRefreshMap = () => {
-        console.log("맵 새로고침 클릭");
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -325,7 +307,6 @@ export default function MapPage() {
         }
     };
 
-    console.log("MyComponent 렌더링 시작:");
     console.log(selectedCategory);
 
     return (
@@ -362,12 +343,12 @@ export default function MapPage() {
             />
 
             {/* 카드 혜택 모달 */}
-            {/* {showCardModal && selectedStore && (
+            {showCardModal && selectedStore && (
                 <CardBenefitModal store={selectedStore} onClose={() => setShowCardModal(false)} />
-            )} */}
+            )}
 
             {/* 바텀 시트 */}
-            {/* <BottomSheet
+            <BottomSheet
                 showStoreInfo={showStoreInfo}
                 setShowStoreInfo={setShowStoreInfo}
                 selectedStore={selectedStore}
@@ -375,7 +356,7 @@ export default function MapPage() {
                 categoryConfig={categoryConfig}
                 categoryNames={categoryNames}
                 getCategoryIcon={getCategoryIcon}
-            /> */}
+            />
         </main>
     )
 }
