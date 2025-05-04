@@ -30,3 +30,10 @@ export type CardBrandUrl = {
     cardBrand: string;
     cardBrandUrl: string;
 };
+
+// 카드 실적 정보 타입 추가
+export type CardSpendingInfo = {
+    cardInfoId: number
+    currentSpending: number
+    spendingGoal: number
+}

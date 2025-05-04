@@ -1,10 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { fetchAllCards, fetchCardDetail, applyCard } from "../lib/card/cardApi"
-import type { CardListDTO, CardBenefitDetail } from "../lib/card/cardTypes"
+import {
+    fetchAllCards,
+    fetchCardDetail,
+    applyCard,
+    fetchMyCards,
+    fetchCardSpending,
+    searchCards,
+} from "../lib/card/cardApi"
+import type { CardListDTO, CardBenefitDetail, CardSpendingInfo } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
-import { ChevronLeft, ChevronRight, Plus, Trash2, Camera, Search, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Trash2, Camera, Search, X, RotateCcw } from "lucide-react"
 
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -31,81 +38,13 @@ export default function CardsPage() {
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
     const { toast } = useToast()
 
-    // 더미 데이터: 내 카드 목록
-    const myCards = [
-        {
-            id: 1,
-            name: "신한카드 Deep Dream",
-            cardType: "신용카드",
-            cardCompany: "신한카드",
-            benefits: ["카페 30%", "영화 8천원", "편의점 20%"],
-            spendingGoal: 300000,
-            currentSpending: 210000,
-            image: "/placeholder.svg?height=200&width=320",
-            detailedBenefits: [
-                {
-                    category: "카페",
-                    description: "스타벅스, 투썸플레이스 등 전국 카페 30% 할인",
-                    limit: "월 최대 5,000원",
-                    condition: "전월 실적 30만원 이상 시",
-                },
-                {
-                    category: "영화",
-                    description: "CGV, 메가박스, 롯데시네마 8,000원 할인",
-                    limit: "월 2회",
-                    condition: "전월 실적 30만원 이상 시",
-                },
-                {
-                    category: "편의점",
-                    description: "CU, GS25, 세븐일레븐 등 전국 편의점 20% 할인",
-                    limit: "월 최대 4,000원",
-                    condition: "전월 실적 30만원 이상 시",
-                },
-                {
-                    category: "대중교통",
-                    description: "버스, 지하철 10% 할인",
-                    limit: "월 최대 3,000원",
-                    condition: "전월 실적 30만원 이상 시",
-                },
-            ],
-        },
-        {
-            id: 2,
-            name: "현대카드 The Green",
-            cardType: "신용카드",
-            cardCompany: "현대카드",
-            benefits: ["마트 15%", "주유 리터당 60원", "대중교통 10%"],
-            spendingGoal: 500000,
-            currentSpending: 320000,
-            image: "/placeholder.svg?height=200&width=320",
-            detailedBenefits: [
-                {
-                    category: "마트",
-                    description: "이마트, 홈플러스, 롯데마트 등 대형마트 15% 할인",
-                    limit: "월 최대 10,000원",
-                    condition: "전월 실적 50만원 이상 시",
-                },
-                {
-                    category: "주유",
-                    description: "전국 주유소 리터당 60원 할인",
-                    limit: "월 최대 8,000원",
-                    condition: "전월 실적 50만원 이상 시",
-                },
-                {
-                    category: "대중교통",
-                    description: "버스, 지하철 10% 할인",
-                    limit: "월 최대 5,000원",
-                    condition: "전월 실적 50만원 이상 시",
-                },
-                {
-                    category: "온라인쇼핑",
-                    description: "쿠팡, 11번가, G마켓 등 온라인쇼핑 5% 할인",
-                    limit: "월 최대 5,000원",
-                    condition: "전월 실적 50만원 이상 시",
-                },
-            ],
-        },
-    ]
+    // 상단에 userId 상태 추가 (import 문 아래, 컴포넌트 내부 상단)
+    const [userId, setUserId] = useState<number>(1) // 임시로 userId를 1로 설정 (실제 구현 시 로그인한 사용자의 ID로 대체 필요)
+    const [myCardsList, setMyCardsList] = useState<CardListDTO[]>([])
+    const [isLoadingMyCards, setIsLoadingMyCards] = useState(false)
+    const [cardSpendingInfo, setCardSpendingInfo] = useState<Record<number, CardSpendingInfo>>({})
+    const [isLoadingSpending, setIsLoadingSpending] = useState(false)
+    const [cardBenefits, setCardBenefits] = useState<Record<number, CardBenefitDetail[]>>({})
 
     // 전체 카드 목록
     const [allCards, setAllCards] = useState<CardListDTO[]>([])
@@ -113,13 +52,19 @@ export default function CardsPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedCardType, setSelectedCardType] = useState("credit")
 
+    // 검색 관련 상태 추가
+    const [searchQuery, setSearchQuery] = useState("")
+    const [isSearching, setIsSearching] = useState(false)
+    const [searchResults, setSearchResults] = useState<CardListDTO[]>([])
+    const [isSearchMode, setIsSearchMode] = useState(false)
+
     // 카드 타입이 변경될 때 항상 1페이지로 이동
     useEffect(() => {
         setCurrentPage(1)
     }, [selectedCardType])
 
     useEffect(() => {
-        if (activeTab === "all-cards") {
+        if (activeTab === "all-cards" && !isSearchMode) {
             fetchAllCards(selectedCardType, currentPage, 10)
                 .then((data) => {
                     setAllCards(data.cardPageList)
@@ -129,7 +74,110 @@ export default function CardsPage() {
                     console.error("카드 데이터 로딩 실패", err)
                 })
         }
-    }, [activeTab, currentPage, selectedCardType])
+    }, [activeTab, currentPage, selectedCardType, isSearchMode])
+
+    // 내 카드 목록 가져오기
+    useEffect(() => {
+        if (activeTab === "my-cards") {
+            setIsLoadingMyCards(true)
+            setIsLoadingSpending(true)
+
+            // 카드 목록 가져오기
+            fetchMyCards(userId)
+                .then((data) => {
+                    // 카드 목록의 실적 정보와 혜택 정보를 병렬로 가져오기
+                    const spendingPromises = data.map((card) =>
+                        fetchCardSpending(card.cardInfoId, userId).catch(() => ({
+                            cardInfoId: card.cardInfoId,
+                            currentSpending: 0,
+                            spendingGoal: 300000,
+                        })),
+                    )
+
+                    const benefitPromises = data.map((card) => fetchCardDetail(card.cardInfoId).catch(() => []))
+
+                    // 모든 데이터를 한 번에 처리
+                    return Promise.all([
+                        Promise.all(spendingPromises),
+                        Promise.all(benefitPromises),
+                        data, // 원본 카드 목록도 전달
+                    ])
+                })
+                .then(([spendingInfoArray, benefitsArray, cardsList]) => {
+                    // 실적 정보 맵 생성
+                    const spendingInfoMap: Record<number, CardSpendingInfo> = {}
+                    spendingInfoArray.forEach((info) => {
+                        if (info) {
+                            spendingInfoMap[info.cardInfoId] = info
+                        }
+                    })
+
+                    // 혜택 정보 맵 생성
+                    const benefitsMap: Record<number, CardBenefitDetail[]> = {}
+                    cardsList.forEach((card, index) => {
+                        benefitsMap[card.cardInfoId] = benefitsArray[index]
+                    })
+
+                    // 모든 상태를 한 번에 업데이트 (배치 업데이트)
+                    setMyCardsList(cardsList)
+                    setCardSpendingInfo(spendingInfoMap)
+                    setCardBenefits(benefitsMap)
+                })
+                .catch((err) => {
+                    console.error("내 카드 목록 로딩 실패", err)
+                    toast({
+                        title: "내 카드 목록 로딩 실패",
+                        description: "내 카드 목록을 불러오는 중 오류가 발생했습니다.",
+                        variant: "destructive",
+                    })
+                })
+                .finally(() => {
+                    // 모든 로딩 상태를 한 번에 false로 설정
+                    setIsLoadingMyCards(false)
+                    setIsLoadingSpending(false)
+                })
+        }
+    }, [activeTab, userId, toast])
+
+    // 카드 검색 핸들러
+    const handleSearchCards = async () => {
+        if (!searchQuery.trim()) {
+            toast({
+                title: "검색어를 입력하세요",
+                description: "카드 이름을 입력한 후 검색해주세요.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        setIsSearching(true)
+        setIsSearchMode(true)
+
+        try {
+            const results = await searchCards(searchQuery)
+            setSearchResults(results)
+            toast({
+                title: "검색 완료",
+                description: `${results.length}개의 카드를 찾았습니다.`,
+            })
+        } catch (error) {
+            console.error("카드 검색 실패:", error)
+            toast({
+                title: "검색 실패",
+                description: "카드 검색 중 오류가 발생했습니다.",
+                variant: "destructive",
+            })
+        } finally {
+            setIsSearching(false)
+        }
+    }
+
+    // 검색 초기화 핸들러
+    const handleResetSearch = () => {
+        setSearchQuery("")
+        setSearchResults([])
+        setIsSearchMode(false)
+    }
 
     // 카드 추가 핸들러
     const handleAddCard = () => {
@@ -207,6 +255,43 @@ export default function CardsPage() {
         }
     }
 
+    // 내 카드 목록 핸들러 추가 (다른 핸들러 근처에 추가)
+    const handleViewMyCardDetail = async (cardInfoId: number) => {
+        setIsLoadingDetail(true)
+        try {
+            // 데이터베이스에서 카드 상세 정보(혜택) 가져오기
+            const cardBenefits = await fetchCardDetail(cardInfoId)
+
+            // 카드 기본 정보 찾기
+            const cardItem = myCardsList.find((card) => card.cardInfoId === cardInfoId)
+
+            if (!cardItem) {
+                throw new Error("카드 정보를 찾을 수 없습니다.")
+            }
+
+            // 카드 실적 정보 가져오기
+            const spendingInfo = cardSpendingInfo[cardInfoId]
+
+            // 카드 기본 정보와 혜택 정보를 합쳐서 selectedCard에 설정
+            setSelectedCard({
+                ...cardItem,
+                benefits: cardBenefits,
+                currentSpending: spendingInfo?.currentSpending,
+                spendingGoal: spendingInfo?.spendingGoal,
+            })
+            setShowCardDetail(true)
+        } catch (error) {
+            console.error("카드 상세 정보 로딩 실패", error)
+            toast({
+                title: "카드 상세 정보 로딩 실패",
+                description: "카드 상세 정보를 불러오는 중 오류가 발생했습니다.",
+                variant: "destructive",
+            })
+        } finally {
+            setIsLoadingDetail(false)
+        }
+    }
+
     // 실적 그라데이션 계산 함수
     const getProgressGradient = (percentage: number) => {
         // 실적에 따라 그라데이션 강도 조절
@@ -238,6 +323,81 @@ export default function CardsPage() {
         return parts.join(" | ")
     }
 
+    // 카드 목록 렌더링 함수
+    const renderCardList = () => {
+        const cards = isSearchMode ? searchResults : allCards
+
+        if (isSearching) {
+            return (
+                <div className="text-center py-8">
+                    <p className="text-gray-500">카드를 검색하는 중...</p>
+                </div>
+            )
+        }
+
+        if (isSearchMode && searchResults.length === 0) {
+            return (
+                <div className="text-center py-8">
+                    <p className="text-gray-500">검색 결과가 없습니다.</p>
+                    <Button
+                        className="mt-4 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                        onClick={handleResetSearch}
+                    >
+                        검색 초기화
+                    </Button>
+                </div>
+            )
+        }
+
+        return cards.map((card) => (
+            <div key={card.cardInfoId} className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100">
+                <div className="flex">
+                    <div className="w-1/3 relative h-[80px] flex items-center justify-center bg-gray-50">
+                        <img
+                            src={card.cardImageUrl || "/placeholder.svg"}
+                            alt={card.cardName}
+                            width={120}
+                            height={80}
+                            className="max-w-full max-h-full object-contain"
+                        />
+                    </div>
+                    <div className="w-2/3 p-3 space-y-2">
+                        <div>
+                            <h3 className="font-bold text-sm">{card.cardName}</h3>
+                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
+                            <p className="text-xs text-gray-500 mt-1.5">
+                                {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
+                            </p>
+                        </div>
+
+                        <div className="flex gap-1 mt-2">
+                            <Button
+                                variant="outline"
+                                className="flex-1 text-xs py-1 h-7 text-[#00A949] border-[#75CB3B]/30 hover:bg-[#75CB3B]/10 hover:border-[#75CB3B]/50"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleFetchCardDetail(card.cardInfoId, card)
+                                }}
+                                disabled={isLoadingDetail}
+                            >
+                                {isLoadingDetail ? "로딩 중..." : "상세 보기"}
+                            </Button>
+                            <Button
+                                className="flex-1 text-xs py-1 h-7 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleApplyCard(card.cardInfoId, card.cardBrand)
+                                }}
+                            >
+                                카드 신청하기
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ))
+    }
+
     const navigate = useNavigate()
 
     return (
@@ -254,7 +414,12 @@ export default function CardsPage() {
                 <h1 className="text-base font-bold flex-1">카드 관리</h1>
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-6 w-6">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-white hover:bg-white/10 h-6 w-6"
+                            aria-label="카드 추가하기"
+                        >
                             <Plus className="h-3.5 w-3.5" />
                         </Button>
                     </DialogTrigger>
@@ -351,91 +516,145 @@ export default function CardsPage() {
             <div className="flex-1 overflow-auto p-4 bg-[#F5FAF0]">
                 {activeTab === "my-cards" ? (
                     <div className="space-y-4">
-                        {myCards.map((card) => {
-                            const percentage = (card.currentSpending / card.spendingGoal) * 100
-                            const progressGradient = getProgressGradient(percentage)
-
-                            return (
-                                <div
-                                    key={card.id}
-                                    className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100 cursor-pointer"
-                                    onClick={() => handleViewCardDetail(card)}
+                        {isLoadingMyCards ? (
+                            <div className="text-center py-8">
+                                <p className="text-gray-500">내 카드 목록을 불러오는 중...</p>
+                            </div>
+                        ) : myCardsList.length === 0 ? (
+                            <div className="text-center py-8">
+                                <p className="text-gray-500">등록된 카드가 없습니다.</p>
+                                <Button
+                                    className="mt-4 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                                    onClick={() => {
+                                        const dialogTrigger = document.querySelector('[aria-label="카드 추가하기"]') as HTMLButtonElement
+                                        if (dialogTrigger) dialogTrigger.click()
+                                    }}
                                 >
-                                    <div className="flex">
-                                        <div className="w-1/3 relative h-[80px] flex items-center justify-center bg-gray-50">
-                                            <img
-                                                src={card.image || "/placeholder.svg"}
-                                                alt={card.name}
-                                                width={120}
-                                                height={80}
-                                                className="max-w-full max-h-full object-contain"
-                                            />
-                                        </div>
-                                        <div className="w-2/3 p-3 space-y-2">
-                                            <div className="flex justify-between">
-                                                <h3 className="font-bold text-sm">{card.name}</h3>
-                                                <div className="flex gap-1">
-                                                    {/* <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6 text-[#00A949]"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                        }}
-                                                    >
-                                                        <Edit className="h-3 w-3" />
-                                                    </Button> */}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6 text-red-600"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            handleDeleteCard(card.id)
-                                                        }}
-                                                    >
-                                                        <Trash2 className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            </div>
+                                    카드 추가하기
+                                </Button>
+                            </div>
+                        ) : (
+                            myCardsList.map((card) => {
+                                // 카드 실적 정보 가져오기
+                                const spendingInfo = cardSpendingInfo[card.cardInfoId]
+                                const currentSpending = spendingInfo?.currentSpending || 0
+                                const spendingGoal = spendingInfo?.spendingGoal || 1
+                                const percentage = (currentSpending / spendingGoal) * 100
+                                const progressGradient = getProgressGradient(percentage)
 
-                                            <div className="space-y-1">
-                                                <div className="flex justify-between text-xs">
-                                                    <span>이번 달 실적</span>
+                                return (
+                                    <div
+                                        key={card.cardInfoId}
+                                        className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100 cursor-pointer"
+                                        onClick={() => handleViewMyCardDetail(card.cardInfoId)}
+                                    >
+                                        <div className="flex">
+                                            <div className="w-1/3 relative h-[80px] flex items-center justify-center bg-gray-50">
+                                                <img
+                                                    src={card.cardImageUrl || "/placeholder.svg"}
+                                                    alt={card.cardName}
+                                                    width={120}
+                                                    height={80}
+                                                    className="max-w-full max-h-full object-contain"
+                                                />
+                                            </div>
+                                            <div className="w-2/3 p-3 space-y-2">
+                                                <div className="flex justify-between">
+                                                    <h3 className="font-bold text-sm">{card.cardName}</h3>
+                                                    <div className="flex gap-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-6 w-6 text-red-600"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                handleDeleteCard(card.cardInfoId)
+                                                            }}
+                                                        >
+                                                            <Trash2 className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+
+                                                {/* 이번 달 실적 표시 수정 */}
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="text-gray-500">이번 달 실적</span>
                                                     <span className="font-medium">
-                                                        {card.currentSpending.toLocaleString()}원 / {card.spendingGoal.toLocaleString()}원
+                                                        {currentSpending.toLocaleString()}원 / {spendingGoal.toLocaleString()}원
                                                     </span>
                                                 </div>
-                                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden -mt-1">
                                                     <div className={`h-full ${progressGradient}`} style={{ width: `${percentage}%` }}></div>
                                                 </div>
-                                            </div>
 
-                                            <div className="flex flex-wrap gap-1">
-                                                {card.benefits.map((benefit, index) => (
-                                                    <span
-                                                        key={index}
-                                                        className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full"
-                                                    >
-                                                        {benefit}
-                                                    </span>
-                                                ))}
+                                                {/* 혜택 태그 표시 - 실제 혜택 정보 사용 */}
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    {cardBenefits[card.cardInfoId]?.slice(0, 3).map((benefit, idx) => (
+                                                        <span
+                                                            key={idx}
+                                                            className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full"
+                                                        >
+                                                            {benefit.cardBenefitTitle}{" "}
+                                                            {benefit.cardBenefitDiscntRate > 0
+                                                                ? `${benefit.cardBenefitDiscntRate}%`
+                                                                : benefit.cardBenefitDiscntPrice > 0
+                                                                    ? `${benefit.cardBenefitDiscntPrice.toLocaleString()}원`
+                                                                    : ""}
+                                                        </span>
+                                                    ))}
+                                                    {!cardBenefits[card.cardInfoId] || cardBenefits[card.cardInfoId].length === 0 ? (
+                                                        // 혜택 정보가 없을 경우 기본 혜택 표시
+                                                        <>
+                                                            <span className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full">
+                                                                혜택 정보 없음
+                                                            </span>
+                                                        </>
+                                                    ) : null}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            )
-                        })}
+                                )
+                            })
+                        )}
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <div className="relative">
-                            <Input
-                                className="pl-9 pr-4 py-2 rounded-full border-[#75CB3B]/30 focus-visible:ring-[#00A949]"
-                                placeholder="카드 검색..."
-                            />
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#00A949]" />
+                        {/* 검색 입력란과 버튼 */}
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <Input
+                                    className="pl-9 pr-4 py-2 rounded-full border-[#75CB3B]/30 focus-visible:ring-[#00A949]"
+                                    placeholder="카드 검색..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            handleSearchCards()
+                                        }
+                                    }}
+                                />
+                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#00A949]" />
+                            </div>
+                            <Button
+                                className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] text-white"
+                                onClick={handleSearchCards}
+                                disabled={isSearching}
+                            >
+                                검색
+                            </Button>
+                            {isSearchMode && (
+                                <Button
+                                    variant="outline"
+                                    className="border-[#75CB3B]/30 text-[#00A949] hover:bg-[#75CB3B]/10"
+                                    onClick={handleResetSearch}
+                                >
+                                    <RotateCcw className="h-4 w-4 mr-1" />
+                                    초기화
+                                </Button>
+                            )}
                         </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="card-type-select">카드 종류</Label>
                             <Select
@@ -453,107 +672,62 @@ export default function CardsPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {allCards.map((card) => (
-                            <div
-                                key={card.cardInfoId}
-                                className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100"
-                            >
-                                <div className="flex">
-                                    <div className="w-1/3 relative h-[80px] flex items-center justify-center bg-gray-50">
-                                        <img
-                                            src={card.cardImageUrl || "/placeholder.svg"}
-                                            alt={card.cardName}
-                                            width={120}
-                                            height={80}
-                                            className="max-w-full max-h-full object-contain"
-                                        />
-                                    </div>
-                                    <div className="w-2/3 p-3 space-y-2">
-                                        <div>
-                                            <h3 className="font-bold text-sm">{card.cardName}</h3>
-                                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
-                                            <p className="text-xs text-gray-500 mt-1.5">
-                                                {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
-                                            </p>
-                                        </div>
 
-                                        <div className="flex gap-1 mt-2">
-                                            <Button
-                                                variant="outline"
-                                                className="flex-1 text-xs py-1 h-7 text-[#00A949] border-[#75CB3B]/30 hover:bg-[#75CB3B]/10 hover:border-[#75CB3B]/50"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    handleFetchCardDetail(card.cardInfoId, card)
-                                                }}
-                                                disabled={isLoadingDetail}
-                                            >
-                                                {isLoadingDetail ? "로딩 중..." : "상세 보기"}
-                                            </Button>
-                                            <Button
-                                                className="flex-1 text-xs py-1 h-7 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    handleApplyCard(card.cardInfoId, card.cardBrand)
-                                                }}
-                                            >
-                                                카드 신청하기
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
+                        {/* 카드 목록 렌더링 */}
+                        {renderCardList()}
+
+                        {/* 페이지네이션 - 검색 모드가 아닐 때만 표시 */}
+                        {!isSearchMode && (
+                            <div className="flex justify-center items-center pt-4 gap-1">
+                                <button
+                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 disabled:opacity-50"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </button>
+
+                                {Array.from({ length: Math.min(5, Math.ceil(totalCount / 10)) }, (_, i) => {
+                                    // Calculate page number based on current page to show 5 pages at a time
+                                    let pageNum: number
+                                    const totalPages = Math.ceil(totalCount / 10)
+
+                                    if (totalPages <= 5) {
+                                        // If total pages are 5 or less, show all pages
+                                        pageNum = i + 1
+                                    } else {
+                                        // If more than 5 pages, create a sliding window
+                                        let startPage = Math.max(1, currentPage - 2)
+                                        const endPage = Math.min(totalPages, startPage + 4)
+
+                                        // Adjust start page if we're near the end
+                                        startPage = Math.max(1, endPage - 4)
+                                        pageNum = startPage + i
+                                    }
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                            className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium ${currentPage === pageNum
+                                                ? "bg-[#00A949] text-white"
+                                                : "bg-white text-[#00A949] border border-gray-200 hover:bg-[#F0FFF5]"
+                                                }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    )
+                                })}
+
+                                <button
+                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(totalCount / 10)))}
+                                    disabled={currentPage === Math.ceil(totalCount / 10)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 disabled:opacity-50"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </button>
                             </div>
-                        ))}
-
-                        {/* ✅ 페이지네이션 */}
-                        <div className="flex justify-center items-center pt-4 gap-1">
-                            <button
-                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 disabled:opacity-50"
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </button>
-
-                            {Array.from({ length: Math.min(5, Math.ceil(totalCount / 10)) }, (_, i) => {
-                                // Calculate page number based on current page to show 5 pages at a time
-                                let pageNum: number
-                                const totalPages = Math.ceil(totalCount / 10)
-
-                                if (totalPages <= 5) {
-                                    // If total pages are 5 or less, show all pages
-                                    pageNum = i + 1
-                                } else {
-                                    // If more than 5 pages, create a sliding window
-                                    let startPage = Math.max(1, currentPage - 2)
-                                    const endPage = Math.min(totalPages, startPage + 4)
-
-                                    // Adjust start page if we're near the end
-                                    startPage = Math.max(1, endPage - 4)
-                                    pageNum = startPage + i
-                                }
-
-                                return (
-                                    <button
-                                        key={pageNum}
-                                        onClick={() => setCurrentPage(pageNum)}
-                                        className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium ${currentPage === pageNum
-                                            ? "bg-[#00A949] text-white"
-                                            : "bg-white text-[#00A949] border border-gray-200 hover:bg-[#F0FFF5]"
-                                            }`}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                )
-                            })}
-
-                            <button
-                                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(totalCount / 10)))}
-                                disabled={currentPage === Math.ceil(totalCount / 10)}
-                                className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 disabled:opacity-50"
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </button>
-                        </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -689,28 +863,28 @@ export default function CardsPage() {
                                     </p>
                                 </div>
                                 <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">
-                                    {selectedCard.spendingGoal
-                                        ? `실적 ${selectedCard.spendingGoal.toLocaleString()}원`
-                                        : renderAnnualFee(selectedCard.cardDomesticAnnualFee || 0, selectedCard.cardGlobalAnnualFee || 0)}
+                                    {renderAnnualFee(selectedCard.cardDomesticAnnualFee || 0, selectedCard.cardGlobalAnnualFee || 0)}
                                 </Badge>
                             </div>
 
-                            {selectedCard.currentSpending !== undefined && (
-                                <div className="space-y-1 mt-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span>이번 달 실적</span>
-                                        <span className="font-medium">
-                                            {selectedCard.currentSpending.toLocaleString()}원 / {selectedCard.spendingGoal.toLocaleString()}원
-                                        </span>
-                                    </div>
-                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-[#75CB3B] to-[#00B959]"
-                                            style={{ width: `${(selectedCard.currentSpending / selectedCard.spendingGoal) * 100}%` }}
-                                        ></div>
-                                    </div>
+                            {/* 이번 달 실적 정보 표시 수정 */}
+                            <div className="space-y-1 mt-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-500">이번 달 실적</span>
+                                    <span className="font-medium">
+                                        {(selectedCard.currentSpending || 0).toLocaleString()}원 /{" "}
+                                        {(selectedCard.spendingGoal || 1).toLocaleString()}원
+                                    </span>
                                 </div>
-                            )}
+                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-[#75CB3B] to-[#00B959]"
+                                        style={{
+                                            width: `${((selectedCard.currentSpending || 0) / (selectedCard.spendingGoal || 1)) * 100}%`,
+                                        }}
+                                    ></div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* 상세 혜택 */}
