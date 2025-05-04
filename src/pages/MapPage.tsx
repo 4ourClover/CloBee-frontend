@@ -1,13 +1,14 @@
 import React from 'react';
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { createRoot } from 'react-dom/client';
 import CardBenefitModal from "../components/card-benefit-modal"
 import CategoryBar from "../components/map/category-bar"
 import BottomNavigation from "../components/bottom-navigation"
 import MapHeader from "../components/map/map-header"
 import MapRefresh from "../components/map/map-refresh"
-import BottomSheet from "../components/map/bottom-sheet"
+//import BottomSheet from "../components/map/bottom-sheet"
 import { Store, StoreCategory, categoryConfig, categoryNames } from '../types/store';
+import { Content } from '@radix-ui/react-tabs';
 
 declare global {
     interface Window {
@@ -19,133 +20,58 @@ export default function MapPage() {
     const [showCardModal, setShowCardModal] = useState(false)
     const [selectedStore, setSelectedStore] = useState<Store | null>(null)
     const [currentLocation, setCurrentLocation] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
-    const [kakaoMapInstance, setKakaoMapInstance] = useState<any>(null); // 지도 인스턴스 저장
     const [showStoreInfo, setShowStoreInfo] = useState(false)
+    const kakaoMapRef = useRef<any>(null); // 지도 인스턴스를 저장할 ref
+    const [nearbyStores, setNearbyStores] = useState<Store[]>([]);
+    const nextStoreIdRef = useRef(1);
+    const [selectedCategory, setSelectedCategory] = useState<StoreCategory | null>(null);
+
+    // 카테고리별로 마커를 저장하는 객체
+    const categoryMarkersRef = useRef<Record<StoreCategory, Array<any>>>({
+        FD6: [],
+        CE7: [],
+        SW8: [],
+        OL7: [],
+        MT1: [],
+        CT1: [],
+        CS2: [],
+        "": [],
+    });
 
 
     // 더미 데이터: 주변 매장
-    const nearbyStores: Store[] = [
-        {
-            id: 1,
-            name: "스타벅스 강남점",
-            distance: 120,
-            address: "서울시 강남구 테헤란로 123",
-            bestCard: "신한카드 Deep Dream",
-            discount: "30%",
-            lat: 36.510046,
-            lng: 128.300269,
-            hasEvent: true,
-            category: "cafe",
-            image: "/placeholder.svg?height=80&width=80",
-            likes: 42,
-            dislikes: 3,
-        },
-        {
-            id: 2,
-            name: "올리브영 역삼점",
-            distance: 230,
-            address: "서울시 강남구 역삼로 45",
-            bestCard: "현대카드 The Green",
-            discount: "20%",
-            lat: 36.509751,
-            lng: 128.300033,
-            hasEvent: false,
-            category: "shopping",
-            image: "/placeholder.svg?height=80&width=80",
-            likes: 28,
-            dislikes: 5,
-        },
-        {
-            id: 3,
-            name: "CGV 강남",
-            distance: 350,
-            address: "서울시 강남구 역삼동 814-6",
-            bestCard: "삼성카드 taptap O",
-            discount: "최대 8천원",
-            lat: 36.394664,
-            lng: 128.391894,
-            hasEvent: true,
-            category: "movie",
-            image: "/placeholder.svg?height=80&width=80",
-            likes: 56,
-            dislikes: 8,
-        },
-        {
-            id: 4,
-            name: "교보문고 강남점",
-            distance: 450,
-            address: "서울시 강남구 테헤란로 152",
-            bestCard: "KB국민카드 가온",
-            discount: "15%",
-            lat: 36.402505,
-            lng: 128.393653,
-            hasEvent: false,
-            category: "shopping",
-            image: "/placeholder.svg?height=80&width=80",
-            likes: 35,
-            dislikes: 2,
-        },
-        {
-            id: 5,
-            name: "버거킹 역삼점",
-            distance: 480,
-            address: "서울시 강남구 역삼동 735-22",
-            bestCard: "우리카드 카드의정석",
-            discount: "최대 5천원",
-            lat: 36.395130,
-            lng: 128.396631,
-            hasEvent: true,
-            category: "restaurant",
-            image: "/placeholder.svg?height=80&width=80",
-            likes: 47,
-            dislikes: 6,
-        },
-        {
-            id: 6,
-            name: "강남역 2번 출구",
-            distance: 180,
-            address: "서울시 강남구 강남대로 396",
-            bestCard: "신한카드 Deep Dream",
-            discount: "교통비 10%",
-            lat: 36.401285,
-            lng: 128.397997,
-            hasEvent: false,
-            category: "transportation",
-            image: "/placeholder.svg?height=80&width=80",
-            likes: 22,
-            dislikes: 1,
-        },
-        {
-            id: 7,
-            name: "GS25 역삼점",
-            distance: 150,
-            address: "서울시 강남구 역삼동 825-20",
-            bestCard: "KB국민카드 가온",
-            discount: "결제금액 10%",
-            lat: 36.394763,
-            lng: 128.397177,
-            hasEvent: true,
-            category: "convenience",
-            image: "/placeholder.svg?height=80&width=80",
-            likes: 18,
-            dislikes: 4,
-        },
-        {
-            id: 8,
-            name: "SK주유소 테헤란로점",
-            distance: 320,
-            address: "서울시 강남구 테헤란로 152",
-            bestCard: "현대카드 The Green",
-            discount: "리터당 80원",
-            lat: 36.391734,
-            lng: 128.391108,
-            hasEvent: false,
-            category: "gas",
-            image: "/placeholder.svg?height=80&width=80",
-            likes: 31,
-            dislikes: 7,
-        },
-    ]
+    // const nearbyStores: Store[] = [
+    //     {
+    //         id: 1,
+    //         name: "스타벅스 강남점",
+    //         distance: 120,
+    //         address: "서울시 강남구 테헤란로 123",
+    //         bestCard: "신한카드",
+    //         discount: "30%",
+    //         lat: 36.510046,
+    //         lng: 128.300269,
+    //         hasEvent: true,
+    //         category: "cafe",
+    //         image: "/placeholder.svg?height=80&width=80",
+    //         likes: 42,
+    //         dislikes: 3,
+    //     },
+    //     {
+    //         id: 2,
+    //         name: "올리브영 역삼점",
+    //         distance: 230,
+    //         address: "서울시 강남구 역삼로 45",
+    //         bestCard: "현대카드",
+    //         discount: "20%",
+    //         lat: 36.509751,
+    //         lng: 128.300033,
+    //         hasEvent: false,
+    //         category: "shopping",
+    //         image: "/placeholder.svg?height=80&width=80",
+    //         likes: 28,
+    //         dislikes: 5,
+    //     },
+    // ]
 
 
     const handleStoreSelect = (store: any) => {
@@ -210,8 +136,11 @@ export default function MapPage() {
         }
     }, []); // 컴포넌트 마운트 시 1회만 실행
 
+
+
     // 지도 로드 함수 (위도, 경도 받아서 처리)
     const loadKakaoMap = useCallback((lat: number, lng: number) => {
+
         console.log("위치 표시");
         if (!window.kakao?.maps) {
             console.error("Kakao Maps API가 로드되지 않았습니다.");
@@ -231,37 +160,81 @@ export default function MapPage() {
             level: 3,
         };
         const map = new window.kakao.maps.Map(container, options);
-        setKakaoMapInstance(map);
+        kakaoMapRef.current = map; // 지도 인스턴스를 ref에 저장
 
         // 현재 위치 마커
         const currentPosition = new window.kakao.maps.LatLng(lat, lng);
-        const currentMarkerContent = (
+        const currentMarkerContent =
             <div className="absolute left-1/2 top-1/2 z-20 transform -translate-x-1/2 -translate-y-1/2">
                 <div className="p-2 rounded-full bg-blue-500 border-2 border-white shadow-md">
                     <div className="h-3 w-3 bg-white rounded-full"></div>
                 </div>
             </div>
-        );
         const currentOverlayRoot = document.createElement('div');
         createRoot(currentOverlayRoot).render(currentMarkerContent);
         const currentOverlay = new window.kakao.maps.CustomOverlay({
             position: currentPosition,
             content: currentOverlayRoot,
             map: map,
-            clickable: true, // 클릭 가능하도록 설정
         });
-        currentOverlay.setMap(map);
 
+        // 장소 검색 객체를 생성합니다
+        var ps = new window.kakao.maps.services.Places();
 
-        //매장 마커
-        nearbyStores.forEach((store) => {
-            const storePosition = new window.kakao.maps.LatLng(store.lat, store.lng);
-            const storeMarkerContent = (
-                <div
-                    className="flex flex-col items-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
-                    onClick={() => handleMapClick(store.id)}
-                >
-                    {/* <Card
+        // 키워드로 장소를 검색합니다
+        ps.keywordSearch('음식점', placesSearchCB, { location: currentPosition });
+
+        console.log("카카오 지도 로드/재조정 완료:", lat, lng);
+
+    }, [nearbyStores, handleMapClick, handleStoreSelect]); // 의존성 배열 업데이트
+
+    // 키워드 검색 완료 시 호출되는 콜백함수 입니다
+    function placesSearchCB(data: any, status: any, pagination: any) {
+        if (status === window.kakao.maps.services.Status.OK) {
+            console.log("장소 검색 완료:", data);
+
+            var bounds = new window.kakao.maps.LatLngBounds();
+
+            const storesToAdd: Store[] = [];
+
+            for (let i = 0; i < data.length; i++) {
+                const item = data[i];
+
+                const store: Store = {
+                    id: Number(nextStoreIdRef.current++), // ✅ 문자열 ID 자동 증가
+                    place_name: item.place_name,
+                    address_name: item.address_name,
+                    road_address_name: item.road_address_name,
+                    phone: item.phone,
+                    place_url: item.place_url,
+                    category_name: item.category_name,
+                    category_group_code: item.category_group_code || "",
+                    category_group_name: item.category_group_name,
+                    distance: item.distance,
+                    lng: item.x,
+                    lat: item.y,
+                };
+
+                storesToAdd.push(store);
+
+                displayMarker(store);
+                bounds.extend(new window.kakao.maps.LatLng(parseFloat(item.y), parseFloat(item.x)));
+            }
+
+            setNearbyStores((prev) => [...prev, ...storesToAdd]);
+            kakaoMapRef.current.setBounds(bounds);
+        }
+    }
+
+    // 지도에 마커를 표시하는 함수입니다
+    function displayMarker(place: Store) {
+        console.log("마커 표시:", place);
+        const storeMarkerContent = (
+            <div
+                className="flex flex-col items-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
+                onClick={() => handleMapClick(place.id)}
+            >
+                {/* <Card
                         key={`tooltip-${store.id}`}
                         className="bg-white shadow-lg rounded-lg p-1 text-xs whitespace-nowrap max-w-[150px] border-none z-30"
                     >
@@ -271,41 +244,63 @@ export default function MapPage() {
                             <span className="font-bold text-[#00A949]">{store.discount}</span>
                         </div>
                     </Card> */}
-                    {/* <div className="p-2 rounded-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] shadow-md relative">
-                        <MapPin className="h-5 w-5 text-white" />
-                        {store.hasEvent && (
-                            <span className="absolute -top-1 -right-1 bg-red-500 w-2 h-2 rounded-full"></span>
-                        )}
-                    </div> */}
-                    <div
-                        className="p-2 rounded-full shadow-md relative"
-                        style={{
-                            background: categoryConfig[store.category].color,
-                        }}
-                    >
-                        {React.createElement(categoryConfig[store.category].icon, { className: "h-5 w-5 text-white" })}
-                    </div>
-                    <div className="mt-1 px-2 py-1 bg-transparent rounded-md text-xs max-w-[100px] text-center font-bold border border-white">
-                        {store.name}
-                    </div>
+                <div
+                    className="p-2 rounded-full shadow-md relative"
+                    style={{
+                        background: categoryConfig[place.category_group_code].color,
+                    }}
+                >
+                    {React.createElement(categoryConfig[place.category_group_code].icon, { className: "h-5 w-5 text-white" })}
                 </div>
-            );
-            const storeOverlayRoot = document.createElement('div');
-            createRoot(storeOverlayRoot).render(storeMarkerContent);
-            const storeOverlay = new window.kakao.maps.CustomOverlay({
-                position: storePosition,
-                content: storeOverlayRoot,
-                map: map,
-                clickable: true// 클릭 가능하도록 설정
-            });
-            storeOverlay.setMap(map);
+                <div className="bg-transparent rounded-md text-xs max-w-[100px] text-center font-bold border border-transparent">
+                    {place.place_name}
+                </div>
+            </div>
+        );
 
+        const storeOverlayRoot = document.createElement('div');
+        createRoot(storeOverlayRoot).render(storeMarkerContent);
+
+
+        // 마커를 생성하고 지도에 표시합니다
+        var marker = new window.kakao.maps.CustomOverlay({
+            position: new window.kakao.maps.LatLng(place.lat, place.lng),
+            content: storeOverlayRoot,
         });
+        marker.setMap(kakaoMapRef.current); // 지도에 마커 표시
 
-        console.log("카카오 지도 로드/재조정 완료:", lat, lng);
+        if (categoryMarkersRef.current[place.category_group_code]) {
+            categoryMarkersRef.current[place.category_group_code].push(marker);
+        }
+    }
 
-    }, [nearbyStores, handleMapClick, handleStoreSelect]); // 의존성 배열 업데이트
+    function showCategoryMarkers(category: StoreCategory, map: typeof window.kakao.maps.Map) {
+        console.log("카테고리 마커 표시:", category);
+        categoryMarkersRef.current[category].forEach((marker) => marker.setMap(map));
+        console.log("카테고리 완료");
+    }
 
+    function hideAllMarkers() {
+        console.log("모든 마커 숨기기");
+        Object.values(categoryMarkersRef.current).forEach((markerList) => {
+            console.log("지워줘");
+            markerList.forEach((marker) => marker.setMap(null));
+        });
+    }
+
+    useEffect(() => {
+        console.log(categoryMarkersRef.current);
+        if (selectedCategory) {
+            console.log("카테고리 변경:");
+            hideAllMarkers();
+            showCategoryMarkers(selectedCategory, kakaoMapRef.current);
+        } else {
+            console.log("모든 카테고리 표시");
+            Object.keys(categoryMarkersRef.current).forEach((category) => {
+                categoryMarkersRef.current[category as StoreCategory].forEach((marker) => marker.setMap(kakaoMapRef.current));
+            });
+        }
+    }, [selectedCategory]);
 
     // MapRefresh 버튼 클릭 핸들러
     const handleRefreshMap = () => {
@@ -316,7 +311,8 @@ export default function MapPage() {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     setCurrentLocation({ lat, lng });
-                    loadKakaoMap(lat, lng); // 현재 위치로 지도 재로드
+                    const moveLatLon = new window.kakao.maps.LatLng(lat, lng);
+                    kakaoMapRef.current.setCenter(moveLatLon); // 지도 중심 이동
                 },
                 (error) => {
                     console.error("Geolocation 에러:", error);
@@ -330,6 +326,7 @@ export default function MapPage() {
     };
 
     console.log("MyComponent 렌더링 시작:");
+    console.log(selectedCategory);
 
     return (
         <main className="flex flex-col h-full w-full mx-auto overflow-auto font-gmarket">
@@ -337,7 +334,11 @@ export default function MapPage() {
             <MapHeader />
 
             {/* 카테고리 바 */}
-            <CategoryBar />
+            <CategoryBar
+                onCategorySelect={(category) =>
+                    setSelectedCategory(prev => (prev === category ? null : category))
+                }
+            />
 
             {/* 지도 부분 */}
             <div className="flex-1 relative bg-[#f2f2f2] overflow-hidden">
@@ -361,12 +362,12 @@ export default function MapPage() {
             />
 
             {/* 카드 혜택 모달 */}
-            {showCardModal && selectedStore && (
+            {/* {showCardModal && selectedStore && (
                 <CardBenefitModal store={selectedStore} onClose={() => setShowCardModal(false)} />
-            )}
+            )} */}
 
             {/* 바텀 시트 */}
-            <BottomSheet
+            {/* <BottomSheet
                 showStoreInfo={showStoreInfo}
                 setShowStoreInfo={setShowStoreInfo}
                 selectedStore={selectedStore}
@@ -374,7 +375,7 @@ export default function MapPage() {
                 categoryConfig={categoryConfig}
                 categoryNames={categoryNames}
                 getCategoryIcon={getCategoryIcon}
-            />
+            /> */}
         </main>
     )
 }
