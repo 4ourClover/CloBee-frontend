@@ -15,76 +15,15 @@ import { brandCategory } from "@/types/store"
 
 interface MapHeaderProps {
     onBrandSelect: (brand: brandCategory) => void;
+    onSearch: (keyword: string) => void; // 검색어를 부모 컴포넌트로 전달하는 함수
 }
 
-export default function MapHeader({ onBrandSelect }: MapHeaderProps) {
+export default function MapHeader({ onBrandSelect, onSearch }: MapHeaderProps) {
     const [searchQuery, setSearchQuery] = useState("")
     const [notificationsEnabled, setNotificationsEnabled] = useState(true)
     const { toast } = useToast()
     const [radius, setRadius] = useState(500) // 기본 반경 500m
 
-    // 주변 매장 더미 데이터
-    // const nearbyStores = [
-    //     {
-    //         id: 1,
-    //         name: "스타벅스 강남점",
-    //         distance: 120,
-    //         address: "서울시 강남구 테헤란로 123",
-    //         bestCard: "신한카드 Deep Dream",
-    //         discount: "30%",
-    //         lat: 37.498095,
-    //         lng: 127.02761,
-    //         hasEvent: true,
-    //     },
-    //     {
-    //         id: 2,
-    //         name: "올리브영 역삼점",
-    //         distance: 230,
-    //         address: "서울시 강남구 역삼로 45",
-    //         bestCard: "현대카드 The Green",
-    //         discount: "20%",
-    //         lat: 37.49944,
-    //         lng: 127.029351,
-    //         hasEvent: false,
-    //     },
-    //     {
-    //         id: 3,
-    //         name: "CGV 강남",
-    //         distance: 350,
-    //         address: "서울시 강남구 역삼동 814-6",
-    //         bestCard: "삼성카드 taptap O",
-    //         discount: "최대 8천원",
-    //         lat: 37.500536,
-    //         lng: 127.026318,
-    //         hasEvent: true,
-    //     },
-    //     {
-    //         id: 4,
-    //         name: "교보문고 강남점",
-    //         distance: 450,
-    //         address: "서울시 강남구 테헤란로 152",
-    //         bestCard: "KB국민카드 가온",
-    //         discount: "15%",
-    //         lat: 37.504476,
-    //         lng: 127.024761,
-    //         hasEvent: false,
-    //     },
-    //     {
-    //         id: 5,
-    //         name: "버거킹 역삼점",
-    //         distance: 480,
-    //         address: "서울시 강남구 역삼동 735-22",
-    //         bestCard: "우리카드 카드의정석",
-    //         discount: "최대 5천원",
-    //         lat: 37.5011,
-    //         lng: 127.036794,
-    //         hasEvent: true,
-    //     },
-    // ]
-
-    // const nearbyEventStores = nearbyStores.filter(
-    //     (store) => store.distance <= 50 && store.hasEvent
-    // )
 
     const handleNotificationToggle = (checked: boolean) => {
         setNotificationsEnabled(checked)
@@ -96,6 +35,18 @@ export default function MapHeader({ onBrandSelect }: MapHeaderProps) {
             variant: checked ? "default" : "destructive",
         })
     }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            const trimmed = searchQuery.trim();
+            if (trimmed) {
+                onSearch(trimmed);
+            } else {
+                alert("검색어를 입력하세요");
+            }
+        }
+    };
+
 
 
     return (
@@ -110,10 +61,12 @@ export default function MapHeader({ onBrandSelect }: MapHeaderProps) {
             {/* 검색창 */}
             <div className="flex-1 relative">
                 <Input
+                    id="search_keyword"
                     className="pl-7 pr-3 py-1 h-6 text-xs rounded-full bg-white/20 text-white placeholder:text-white/70 border-none focus-visible:ring-white/30"
                     placeholder="매장 검색..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
                 />
                 <Search className="absolute left-2 top-1 h-3 w-3 text-white/70" />
                 {searchQuery && (

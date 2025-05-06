@@ -70,8 +70,27 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
         // parentHandleReaction?.(storeId, reaction, !storeReactions[storeId]?.[reaction]);
     }, [setStoreReactions]); // 의존성 배열에 setStoreReactions 추가
 
-    if (!selectedStore) {
-        return null;
+    if (
+        !selectedStore ||
+        !benefitCards.some((card) => card.benefit_store === selectedStore.place_name.match(/^\S+/)?.[0])
+    ) {
+        return showStoreInfo ? (
+            <div
+                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-lg z-40 max-h-[50%] overflow-hidden"
+            >
+                <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                    <h3 className="text-lg font-medium text-[#5A3D2B]">매장 정보가 없습니다</h3>
+                    <p className="text-sm text-[#5A3D2B]/70 mt-1">다른 매장을 선택해보세요</p>
+                    <Button
+                        variant="outline"
+                        className="border-[#75CB3B]/30 text-[#00A949] hover:bg-[#75CB3B]/10 mt-4"
+                        onClick={() => setShowStoreInfo(false)}
+                    >
+                        닫기
+                    </Button>
+                </div>
+            </div>
+        ) : null;
     }
 
     return (

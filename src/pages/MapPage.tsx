@@ -7,6 +7,7 @@ import MapHeader from "../components/map/map-header"
 import MapRefresh from "../components/map/map-refresh"
 import BottomSheet from "../components/map/bottom-sheet"
 import { Store, StoreCategory, categoryConfig, BenefitCard, brandCategory } from '../types/store';
+import SearchList from '../components/map/search-list';
 
 declare global {
     interface Window {
@@ -24,10 +25,12 @@ export default function MapPage() {
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | null>(null);
     const [selectedBrand, setSelectedBrand] = useState<brandCategory | null>(null);
     const nearbyStoresRef = useRef<Store[]>([]);
+    const [showSearchStoreList, setSearchStoreList] = useState(false) // 주변 매장 목록을 보여줄지 여부를 저장하는 ref
+    const searchStoreList = useRef<Store[]>([]); // 주변 매장 목록을 저장하는 ref
 
     useEffect(() => {
         nearbyStoresRef.current = nearbyStores;
-        console.log("nearbyStoresRef 업데이트:", nearbyStoresRef.current);
+        console.log("nearbyStoresRef 업데이트:");
     }, [nearbyStores]);
 
 
@@ -95,32 +98,9 @@ export default function MapPage() {
     ]
 
 
-
-    // 더미 데이터: 주변 매장
-    // const nearbyStores: Store[] = [
-    //     {
-    //         id: 1,
-    //         name: "스타벅스 강남점",
-    //         distance: 120,
-    //         address: "서울시 강남구 테헤란로 123",
-    //         bestCard: "신한카드",
-    //         discount: "30%",
-    //         lat: 36.510046,
-    //         lng: 128.300269,
-    //         hasEvent: true,
-    //         category: "cafe",
-    //         image: "/placeholder.svg?height=80&width=80",
-    //         likes: 42,
-    //         dislikes: 3,
-    //     },
-    // ]
-
-
-
     // 지도 클릭 핸들러
     const handleMapClick = (storeId: number) => {
         console.log("지도 클릭:", typeof storeId, storeId);
-        console.log(nearbyStores);
         const store = nearbyStoresRef.current.find((s) => Number(s.id) == Number(storeId))
         console.log("선택된 매장:", store);
         if (store) {
@@ -128,6 +108,7 @@ export default function MapPage() {
 
             // 바텀 시트 표시
             setShowStoreInfo(true)
+            console.log("바텀 시트 열기:", store.place_name);
         }
     }
 
@@ -224,6 +205,61 @@ export default function MapPage() {
 
     }, []); // 의존성 배열 업데이트
 
+    const searchPlacesMenu = (keyword: string) => {
+
+        console.log("검색어:", keyword);
+        setSearchStoreList(true); // 검색 결과 목록 표시
+
+
+        // 장소검색 객체를 통해 키워드로 장소검색을 요청합니다
+        const currentPosition = new window.kakao.maps.LatLng(currentLocation.lat, currentLocation.lng);
+        var ps = new window.kakao.maps.services.Places();
+        ps.keywordSearch(keyword, searchPlacesMenuCB, { location: currentPosition, size: 5 });
+    }
+
+    function searchPlacesMenuCB(data: any, status: any, pagination: any) {
+        if (status === window.kakao.maps.services.Status.OK) {
+            const bounds = new window.kakao.maps.LatLngBounds();
+
+            const newStores: Store[] = [];
+
+            data.forEach((item: any) => {
+                const store: Store = {
+                    id: item.id,
+                    place_name: item.place_name,
+                    address_name: item.address_name,
+                    road_address_name: item.road_address_name,
+                    phone: item.phone,
+                    place_url: item.place_url,
+                    category_name: item.category_name,
+                    category_group_code: item.category_group_code || "",
+                    category_group_name: item.category_group_name,
+                    distance: item.distance,
+                    lng: item.x,
+                    lat: item.y,
+                };
+
+                newStores.push(store);
+            });
+
+            searchStoreList.current = newStores; // 검색 결과 저장
+            console.log("검색 결과:", searchStoreList.current);
+        }
+    }
+
+    function selectSearchStore(storeId: number) {
+        const store = searchStoreList.current.find((s) => s.id === storeId);
+        if (store) {
+            console.log("선택된 매장:", store);
+
+            kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(store.lat, store.lng)); // 지도 중심 이동
+            kakaoMapRef.current.setLevel(3); // 줌 레벨 조정
+            setNearbyStores((prev) => [...prev, store]);
+            displayMarker(store); // 마커 표시
+        }
+    }
+
+
     function placesSearch(currentPosition: any) {
         // 장소 검색 객체를 생성합니다
         var ps = new window.kakao.maps.services.Places();
@@ -271,8 +307,6 @@ export default function MapPage() {
 
             // ✅ 상태 업데이트는 한 번만
             setNearbyStores((prev) => [...prev, ...newStores]);
-            // console.log("매장 추가:", newStores);
-            // console.log("전체 매장:", nearbyStores);
 
             kakaoMapRef.current.setBounds(bounds);
         }
@@ -337,51 +371,14 @@ export default function MapPage() {
         starbucksBenefitCards.forEach((card) => {
 
             if (card.benefit_store === keyword) {
-                console.log("카드 마커 추가:", card.benefit_store, keyword);
+                //console.log("카드 마커 추가:", card.benefit_store, keyword);
                 brandMarkersRef.current[card.card_brand].push(marker); // 카드 마커 추가
             }
-            console.log("카드 마커 추가:", brandMarkersRef.current);
+            //console.log("카드 마커 추가:", brandMarkersRef.current);
         });
 
     }
 
-
-
-    // function showCategoryMarkers(category: StoreCategory, map: typeof window.kakao.maps.Map) {
-    //     categoryMarkersRef.current[category].forEach((marker) => marker.setMap(map));
-    // }
-
-    // function hideAllMarkers(markers: any[] = []) {
-    //     Object.values(categoryMarkersRef.current).forEach((markerList) => {
-    //         markerList.forEach((marker) => marker.setMap(null));
-    //     });
-    // }
-
-    // useEffect(() => {
-    //     console.log(categoryMarkersRef.current);
-    //     if (selectedCategory) {
-    //         hideAllMarkers();
-    //         showCategoryMarkers(selectedCategory, kakaoMapRef.current);
-    //     } else {
-    //         Object.keys(categoryMarkersRef.current).forEach((category) => {
-    //             categoryMarkersRef.current[category as StoreCategory].forEach((marker) => marker.setMap(kakaoMapRef.current));
-    //         });
-    //     }
-    // }, [selectedCategory]);
-
-    // useEffect(() => {
-    //     console.log(brandMarkersRef.current);
-    //     if (selectedBrand) {
-    //         hideAllMarkers();
-    //         Object.keys(brandMarkersRef.current).forEach((brand) => {
-    //             brandMarkersRef.current[brand as brandCategory].forEach((marker) => marker.setMap(kakaoMapRef.current));
-    //         });
-    //     } else {
-    //         Object.keys(brandMarkersRef.current).forEach((brand) => {
-    //             brandMarkersRef.current[brand as brandCategory].forEach((marker) => marker.setMap(kakaoMapRef.current));
-    //         });
-    //     }
-    // }, [selectedBrand]);
 
     function updateMarkersBySelection<T extends string>(
         ref: React.MutableRefObject<Record<T, any[]>>,
@@ -435,8 +432,6 @@ export default function MapPage() {
         placesSearch(center); // 장소 검색 시작
     }
 
-    console.log(selectedCategory);
-
     return (
         <main className="flex flex-col h-full w-full mx-auto overflow-auto font-gmarket">
             {/* 헤더 */}
@@ -444,6 +439,7 @@ export default function MapPage() {
                 onBrandSelect={(brand: brandCategory) =>
                     setSelectedBrand(prev => (prev === brand ? null : brand))
                 }
+                onSearch={searchPlacesMenu}
             />
 
             {/* 카테고리 바 */}
@@ -485,6 +481,18 @@ export default function MapPage() {
                 recommendedCards={starbucksBenefitCards}
                 getCategoryIcon={getCategoryIcon} //아이콘
             />
+
+            {/* 검색 매장 목록 */}
+            {showSearchStoreList && (
+                <SearchList
+                    searchStores={searchStoreList.current}
+                    setShowStoreList={setSearchStoreList}
+                    onSearchStoreSelect={(storeId) => {
+                        selectSearchStore(storeId); // 매장 선택 시 호출되는 함수
+                        // 여기서 setSelectedStore 등 원하는 작업 수행
+                    }}
+                />
+            )}
         </main>
     )
 }
