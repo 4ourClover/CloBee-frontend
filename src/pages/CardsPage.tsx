@@ -8,10 +8,11 @@ import {
     fetchMyCards,
     fetchCardSpending,
     searchCards,
+    addUserCard,
 } from "../lib/card/cardApi"
 import type { CardListDTO, CardBenefitDetail, CardSpendingInfo } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
-import { ChevronLeft, ChevronRight, Plus, Trash2, Camera, Search, X, RotateCcw } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Trash2, Camera, Search, X, RotateCcw, PlusCircle } from "lucide-react"
 
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -57,6 +58,14 @@ export default function CardsPage() {
     const [isSearching, setIsSearching] = useState(false)
     const [searchResults, setSearchResults] = useState<CardListDTO[]>([])
     const [isSearchMode, setIsSearchMode] = useState(false)
+
+    // 카드 추가 모달 관련 상태
+    const [showAddCardModal, setShowAddCardModal] = useState(false)
+    const [addCardSearchQuery, setAddCardSearchQuery] = useState("")
+    const [addCardSearchResults, setAddCardSearchResults] = useState<CardListDTO[]>([])
+    const [isAddCardSearching, setIsAddCardSearching] = useState(false)
+    const [addCardSelectedType, setAddCardSelectedType] = useState("credit")
+    const [isAddingCard, setIsAddingCard] = useState(false)
 
     // 카드 타입이 변경될 때 항상 1페이지로 이동
     useEffect(() => {
@@ -142,6 +151,10 @@ export default function CardsPage() {
     // 카드 검색 핸들러
     const handleSearchCards = async () => {
         if (!searchQuery.trim()) {
+            // 검색어가 없을 때는 검색 모드를 비활성화하고 전체 카드 리스트를 보여줌
+            setIsSearchMode(false)
+
+            // 백엔드 API를 호출하지 않고 toast 메시지만 표시
             toast({
                 title: "검색어를 입력하세요",
                 description: "카드 이름을 입력한 후 검색해주세요.",
@@ -156,19 +169,93 @@ export default function CardsPage() {
         try {
             const results = await searchCards(searchQuery)
             setSearchResults(results)
+
+            // 검색 결과 개수 표시 (카드 타입 필터링 전)
+            const totalResults = results.length
+
+            // 현재 선택된 카드 타입에 맞는 결과 개수 계산
+            const filteredResults = results.filter(
+                (card) =>
+                    (selectedCardType === "credit" && card.cardType === 401) ||
+                    (selectedCardType === "check" && card.cardType === 402),
+            )
+
             toast({
                 title: "검색 완료",
-                description: `${results.length}개의 카드를 찾았습니다.`,
+                description: `총 ${totalResults}개의 카드 중 ${filteredResults.length}개의 ${selectedCardType === "credit" ? "신용" : "체크"}카드를 찾았습니다.`,
             })
-        } catch (error) {
+        } catch (error: any) {
             console.error("카드 검색 실패:", error)
-            toast({
-                title: "검색 실패",
-                description: "카드 검색 중 오류가 발생했습니다.",
-                variant: "destructive",
-            })
+
+            // 백엔드에서 보낸 에러 메시지 처리
+            if (error.response && error.response.data && error.response.data.message) {
+                toast({
+                    title: "검색 실패",
+                    description: error.response.data.message,
+                    variant: "destructive",
+                })
+            } else {
+                toast({
+                    title: "검색 실패",
+                    description: "카드 검색 중 오류가 발생했습니다.",
+                    variant: "destructive",
+                })
+            }
         } finally {
             setIsSearching(false)
+        }
+    }
+
+    // 카드 추가 모달 내 검색 핸들러
+    const handleAddCardSearch = async () => {
+        if (!addCardSearchQuery.trim()) {
+            toast({
+                title: "검색어를 입력하세요",
+                description: "카드 이름을 입력한 후 검색해주세요.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        setIsAddCardSearching(true)
+
+        try {
+            const results = await searchCards(addCardSearchQuery)
+            setAddCardSearchResults(results)
+
+            // 검색 결과 개수 표시 (카드 타입 필터링 전)
+            const totalResults = results.length
+
+            // 현재 선택된 카드 타입에 맞는 결과 개수 계산
+            const filteredResults = results.filter(
+                (card) =>
+                    (addCardSelectedType === "credit" && card.cardType === 401) ||
+                    (addCardSelectedType === "check" && card.cardType === 402),
+            )
+
+            toast({
+                title: "검색 완료",
+                description: `총 ${totalResults}개의 카드 중 ${filteredResults.length}개의 ${addCardSelectedType === "credit" ? "신용" : "체크"}카드를 찾았습니다.`,
+            })
+        } catch (error: any) {
+            console.error("카드 검색 실패:", error)
+
+            // 백엔드에서 보낸 에러 메시지 처리
+            if (error.response && error.response.data && error.response.data.message) {
+                toast({
+                    title: "검색 실패",
+                    description: error.response.data.message,
+                    variant: "destructive",
+                })
+            } else {
+                toast({
+                    title: "검색 실패",
+                    description: "카드 검색 중 오류가 발생했습니다.",
+                    variant: "destructive",
+                })
+            }
+        } finally {
+            setIsAddCardSearching(false)
         }
     }
 
@@ -179,7 +266,55 @@ export default function CardsPage() {
         setIsSearchMode(false)
     }
 
-    // 카드 추가 핸들러
+    // 카드 추가 모달 검색 초기화 핸들러
+    const handleResetAddCardSearch = () => {
+        setAddCardSearchQuery("")
+        setAddCardSearchResults([])
+    }
+
+    // 카드 추가 핸들러 (모달에서 카드 선택 후)
+    const handleAddUserCard = async (cardInfoId: number, cardType: number) => {
+        setIsAddingCard(true)
+        try {
+            // 카드 타입 값 설정 (401: 신용카드, 402: 체크카드)
+            const userCardType = cardType
+
+            // 백엔드 API 호출
+            await addUserCard(userId, cardInfoId, userCardType)
+
+            toast({
+                title: "카드가 추가되었습니다",
+                description: "새로운 카드가 내 카드 목록에 추가되었습니다.",
+            })
+
+            // 모달 닫기
+            setShowAddCardModal(false)
+
+            // 검색 초기화
+            handleResetAddCardSearch()
+
+            // 내 카드 목록 새로고침 (activeTab을 변경했다가 다��� 돌아오는 방식)
+            if (activeTab === "my-cards") {
+                setActiveTab("all-cards")
+                setTimeout(() => {
+                    setActiveTab("my-cards")
+                }, 100)
+            } else {
+                setActiveTab("my-cards")
+            }
+        } catch (error) {
+            console.error("카드 추가 실패:", error)
+            toast({
+                title: "카드 추가 실패",
+                description: "카드를 추가하는 중 오류가 발생했습니다.",
+                variant: "destructive",
+            })
+        } finally {
+            setIsAddingCard(false)
+        }
+    }
+
+    // 기존 카드 추가 핸들러 (이전 모달용)
     const handleAddCard = () => {
         toast({
             title: "카드가 추가되었습니다",
@@ -325,6 +460,7 @@ export default function CardsPage() {
 
     // 카드 목록 렌더링 함수
     const renderCardList = () => {
+        // 검색 모드인 경우 검색 결과를, 아닌 경우 전체 카드 목록을 사용
         const cards = isSearchMode ? searchResults : allCards
 
         if (isSearching) {
@@ -334,6 +470,15 @@ export default function CardsPage() {
                 </div>
             )
         }
+
+        // 카드 타입에 따라 필터링
+        const filteredCards = cards.filter((card) => {
+            // cardType이 401이면 신용카드, 402면 체크카드로 가정
+            return (
+                (selectedCardType === "credit" && card.cardType === 401) ||
+                (selectedCardType === "check" && card.cardType === 402)
+            )
+        })
 
         if (isSearchMode && searchResults.length === 0) {
             return (
@@ -349,7 +494,27 @@ export default function CardsPage() {
             )
         }
 
-        return cards.map((card) => (
+        if (filteredCards.length === 0) {
+            return (
+                <div className="text-center py-8">
+                    <p className="text-gray-500">
+                        {isSearchMode
+                            ? `선택한 카드 타입(${selectedCardType === "credit" ? "신용카드" : "체크카드"})에 해당하는 검색 결과가 없습니다.`
+                            : `선택한 카드 타입(${selectedCardType === "credit" ? "신용카드" : "체크카드"})에 해당하는 카드가 없습니다.`}
+                    </p>
+                    {isSearchMode && (
+                        <Button
+                            className="mt-4 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                            onClick={handleResetSearch}
+                        >
+                            검색 초기화
+                        </Button>
+                    )}
+                </div>
+            )
+        }
+
+        return filteredCards.map((card) => (
             <div key={card.cardInfoId} className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100">
                 <div className="flex">
                     <div className="w-1/3 relative h-[80px] flex items-center justify-center bg-gray-50">
@@ -398,6 +563,105 @@ export default function CardsPage() {
         ))
     }
 
+    // 카드 추가 모달 내 카드 목록 렌더링 함수
+    const renderAddCardSearchResults = () => {
+        if (isAddCardSearching) {
+            return (
+                <div className="text-center py-8">
+                    <p className="text-gray-500">카드를 검색하는 중...</p>
+                </div>
+            )
+        }
+
+        if (addCardSearchResults.length === 0) {
+            return (
+                <div className="text-center py-8">
+                    <p className="text-gray-500">검색 결과가 없습니다.</p>
+                    <Button
+                        className="mt-4 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                        onClick={handleResetAddCardSearch}
+                    >
+                        검색 초기화
+                    </Button>
+                </div>
+            )
+        }
+
+        // 카드 타입에 따라 필터링
+        const filteredCards = addCardSearchResults.filter((card) => {
+            return (
+                (addCardSelectedType === "credit" && card.cardType === 401) ||
+                (addCardSelectedType === "check" && card.cardType === 402)
+            )
+        })
+
+        if (filteredCards.length === 0) {
+            return (
+                <div className="text-center py-8">
+                    <p className="text-gray-500">
+                        선택한 카드 타입({addCardSelectedType === "credit" ? "신용카드" : "체크카드"})에 해당하는 검색 결과가
+                        없습니다.
+                    </p>
+                    <Button
+                        className="mt-4 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                        onClick={handleResetAddCardSearch}
+                    >
+                        검색 초기화
+                    </Button>
+                </div>
+            )
+        }
+
+        return filteredCards.map((card) => (
+            <div key={card.cardInfoId} className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100 mb-3">
+                <div className="flex">
+                    <div className="w-1/3 relative h-[80px] flex items-center justify-center bg-gray-50">
+                        <img
+                            src={card.cardImageUrl || "/placeholder.svg"}
+                            alt={card.cardName}
+                            width={120}
+                            height={80}
+                            className="max-w-full max-h-full object-contain"
+                        />
+                    </div>
+                    <div className="w-2/3 p-3 space-y-2">
+                        <div>
+                            <h3 className="font-bold text-sm">{card.cardName}</h3>
+                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
+                            <p className="text-xs text-gray-500 mt-1.5">
+                                {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
+                            </p>
+                        </div>
+
+                        <div className="flex gap-1 mt-2">
+                            <Button
+                                variant="outline"
+                                className="flex-1 text-xs py-1 h-7 text-[#00A949] border-[#75CB3B]/30 hover:bg-[#75CB3B]/10 hover:border-[#75CB3B]/50"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleFetchCardDetail(card.cardInfoId, card)
+                                }}
+                                disabled={isLoadingDetail}
+                            >
+                                {isLoadingDetail ? "로딩 중..." : "상세 보기"}
+                            </Button>
+                            <Button
+                                className="flex-1 text-xs py-1 h-7 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleAddUserCard(card.cardInfoId, card.cardType)
+                                }}
+                                disabled={isAddingCard}
+                            >
+                                {isAddingCard ? "추가 중..." : "카드 추가하기"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ))
+    }
+
     const navigate = useNavigate()
 
     return (
@@ -419,6 +683,7 @@ export default function CardsPage() {
                             size="icon"
                             className="text-white hover:bg-white/10 h-6 w-6"
                             aria-label="카드 추가하기"
+                            onClick={() => setShowAddCardModal(true)}
                         >
                             <Plus className="h-3.5 w-3.5" />
                         </Button>
@@ -525,10 +790,7 @@ export default function CardsPage() {
                                 <p className="text-gray-500">등록된 카드가 없습니다.</p>
                                 <Button
                                     className="mt-4 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
-                                    onClick={() => {
-                                        const dialogTrigger = document.querySelector('[aria-label="카드 추가하기"]') as HTMLButtonElement
-                                        if (dialogTrigger) dialogTrigger.click()
-                                    }}
+                                    onClick={() => setShowAddCardModal(true)}
                                 >
                                     카드 추가하기
                                 </Button>
@@ -733,99 +995,75 @@ export default function CardsPage() {
             </div>
 
             {/* 하단 네비게이션 */}
-            {/* 카드 추가 버튼 - 오른쪽 하단에 배치 
-            //h-12 w-12 rounded-full shadow-md bg-white hover:bg-gray-100*/}
+            {/* 카드 추가 버튼 - 오른쪽 하단에 배치 */}
             <BottomNavigation
                 floatingActionButton={
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button className="h-14 w-14 rounded-full shadow-md bg-white hover:bg-gray-100 p-0 overflow-hidden">
-                                <img
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-knhlHRBh7Yde8QtKPul45zdTK5iYJr.png"
-                                    alt="카드 연결"
-                                    width={56}
-                                    height={56}
-                                    className="object-cover"
-                                />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-sm mx-auto">
-                            <DialogHeader>
-                                <DialogTitle>카드 추가하기</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="card-type-modal">카드 종류</Label>
-                                    <Select defaultValue="credit">
-                                        <SelectTrigger id="card-type-modal">
-                                            <SelectValue placeholder="카드 종류 선택" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="credit">신용카드</SelectItem>
-                                            <SelectItem value="debit">체크카드</SelectItem>
-                                            <SelectItem value="prepaid">선불카드</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="card-company-modal">카드사</Label>
-                                    <Select>
-                                        <SelectTrigger id="card-company-modal">
-                                            <SelectValue placeholder="카드사 선택" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="shinhan">신한카드</SelectItem>
-                                            <SelectItem value="samsung">삼성카드</SelectItem>
-                                            <SelectItem value="hyundai">현대카드</SelectItem>
-                                            <SelectItem value="kb">KB국민카드</SelectItem>
-                                            <SelectItem value="woori">우리카드</SelectItem>
-                                            <SelectItem value="hana">하나카드</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="card-number-modal">카드 번호</Label>
-                                    <Input id="card-number-modal" placeholder="0000-0000-0000-0000" />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="expiry-date-modal">유효기간</Label>
-                                        <Input id="expiry-date-modal" placeholder="MM/YY" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cvc-modal">CVC</Label>
-                                        <Input id="cvc-modal" placeholder="000" />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>카드 이미지</Label>
-                                    <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                                        <Button variant="outline" className="w-full">
-                                            <Camera className="h-4 w-4 mr-2" />
-                                            카드 촬영하기 (OCR)
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button variant="outline">취소</Button>
-                                </DialogClose>
-                                <Button
-                                    className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
-                                    onClick={handleAddCard}
-                                >
-                                    추가하기
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <Button
+                        className="h-14 w-14 rounded-full shadow-md bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] p-0 overflow-hidden"
+                        onClick={() => setShowAddCardModal(true)}
+                    >
+                        <PlusCircle className="h-8 w-8 text-white" />
+                    </Button>
                 }
             />
+
+            {/* 카드 추가 모달 */}
+            <Dialog open={showAddCardModal} onOpenChange={setShowAddCardModal}>
+                <DialogContent className="max-w-sm mx-auto">
+                    <DialogHeader>
+                        <DialogTitle>카드 추가하기</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="add-card-type">카드 종류</Label>
+                            <Select value={addCardSelectedType} onValueChange={(value) => setAddCardSelectedType(value)}>
+                                <SelectTrigger id="add-card-type">
+                                    <SelectValue placeholder="카드 종류 선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="credit">신용카드</SelectItem>
+                                    <SelectItem value="check">체크카드</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="add-card-search">카드 검색</Label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Input
+                                        id="add-card-search"
+                                        className="pl-9 pr-4 py-2 rounded-full border-[#75CB3B]/30 focus-visible:ring-[#00A949]"
+                                        placeholder="카드 검색..."
+                                        value={addCardSearchQuery}
+                                        onChange={(e) => setAddCardSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                handleAddCardSearch()
+                                            }
+                                        }}
+                                    />
+                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#00A949]" />
+                                </div>
+                                <Button
+                                    className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] text-white"
+                                    onClick={handleAddCardSearch}
+                                    disabled={isAddCardSearching}
+                                >
+                                    검색
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="max-h-[300px] overflow-y-auto">{renderAddCardSearchResults()}</div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">닫기</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* 카드 상세 정보 모달 */}
             {showCardDetail && selectedCard && (
@@ -859,7 +1097,8 @@ export default function CardsPage() {
                                 <div>
                                     <h3 className="font-bold text-lg">{selectedCard.name || selectedCard.cardName}</h3>
                                     <p className="text-sm text-gray-500">
-                                        {selectedCard.cardCompany || selectedCard.cardBrand} | {selectedCard.cardType}
+                                        {selectedCard.cardCompany || selectedCard.cardBrand} |{" "}
+                                        {selectedCard.cardType === 401 ? "신용카드" : "체크카드"}
                                     </p>
                                 </div>
                                 <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">
@@ -882,7 +1121,7 @@ export default function CardsPage() {
                                         style={{
                                             width: `${((selectedCard.currentSpending || 0) / (selectedCard.spendingGoal || 1)) * 100}%`,
                                         }}
-                                    ></div>
+                                    />
                                 </div>
                             </div>
                         </div>

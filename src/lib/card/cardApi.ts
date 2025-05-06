@@ -53,3 +53,19 @@ export const searchCards = async (cardName: string): Promise<CardListDTO[]> => {
     })
     return response.data
 }
+
+
+// 내 카드 추가하기 함수 추가
+export const addUserCard = async (userId: number, cardInfoId: number, userCardType: number): Promise<string> => {
+    try {
+        const response = await axios.post("http://localhost:8080/api/card/addCard", {
+            userId,
+            cardInfoId,
+            userCardType,
+        })
+        return response.data
+    } catch (error) {
+        console.error("카드 추가 실패:", error)
+        throw error
+    }
+}
