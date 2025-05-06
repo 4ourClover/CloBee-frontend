@@ -6,7 +6,7 @@ import BottomNavigation from "../components/bottom-navigation"
 import MapHeader from "../components/map/map-header"
 import MapRefresh from "../components/map/map-refresh"
 import BottomSheet from "../components/map/bottom-sheet"
-import { Store, StoreCategory, categoryConfig, BenefitCard } from '../types/store';
+import { Store, StoreCategory, categoryConfig, BenefitCard, brandCategory } from '../types/store';
 
 declare global {
     interface Window {
@@ -22,6 +22,7 @@ export default function MapPage() {
     const currentMarkerRef = useRef<any>(null); // 현재 위치 마커를 저장할 ref
     const [nearbyStores, setNearbyStores] = useState<Store[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | null>(null);
+    const [selectedBrand, setSelectedBrand] = useState<brandCategory | null>(null);
     const nearbyStoresRef = useRef<Store[]>([]);
 
     useEffect(() => {
@@ -42,12 +43,23 @@ export default function MapPage() {
         "": [],
     });
 
+    const brandMarkersRef = useRef<Record<brandCategory, Array<any>>>({
+        신한카드: [],
+        삼성카드: [],
+        현대카드: [],
+        KB국민카드: [],
+        우리카드: [],
+        "": [],
+    });
+
+
     const benefitStore = ["스타벅스", "이마트", "GS25"]
 
     const starbucksBenefitCards: BenefitCard[] = [
         {
             id: 1,
             card_name: "신한카드",
+            card_brand: "신한카드",
             benefit_store: "스타벅스",
             discount: "30%",
             max_discount: "10,000원",
@@ -56,7 +68,8 @@ export default function MapPage() {
         {
             id: 2,
             card_name: "삼성카드 taptap O",
-            benefit_store: "스타벅스",
+            card_brand: "삼성카드",
+            benefit_store: "이마트",
             discount: "25%",
             max_discount: "10,000원",
             image: "/placeholder.svg?height=200&width=320",
@@ -64,7 +77,8 @@ export default function MapPage() {
         {
             id: 3,
             card_name: "신한카드 Deep Dream",
-            benefit_store: "스타벅스",
+            card_brand: "신한카드",
+            benefit_store: "GS25",
             discount: "20%",
             max_discount: "5,000원",
             image: "/placeholder.svg?height=200&width=320",
@@ -72,6 +86,7 @@ export default function MapPage() {
         {
             id: 4,
             card_name: "현대카드 The Green",
+            card_brand: "현대카드",
             benefit_store: "스타벅스",
             discount: "15%",
             max_discount: "3,000원",
@@ -256,8 +271,8 @@ export default function MapPage() {
 
             // ✅ 상태 업데이트는 한 번만
             setNearbyStores((prev) => [...prev, ...newStores]);
-            console.log("매장 추가:", newStores);
-            console.log("전체 매장:", nearbyStores);
+            // console.log("매장 추가:", newStores);
+            // console.log("전체 매장:", nearbyStores);
 
             kakaoMapRef.current.setBounds(bounds);
         }
@@ -316,31 +331,89 @@ export default function MapPage() {
         if (categoryMarkersRef.current[place.category_group_code]) {
             categoryMarkersRef.current[place.category_group_code].push(marker);
         }
-    }
 
+        const keyword = place.place_name.match(/^\S+/)?.[0];
 
+        starbucksBenefitCards.forEach((card) => {
 
-    function showCategoryMarkers(category: StoreCategory, map: typeof window.kakao.maps.Map) {
-        categoryMarkersRef.current[category].forEach((marker) => marker.setMap(map));
-    }
-
-    function hideAllMarkers() {
-        Object.values(categoryMarkersRef.current).forEach((markerList) => {
-            markerList.forEach((marker) => marker.setMap(null));
+            if (card.benefit_store === keyword) {
+                console.log("카드 마커 추가:", card.benefit_store, keyword);
+                brandMarkersRef.current[card.card_brand].push(marker); // 카드 마커 추가
+            }
+            console.log("카드 마커 추가:", brandMarkersRef.current);
         });
+
+    }
+
+
+
+    // function showCategoryMarkers(category: StoreCategory, map: typeof window.kakao.maps.Map) {
+    //     categoryMarkersRef.current[category].forEach((marker) => marker.setMap(map));
+    // }
+
+    // function hideAllMarkers(markers: any[] = []) {
+    //     Object.values(categoryMarkersRef.current).forEach((markerList) => {
+    //         markerList.forEach((marker) => marker.setMap(null));
+    //     });
+    // }
+
+    // useEffect(() => {
+    //     console.log(categoryMarkersRef.current);
+    //     if (selectedCategory) {
+    //         hideAllMarkers();
+    //         showCategoryMarkers(selectedCategory, kakaoMapRef.current);
+    //     } else {
+    //         Object.keys(categoryMarkersRef.current).forEach((category) => {
+    //             categoryMarkersRef.current[category as StoreCategory].forEach((marker) => marker.setMap(kakaoMapRef.current));
+    //         });
+    //     }
+    // }, [selectedCategory]);
+
+    // useEffect(() => {
+    //     console.log(brandMarkersRef.current);
+    //     if (selectedBrand) {
+    //         hideAllMarkers();
+    //         Object.keys(brandMarkersRef.current).forEach((brand) => {
+    //             brandMarkersRef.current[brand as brandCategory].forEach((marker) => marker.setMap(kakaoMapRef.current));
+    //         });
+    //     } else {
+    //         Object.keys(brandMarkersRef.current).forEach((brand) => {
+    //             brandMarkersRef.current[brand as brandCategory].forEach((marker) => marker.setMap(kakaoMapRef.current));
+    //         });
+    //     }
+    // }, [selectedBrand]);
+
+    function updateMarkersBySelection<T extends string>(
+        ref: React.MutableRefObject<Record<T, any[]>>,
+        selected: T | null,
+        map: typeof window.kakao.maps.Map
+    ) {
+        // 모든 마커 숨기기
+        Object.values(ref.current).forEach((markerList: any) =>
+            markerList.forEach((marker: any) => marker.setMap(null))
+        );
+
+        // 선택된 키가 있으면 해당 마커만 보여주기, 없으면 모두 다시 표시
+        if (selected) {
+            ref.current[selected]?.forEach((marker) => marker.setMap(map));
+        } else {
+            Object.values(ref.current).forEach((markerList: any) =>
+                markerList.forEach((marker: any) => marker.setMap(map))
+            );
+        }
     }
 
     useEffect(() => {
-        console.log(categoryMarkersRef.current);
-        if (selectedCategory) {
-            hideAllMarkers();
-            showCategoryMarkers(selectedCategory, kakaoMapRef.current);
-        } else {
-            Object.keys(categoryMarkersRef.current).forEach((category) => {
-                categoryMarkersRef.current[category as StoreCategory].forEach((marker) => marker.setMap(kakaoMapRef.current));
-            });
-        }
+        console.log(selectedCategory);
+        updateMarkersBySelection<StoreCategory>(categoryMarkersRef, selectedCategory, kakaoMapRef.current);
     }, [selectedCategory]);
+
+    useEffect(() => {
+        console.log(selectedBrand);
+        updateMarkersBySelection<brandCategory>(brandMarkersRef, selectedBrand, kakaoMapRef.current);
+    }, [selectedBrand]);
+
+
 
     // MapRefresh 버튼 클릭 핸들러
     const handleRefreshMap = () => {
@@ -367,7 +440,11 @@ export default function MapPage() {
     return (
         <main className="flex flex-col h-full w-full mx-auto overflow-auto font-gmarket">
             {/* 헤더 */}
-            <MapHeader />
+            <MapHeader
+                onBrandSelect={(brand: brandCategory) =>
+                    setSelectedBrand(prev => (prev === brand ? null : brand))
+                }
+            />
 
             {/* 카테고리 바 */}
             <CategoryBar
@@ -378,7 +455,7 @@ export default function MapPage() {
 
             {/* 지도 부분 */}
             <div className="flex-1 relative bg-[#f2f2f2] overflow-hidden">
-                {/* 반경 표시 */}
+                {/* 현지도에서 검색 */}
                 <div className="absolute top-14 left-1/2 transform -translate-x-1/2 z-30 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md text-sm font-medium text-[#00A949]"
                     onClick={showAroundStore}
                 >

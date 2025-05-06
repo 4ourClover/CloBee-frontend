@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, Dispatch } from "react"
 import { Search, ChevronLeft, X, Filter, Bell } from "lucide-react"
 
 import { Button } from "../ui/button"
@@ -11,76 +11,80 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../u
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover"
 import { Input } from "../ui/input"
 import { Link } from "react-router-dom"
+import { brandCategory } from "@/types/store"
 
+interface MapHeaderProps {
+    onBrandSelect: (brand: brandCategory) => void;
+}
 
-export default function MapHeader() {
+export default function MapHeader({ onBrandSelect }: MapHeaderProps) {
     const [searchQuery, setSearchQuery] = useState("")
     const [notificationsEnabled, setNotificationsEnabled] = useState(true)
     const { toast } = useToast()
     const [radius, setRadius] = useState(500) // 기본 반경 500m
 
     // 주변 매장 더미 데이터
-    const nearbyStores = [
-        {
-            id: 1,
-            name: "스타벅스 강남점",
-            distance: 120,
-            address: "서울시 강남구 테헤란로 123",
-            bestCard: "신한카드 Deep Dream",
-            discount: "30%",
-            lat: 37.498095,
-            lng: 127.02761,
-            hasEvent: true,
-        },
-        {
-            id: 2,
-            name: "올리브영 역삼점",
-            distance: 230,
-            address: "서울시 강남구 역삼로 45",
-            bestCard: "현대카드 The Green",
-            discount: "20%",
-            lat: 37.49944,
-            lng: 127.029351,
-            hasEvent: false,
-        },
-        {
-            id: 3,
-            name: "CGV 강남",
-            distance: 350,
-            address: "서울시 강남구 역삼동 814-6",
-            bestCard: "삼성카드 taptap O",
-            discount: "최대 8천원",
-            lat: 37.500536,
-            lng: 127.026318,
-            hasEvent: true,
-        },
-        {
-            id: 4,
-            name: "교보문고 강남점",
-            distance: 450,
-            address: "서울시 강남구 테헤란로 152",
-            bestCard: "KB국민카드 가온",
-            discount: "15%",
-            lat: 37.504476,
-            lng: 127.024761,
-            hasEvent: false,
-        },
-        {
-            id: 5,
-            name: "버거킹 역삼점",
-            distance: 480,
-            address: "서울시 강남구 역삼동 735-22",
-            bestCard: "우리카드 카드의정석",
-            discount: "최대 5천원",
-            lat: 37.5011,
-            lng: 127.036794,
-            hasEvent: true,
-        },
-    ]
+    // const nearbyStores = [
+    //     {
+    //         id: 1,
+    //         name: "스타벅스 강남점",
+    //         distance: 120,
+    //         address: "서울시 강남구 테헤란로 123",
+    //         bestCard: "신한카드 Deep Dream",
+    //         discount: "30%",
+    //         lat: 37.498095,
+    //         lng: 127.02761,
+    //         hasEvent: true,
+    //     },
+    //     {
+    //         id: 2,
+    //         name: "올리브영 역삼점",
+    //         distance: 230,
+    //         address: "서울시 강남구 역삼로 45",
+    //         bestCard: "현대카드 The Green",
+    //         discount: "20%",
+    //         lat: 37.49944,
+    //         lng: 127.029351,
+    //         hasEvent: false,
+    //     },
+    //     {
+    //         id: 3,
+    //         name: "CGV 강남",
+    //         distance: 350,
+    //         address: "서울시 강남구 역삼동 814-6",
+    //         bestCard: "삼성카드 taptap O",
+    //         discount: "최대 8천원",
+    //         lat: 37.500536,
+    //         lng: 127.026318,
+    //         hasEvent: true,
+    //     },
+    //     {
+    //         id: 4,
+    //         name: "교보문고 강남점",
+    //         distance: 450,
+    //         address: "서울시 강남구 테헤란로 152",
+    //         bestCard: "KB국민카드 가온",
+    //         discount: "15%",
+    //         lat: 37.504476,
+    //         lng: 127.024761,
+    //         hasEvent: false,
+    //     },
+    //     {
+    //         id: 5,
+    //         name: "버거킹 역삼점",
+    //         distance: 480,
+    //         address: "서울시 강남구 역삼동 735-22",
+    //         bestCard: "우리카드 카드의정석",
+    //         discount: "최대 5천원",
+    //         lat: 37.5011,
+    //         lng: 127.036794,
+    //         hasEvent: true,
+    //     },
+    // ]
 
-    const nearbyEventStores = nearbyStores.filter(
-        (store) => store.distance <= 50 && store.hasEvent
-    )
+    // const nearbyEventStores = nearbyStores.filter(
+    //     (store) => store.distance <= 50 && store.hasEvent
+    // )
 
     const handleNotificationToggle = (checked: boolean) => {
         setNotificationsEnabled(checked)
@@ -93,9 +97,6 @@ export default function MapHeader() {
         })
     }
 
-    const handleRadiusChange = (value: number[]) => {
-        setRadius(value[0])
-    }
 
     return (
         <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-1.5 flex items-center gap-2 z-20">
@@ -128,7 +129,7 @@ export default function MapHeader() {
             </div>
 
             {/* 주변 매장 알림 */}
-            <Popover>
+            {/* <Popover>
                 <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-6 w-6 relative">
                         <Bell className="h-3.5 w-3.5" />
@@ -161,7 +162,7 @@ export default function MapHeader() {
                         )}
                     </div>
                 </PopoverContent>
-            </Popover>
+            </Popover> */}
 
             {/* 필터 설정 */}
             <Sheet>
@@ -184,7 +185,7 @@ export default function MapHeader() {
                                     max={2000}
                                     min={100}
                                     step={100}
-                                    onValueChange={handleRadiusChange}
+                                    //onValueChange={handleRadiusChange}
                                     className="w-full"
                                 />
                                 <div className="flex justify-between">
@@ -219,6 +220,7 @@ export default function MapHeader() {
                                         key={brand}
                                         variant="outline"
                                         className="cursor-pointer hover:bg-[#75CB3B]/10 rounded-full"
+                                        onClick={() => onBrandSelect(brand as brandCategory)}
                                     >
                                         {brand}
                                     </Badge>

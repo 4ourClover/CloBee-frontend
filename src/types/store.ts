@@ -12,10 +12,13 @@ import {
 //export type StoreCategory = "restaurant" | "cafe" | "transportation" | "gas" | "shopping" | "movie" | "convenience" | "beauty";
 
 export type StoreCategory = "FD6" | "CE7" | "SW8" | "OL7" | "MT1" | "CT1" | "CS2" | "";
+export type brandCategory = "신한카드" | "삼성카드" | "현대카드" | "KB국민카드" | "우리카드" | "";
+
 
 export type BenefitCard = {
     id: number;
     card_name: string;
+    card_brand: brandCategory;
     benefit_store: string;
     discount: string;
     max_discount: string;
