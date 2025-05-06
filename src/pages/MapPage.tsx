@@ -21,6 +21,7 @@ export default function MapPage() {
     const [currentLocation, setCurrentLocation] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
     const [showStoreInfo, setShowStoreInfo] = useState(false)
     const kakaoMapRef = useRef<any>(null); // 지도 인스턴스를 저장할 ref
+    const currentMarkerRef = useRef<any>(null); // 현재 위치 마커를 저장할 ref
     const [nearbyStores, setNearbyStores] = useState<Store[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | null>(null);
     const nearbyStoresRef = useRef<Store[]>([]);
@@ -102,6 +103,21 @@ export default function MapPage() {
                     console.log("현재 위치:", lat, lng);
                     setCurrentLocation({ lat, lng }); // 현재 위치 상태 업데이트
 
+                    const container = document.getElementById("map");
+                    if (!container) {
+                        console.error("지도를 표시할 컨테이너('#map')를 찾을 수 없습니다.");
+                        return;
+                    }
+
+                    //맵 생성
+                    const options = {
+                        center: new window.kakao.maps.LatLng(lat, lng),
+                        level: 3,
+                    };
+                    const map = new window.kakao.maps.Map(container, options);
+
+                    kakaoMapRef.current = map; // 지도 인스턴스를 ref에 저장
+
                     loadKakaoMap(lat, lng); // 현재 위치로 지도 로드
                 },
                 (error) => {
@@ -140,21 +156,6 @@ export default function MapPage() {
             return;
         }
 
-        const container = document.getElementById("map");
-        if (!container) {
-            console.error("지도를 표시할 컨테이너('#map')를 찾을 수 없습니다.");
-            return;
-        }
-
-        //맵 생성
-        const options = {
-            center: new window.kakao.maps.LatLng(lat, lng),
-            level: 3,
-        };
-        const map = new window.kakao.maps.Map(container, options);
-
-        kakaoMapRef.current = map; // 지도 인스턴스를 ref에 저장
-
         // 현재 위치 마커
         const currentPosition = new window.kakao.maps.LatLng(lat, lng);
         const currentMarkerContent =
@@ -168,9 +169,16 @@ export default function MapPage() {
         const currentOverlay = new window.kakao.maps.CustomOverlay({
             position: currentPosition,
             content: currentOverlayRoot,
-            map: kakaoMapRef.current,
         });
+        currentOverlay.setMap(kakaoMapRef.current); // 지도에 마커 표시
+        currentMarkerRef.current = currentOverlay; // 현재 위치 마커 ref에 저장
 
+
+        placesSearch(currentPosition); // 장소 검색 시작
+
+    }, []); // 의존성 배열 업데이트
+
+    function placesSearch(currentPosition: any) {
         // 장소 검색 객체를 생성합니다
         var ps = new window.kakao.maps.services.Places();
 
@@ -178,9 +186,8 @@ export default function MapPage() {
         benefitStore.forEach((store) => {
             ps.keywordSearch(store, placesSearchCB, { location: currentPosition, size: 5 });
         });
-        console.log("카카오 지도 로드/재조정 완료:", lat, lng);
-
-    }, []); // 의존성 배열 업데이트
+        console.log("카카오 지도 로드/재조정 완료:", currentPosition.lat, currentPosition.lng);
+    }
 
 
     function placesSearchCB(data: any, status: any, pagination: any) {
@@ -309,9 +316,16 @@ export default function MapPage() {
         const lat = currentLocation.lat;
         const lng = currentLocation.lng;
         const moveLatLon = new window.kakao.maps.LatLng(lat, lng);
+        currentMarkerRef.current.setPosition(moveLatLon); // 현재 위치 마커 이동
         kakaoMapRef.current.setCenter(moveLatLon); // 지도 중심 이동
         kakaoMapRef.current.setLevel(5); // 줌 레벨 조정
     };
+
+    const showAroundStore = () => {
+        console.log("주변 매장 검색 시작");
+        var center = kakaoMapRef.current.getCenter(); // 현재 지도 중심 좌표
+        placesSearch(center); // 장소 검색 시작
+    }
 
     console.log(selectedCategory);
 
@@ -330,9 +344,11 @@ export default function MapPage() {
             {/* 지도 부분 */}
             <div className="flex-1 relative bg-[#f2f2f2] overflow-hidden">
                 {/* 반경 표시 */}
-                {/* <div className="absolute top-14 left-1/2 transform -translate-x-1/2 z-30 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md text-sm font-medium text-[#00A949]">
-                    반경 {radius}m
-                </div> */}
+                <div className="absolute top-14 left-1/2 transform -translate-x-1/2 z-30 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md text-sm font-medium text-[#00A949]"
+                    onClick={showAroundStore}
+                >
+                    ↻ 현 지도에서 검색
+                </div>
 
                 {/* 지도 배경 */}
                 <div className="absolute inset-0 bg-[#e8f4f8]">
