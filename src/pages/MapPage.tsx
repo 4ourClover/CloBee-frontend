@@ -1,13 +1,12 @@
 import React from 'react';
 import { useState, useEffect, useCallback, useRef } from "react"
 import { createRoot } from 'react-dom/client';
-import CardBenefitModal from "../components/card-benefit-modal"
 import CategoryBar from "../components/map/category-bar"
 import BottomNavigation from "../components/bottom-navigation"
 import MapHeader from "../components/map/map-header"
 import MapRefresh from "../components/map/map-refresh"
 import BottomSheet from "../components/map/bottom-sheet"
-import { Store, StoreCategory, categoryConfig, categoryNames } from '../types/store';
+import { Store, StoreCategory, categoryConfig, BenefitCard } from '../types/store';
 
 declare global {
     interface Window {
@@ -16,7 +15,6 @@ declare global {
 }
 
 export default function MapPage() {
-    const [showCardModal, setShowCardModal] = useState(false)
     const [selectedStore, setSelectedStore] = useState<Store | null>(null)
     const [currentLocation, setCurrentLocation] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
     const [showStoreInfo, setShowStoreInfo] = useState(false)
@@ -25,6 +23,7 @@ export default function MapPage() {
     const [nearbyStores, setNearbyStores] = useState<Store[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | null>(null);
     const nearbyStoresRef = useRef<Store[]>([]);
+
     useEffect(() => {
         nearbyStoresRef.current = nearbyStores;
         console.log("nearbyStoresRef 업데이트:", nearbyStoresRef.current);
@@ -44,6 +43,42 @@ export default function MapPage() {
     });
 
     const benefitStore = ["스타벅스", "이마트", "GS25"]
+
+    const starbucksBenefitCards: BenefitCard[] = [
+        {
+            id: 1,
+            card_name: "신한카드",
+            benefit_store: "스타벅스",
+            discount: "30%",
+            max_discount: "10,000원",
+            image: "/placeholder.svg?height=200&width=320",
+        },
+        {
+            id: 2,
+            card_name: "삼성카드 taptap O",
+            benefit_store: "스타벅스",
+            discount: "25%",
+            max_discount: "10,000원",
+            image: "/placeholder.svg?height=200&width=320",
+        },
+        {
+            id: 3,
+            card_name: "신한카드 Deep Dream",
+            benefit_store: "스타벅스",
+            discount: "20%",
+            max_discount: "5,000원",
+            image: "/placeholder.svg?height=200&width=320",
+        },
+        {
+            id: 4,
+            card_name: "현대카드 The Green",
+            benefit_store: "스타벅스",
+            discount: "15%",
+            max_discount: "3,000원",
+            image: "/placeholder.svg?height=200&width=320",
+        },
+    ]
+
 
 
     // 더미 데이터: 주변 매장
@@ -65,11 +100,7 @@ export default function MapPage() {
     //     },
     // ]
 
-    const handleStoreSelect = (store: any) => {
-        console.log("매장 자세히 보기");
-        setSelectedStore(store)
-        setShowCardModal(true)
-    }
+
 
     // 지도 클릭 핸들러
     const handleMapClick = (storeId: number) => {
@@ -182,9 +213,12 @@ export default function MapPage() {
         // 장소 검색 객체를 생성합니다
         var ps = new window.kakao.maps.services.Places();
 
+        //benefitStore 받아오기
+
+
         // 키워드로 장소를 검색합니다
-        benefitStore.forEach((store) => {
-            ps.keywordSearch(store, placesSearchCB, { location: currentPosition, size: 5 });
+        benefitStore.forEach((bStore) => {
+            ps.keywordSearch(bStore, placesSearchCB, { location: currentPosition, size: 5 });
         });
         console.log("카카오 지도 로드/재조정 완료:", currentPosition.lat, currentPosition.lng);
     }
@@ -236,6 +270,7 @@ export default function MapPage() {
         const storeMarkerContent = (
             <div
                 data-id={place.id}
+                data-keyword={place.place_name.match(/^\S+/)?.[0] || ""}
                 className="flex flex-col items-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
                 onClick={(e) => {
                     const id = Number((e.currentTarget as HTMLElement).dataset.id);
@@ -364,20 +399,14 @@ export default function MapPage() {
                 }
             />
 
-            {/* 카드 혜택 모달 */}
-            {showCardModal && selectedStore && (
-                <CardBenefitModal store={selectedStore} onClose={() => setShowCardModal(false)} />
-            )}
-
             {/* 바텀 시트 */}
             <BottomSheet
                 showStoreInfo={showStoreInfo}
                 setShowStoreInfo={setShowStoreInfo}
                 selectedStore={selectedStore}
-                handleStoreSelect={handleStoreSelect}
-                categoryConfig={categoryConfig}
-                categoryNames={categoryNames}
-                getCategoryIcon={getCategoryIcon}
+                benefitCards={starbucksBenefitCards}
+                recommendedCards={starbucksBenefitCards}
+                getCategoryIcon={getCategoryIcon} //아이콘
             />
         </main>
     )

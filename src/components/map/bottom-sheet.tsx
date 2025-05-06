@@ -2,21 +2,21 @@ import React, { Dispatch, SetStateAction, useState, useCallback } from 'react';
 import { Button } from "../ui/button"
 import { Sheet, SheetContent } from "../ui/sheet"
 import { Badge } from "../ui/badge";
+import CardBenefitModal from "../card-benefit-modal"
 
 import {
     ThumbsUp,
     ThumbsDown,
 } from "lucide-react"
 
-import { Store, StoreCategory } from '../../types/store';
+import { Store, StoreCategory, categoryConfig, categoryNames } from '../../types/store';
 
 interface BottomSheetProps {
     showStoreInfo: boolean;
     setShowStoreInfo: Dispatch<SetStateAction<boolean>>;
     selectedStore: Store | null;
-    handleStoreSelect: (store: Store) => void;
-    categoryConfig: Record<StoreCategory, { color: string; icon: React.ElementType }>;
-    categoryNames: Record<StoreCategory, string>;
+    benefitCards: any[]; // 카드 혜택 데이터 (예: { cardName: string; discount: string; maxDiscount: string; isRecommended: boolean; }[])
+    recommendedCards: any[]; // 추천 카드 혜택 데이터 (예: { cardName: string; discount: string; maxDiscount: string; isRecommended: boolean; image: string }[])
     getCategoryIcon: (category: StoreCategory) => React.ReactNode;
     // 좋아요/싫어요 상태와 핸들러를 부모로부터 받을 수도 있습니다.
     // 만약 BottomSheet 내부에서 관리하려면 아래 주석을 해제하고 부모에게 업데이트 함수를 전달해야 합니다.
@@ -28,14 +28,20 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
     showStoreInfo,
     setShowStoreInfo,
     selectedStore,
-    handleStoreSelect,
-    categoryConfig,
-    categoryNames,
+    benefitCards,
+    recommendedCards,
     getCategoryIcon,
     // storeReactions: parentStoreReactions, // 부모로부터 상태를 받는 경우
     // handleReaction: parentHandleReaction, // 부모로부터 핸들러를 받는 경우
 }) => {
     const [storeReactions, setStoreReactions] = useState<Record<number, { liked: boolean; disliked: boolean }>>({});
+    const [showCardModal, setShowCardModal] = useState(false)
+
+    const handleStoreSelect = (store: any) => {
+        console.log("매장 자세히 보기");
+        //setSelectedStore(store)
+        setShowCardModal(true)
+    }
 
     // useCallback을 사용하여 handleReaction 함수를 메모이제이션합니다.
     const handleReaction = useCallback((storeId: number, reaction: "like" | "dislike") => {
@@ -136,10 +142,10 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                                     <h3 className="font-medium text-[#5A3D2B] mb-2">최고 혜택 카드</h3>
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <p className="font-bold text-lg text-[#00A949]">신한카드</p>
+                                            <p className="font-bold text-lg text-[#00A949]">{benefitCards[0].name}</p>
                                             <p className="text-sm text-[#5A3D2B]/70">최대 할인</p>
                                         </div>
-                                        <div className="text-2xl font-bold text-[#00A949]">30%</div>
+                                        <div className="text-2xl font-bold text-[#00A949]">{benefitCards[0].discount}</div>
                                     </div>
                                 </div>
 
@@ -157,6 +163,11 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                     )}
                 </SheetContent>
             </Sheet >
+
+            {/* 카드 혜택 모달 */}
+            {showCardModal && selectedStore && (
+                <CardBenefitModal store={selectedStore} benefitCards={benefitCards} recommendedCards={recommendedCards} onClose={() => setShowCardModal(false)} />
+            )}
         </div >
     );
 };

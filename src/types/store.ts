@@ -13,6 +13,16 @@ import {
 
 export type StoreCategory = "FD6" | "CE7" | "SW8" | "OL7" | "MT1" | "CT1" | "CS2" | "";
 
+export type BenefitCard = {
+    id: number;
+    card_name: string;
+    benefit_store: string;
+    discount: string;
+    max_discount: string;
+    image: string;
+};
+
+
 // export interface Store {
 //     id: number;
 //     name: string;
