@@ -8,7 +8,6 @@ import MapHeader from "../components/map/map-header"
 import MapRefresh from "../components/map/map-refresh"
 import BottomSheet from "../components/map/bottom-sheet"
 import { Store, StoreCategory, categoryConfig, categoryNames } from '../types/store';
-import { Content } from '@radix-ui/react-tabs';
 
 declare global {
     interface Window {
@@ -24,6 +23,12 @@ export default function MapPage() {
     const kakaoMapRef = useRef<any>(null); // 지도 인스턴스를 저장할 ref
     const [nearbyStores, setNearbyStores] = useState<Store[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | null>(null);
+    const nearbyStoresRef = useRef<Store[]>([]);
+    useEffect(() => {
+        nearbyStoresRef.current = nearbyStores;
+        console.log("nearbyStoresRef 업데이트:", nearbyStoresRef.current);
+    }, [nearbyStores]);
+
 
     // 카테고리별로 마커를 저장하는 객체
     const categoryMarkersRef = useRef<Record<StoreCategory, Array<any>>>({
@@ -36,6 +41,8 @@ export default function MapPage() {
         CS2: [],
         "": [],
     });
+
+    const benefitStore = ["스타벅스", "이마트", "GS25"]
 
 
     // 더미 데이터: 주변 매장
@@ -57,7 +64,6 @@ export default function MapPage() {
     //     },
     // ]
 
-
     const handleStoreSelect = (store: any) => {
         console.log("매장 자세히 보기");
         setSelectedStore(store)
@@ -68,7 +74,7 @@ export default function MapPage() {
     const handleMapClick = (storeId: number) => {
         console.log("지도 클릭:", typeof storeId, storeId);
         console.log(nearbyStores);
-        const store = nearbyStores.find((s) => Number(s.id) == Number(storeId))
+        const store = nearbyStoresRef.current.find((s) => Number(s.id) == Number(storeId))
         console.log("선택된 매장:", store);
         if (store) {
             setSelectedStore(store)
@@ -95,6 +101,7 @@ export default function MapPage() {
                     const lng = position.coords.longitude;
                     console.log("현재 위치:", lat, lng);
                     setCurrentLocation({ lat, lng }); // 현재 위치 상태 업데이트
+
                     loadKakaoMap(lat, lng); // 현재 위치로 지도 로드
                 },
                 (error) => {
@@ -145,6 +152,7 @@ export default function MapPage() {
             level: 3,
         };
         const map = new window.kakao.maps.Map(container, options);
+
         kakaoMapRef.current = map; // 지도 인스턴스를 ref에 저장
 
         // 현재 위치 마커
@@ -160,29 +168,28 @@ export default function MapPage() {
         const currentOverlay = new window.kakao.maps.CustomOverlay({
             position: currentPosition,
             content: currentOverlayRoot,
-            map: map,
+            map: kakaoMapRef.current,
         });
 
         // 장소 검색 객체를 생성합니다
         var ps = new window.kakao.maps.services.Places();
 
         // 키워드로 장소를 검색합니다
-        ps.keywordSearch('음식점', placesSearchCB, { location: currentPosition });
-
+        benefitStore.forEach((store) => {
+            ps.keywordSearch(store, placesSearchCB, { location: currentPosition, size: 5 });
+        });
         console.log("카카오 지도 로드/재조정 완료:", lat, lng);
 
-    }, [handleMapClick]); // 의존성 배열 업데이트
+    }, []); // 의존성 배열 업데이트
 
-    // 키워드 검색 완료 시 호출되는 콜백함수 입니다
+
     function placesSearchCB(data: any, status: any, pagination: any) {
         if (status === window.kakao.maps.services.Status.OK) {
-            var bounds = new window.kakao.maps.LatLngBounds();
+            const bounds = new window.kakao.maps.LatLngBounds();
 
-            const storesToAdd: Store[] = [];
+            const newStores: Store[] = [];
 
-            for (let i = 0; i < data.length; i++) {
-                const item = data[i];
-
+            data.forEach((item: any) => {
                 const store: Store = {
                     id: item.id,
                     place_name: item.place_name,
@@ -198,16 +205,24 @@ export default function MapPage() {
                     lat: item.y,
                 };
 
-                storesToAdd.push(store);
+                // 중복 검사 → 추가
+                if (!nearbyStoresRef.current.some((s) => s.id === store.id)) {
+                    newStores.push(store);
+                    displayMarker(store);
+                    bounds.extend(new window.kakao.maps.LatLng(parseFloat(item.y), parseFloat(item.x)));
+                }
+            });
 
-                displayMarker(store);
-                bounds.extend(new window.kakao.maps.LatLng(parseFloat(item.y), parseFloat(item.x)));
-            }
+            // ✅ 상태 업데이트는 한 번만
+            setNearbyStores((prev) => [...prev, ...newStores]);
+            console.log("매장 추가:", newStores);
+            console.log("전체 매장:", nearbyStores);
 
-            setNearbyStores((prev) => [...prev, ...storesToAdd]); //매장 추가
             kakaoMapRef.current.setBounds(bounds);
         }
     }
+
+
 
     // 지도에 마커를 표시하는 함수입니다
     function displayMarker(place: Store) {
@@ -287,24 +302,15 @@ export default function MapPage() {
 
     // MapRefresh 버튼 클릭 핸들러
     const handleRefreshMap = () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    setCurrentLocation({ lat, lng });
-                    const moveLatLon = new window.kakao.maps.LatLng(lat, lng);
-                    kakaoMapRef.current.setCenter(moveLatLon); // 지도 중심 이동
-                },
-                (error) => {
-                    console.error("Geolocation 에러:", error);
-                    alert("현재 위치를 가져올 수 없습니다.");
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        } else {
-            alert("브라우저가 위치 정보 기능을 지원하지 않습니다.");
+        if (!currentLocation) {
+            console.error("현재 위치 정보가 없습니다.");
+            return;
         }
+        const lat = currentLocation.lat;
+        const lng = currentLocation.lng;
+        const moveLatLon = new window.kakao.maps.LatLng(lat, lng);
+        kakaoMapRef.current.setCenter(moveLatLon); // 지도 중심 이동
+        kakaoMapRef.current.setLevel(5); // 줌 레벨 조정
     };
 
     console.log(selectedCategory);
