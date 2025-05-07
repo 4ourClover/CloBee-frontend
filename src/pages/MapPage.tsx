@@ -207,10 +207,7 @@ export default function MapPage() {
     }, []); // 의존성 배열 업데이트
 
     const searchPlacesMenu = (keyword: string) => {
-
         console.log("검색어:", keyword);
-        setSearchStoreList(true); // 검색 결과 목록 표시
-
 
         // 장소검색 객체를 통해 키워드로 장소검색을 요청합니다
         const currentPosition = new window.kakao.maps.LatLng(currentLocation.lat, currentLocation.lng);
@@ -245,6 +242,7 @@ export default function MapPage() {
             });
 
             searchStoreList.current = newStores; // 검색 결과 저장
+            setSearchStoreList(true); // 검색 결과 목록 표시
             console.log("검색 결과:", searchStoreList.current);
         }
     }
@@ -328,65 +326,6 @@ export default function MapPage() {
             console.error("장소 검색 중 오류 발생:", error);
         }
     }, [benefitStore, displayMarker]); // benefitStore 또는 displayMarker가 변경되면 함수 재생성
-
-
-
-    // function placesSearch(currentPosition: any) {
-    //     // 장소 검색 객체를 생성합니다
-    //     var ps = new window.kakao.maps.services.Places();
-
-    //     // 키워드로 장소를 검색합니다
-    //     benefitStore.forEach((bStore) => {
-    //         ps.keywordSearch(bStore, placesSearchCB, { location: currentPosition, size: 5 });
-    //     });
-    //     console.log("카카오 지도 로드/재조정 완료:", currentPosition);
-    // }
-
-
-    function placesSearchCB(data: any, status: any, pagination: any) {
-        if (status === window.kakao.maps.services.Status.OK) {
-            const bounds = new window.kakao.maps.LatLngBounds();
-
-            const newStores: Store[] = [];
-
-            data.forEach((item: any) => {
-                const store: Store = {
-                    id: item.id,
-                    place_name: item.place_name,
-                    address_name: item.address_name,
-                    road_address_name: item.road_address_name,
-                    phone: item.phone,
-                    place_url: item.place_url,
-                    category_name: item.category_name,
-                    category_group_code: item.category_group_code || "",
-                    category_group_name: item.category_group_name,
-                    distance: item.distance,
-                    lng: item.x,
-                    lat: item.y,
-                };
-
-                // 중복 검사 → 추가
-                if (!nearbyStoresRef.current.some((s) => s.id === store.id)) {
-                    console.log("중복되지 않는 매장:", store);
-                    newStores.push(store);
-                    displayMarker(store);
-                    bounds.extend(new window.kakao.maps.LatLng(parseFloat(item.y), parseFloat(item.x)));
-                }
-            });
-
-            // ✅ 상태 업데이트는 한 번만
-            setNearbyStores((prev) => [...prev, ...newStores]);
-            //console.log("주변 매장:", nearbyStoresRef.current);
-            console.log(bounds);
-
-            if (!kakaoMapRef.current) {
-                console.warn("지도 인스턴스가 준비되지 않았습니다.");
-                return;
-            }
-            kakaoMapRef.current.setBounds(bounds);
-        }
-    }
-
 
 
     // 지도에 마커를 표시하는 함수입니다
