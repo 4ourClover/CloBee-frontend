@@ -18,8 +18,8 @@ import EventsCouponPage from './pages/Event/EventsCouponPage';
 function App() {
   return (
     <div
-      className="max-w-sm mx-auto h-screen overflow-auto font-gmarket"
-      style={{ aspectRatio: "16/7.4" }}
+      className="mx-auto h-screen overflow-auto font-gmarket"
+      style={{ width: "450px", aspectRatio: "16/7.4" }}
     >
       <Routes>
         <Route path="/" element={<WelcomePage />} />
