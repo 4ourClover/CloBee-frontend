@@ -10,20 +10,9 @@ import {
     addUserCard,
     fetchCardPerformance,
 } from "../lib/card/cardApi"
-import type { CardListDTO, CardBenefitDetail, UserCardPerformanceDetail, UserCardListDTO } from "../lib/card/cardTypes"
+import type { CardListDTO, CardBenefitDetail, UserCardPerformanceDetail } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
-import {
-    ChevronLeft,
-    ChevronRight,
-    Plus,
-    Trash2,
-    Camera,
-    Search,
-    X,
-    RotateCcw,
-    PlusCircle,
-    Calendar,
-} from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Trash2, Search, X, RotateCcw, PlusCircle, Calendar } from "lucide-react"
 
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -51,9 +40,13 @@ export default function CardsPage() {
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
     const { toast } = useToast()
 
+    // 커스텀 알림 상태 추가
+    const [alertOpen, setAlertOpen] = useState(false)
+    const [alertMessage, setAlertMessage] = useState("")
+
     // 상단에 userId 상태 추가 (import 문 아래, 컴포넌트 내부 상단)
     const [userId, setUserId] = useState<number>(1) // 임시로 userId를 1로 설정 (실제 구현 시 로그인한 사용자의 ID로 대체 필요)
-    const [myCardsList, setMyCardsList] = useState<UserCardListDTO[]>([])
+    const [myCardsList, setMyCardsList] = useState<CardListDTO[]>([])
     const [isLoadingMyCards, setIsLoadingMyCards] = useState(false)
     const [cardPerformanceInfo, setCardPerformanceInfo] = useState<Record<number, UserCardPerformanceDetail>>({})
     const [isLoadingPerformance, setIsLoadingPerformance] = useState(false)
@@ -91,6 +84,12 @@ export default function CardsPage() {
     // 년도와 월 옵션 생성
     const yearOptions = [2024, 2025, 2026]
     const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1)
+
+    // 커스텀 알림 표시 함수
+    const showAlert = (message: string) => {
+        setAlertMessage(message)
+        setAlertOpen(true)
+    }
 
     // 카드 타입이 변경될 때 항상 1페이지로 이동
     useEffect(() => {
@@ -302,12 +301,9 @@ export default function CardsPage() {
             // 검색어가 없을 때는 검색 모드를 비활성화하고 전체 카드 리스트를 보여줌
             setIsSearchMode(false)
 
-            // 백엔드 API를 호출하지 않고 toast 메시지만 표시
-            toast({
-                title: "검색어를 입력하세요",
-                description: "카드 이름을 입력한 후 검색해주세요.",
-                variant: "destructive",
-            })
+            // 커스텀 알림 표시
+            setAlertMessage("검색어를 입력해주세요")
+            setAlertOpen(true)
             return
         }
 
@@ -357,11 +353,9 @@ export default function CardsPage() {
     // 카드 추가 모달 내 검색 핸들러
     const handleAddCardSearch = async () => {
         if (!addCardSearchQuery.trim()) {
-            toast({
-                title: "검색어를 입력하세요",
-                description: "카드 이름을 입력한 후 검색해주세요.",
-                variant: "destructive",
-            })
+            // 검색어가 없을 때 커스텀 알림 표시
+            setAlertMessage("검색어를 입력해주세요")
+            setAlertOpen(true)
             return
         }
 
@@ -418,6 +412,23 @@ export default function CardsPage() {
     const handleResetAddCardSearch = () => {
         setAddCardSearchQuery("")
         setAddCardSearchResults([])
+    }
+
+    // 카드 추가 모달 상태 변경 시 검색 결과 초기화 처리
+    // showAddCardModal 상태가 변경될 때 검색 결과를 초기화하도록 수정
+    // setShowAddCardModal 함수를 직접 사용하는 대신 handleAddCardModalChange 함수를 사용
+
+    // 다음 코드를 추가합니다 (handleAddCardModalChange 함수 추가)
+    // 기존 핸들러 근처에 추가 (예: handleResetAddCardSearch 함수 아래)
+    const handleAddCardModalChange = (open: boolean) => {
+        setShowAddCardModal(open)
+
+        // 모달이 열릴 때 신용카드를 기본값으로 설정하고, 닫힐 때 검색 결과 초기화
+        if (open) {
+            setAddCardSelectedType("credit")
+        } else {
+            handleResetAddCardSearch()
+        }
     }
 
     // 카드 추가 핸들러 (모달에서 카드 선택 후)
@@ -524,7 +535,6 @@ export default function CardsPage() {
             // 카드 기본 정보와 혜택 정보를 합쳐서 selectedCard에 설정
             setSelectedCard({
                 ...cardItem,
-                userCardId: cardItem.userCardId,
                 benefits: cardBenefits,
             })
             setShowCardDetail(true)
@@ -715,7 +725,9 @@ export default function CardsPage() {
         ))
     }
 
-    // 카드 추가 모달 내 카드 목록 렌더링 함수
+    // 카드 추가 모달 내 카드 목록 렌더링 함수 수정
+    // renderAddCardSearchResults 함수에서 상세 보기 버튼을 제거하고 카드 추가하기 버튼만 표시하도록 수정
+    // 다음 코드로 renderAddCardSearchResults 함수의 return 부분을 수정합니다:
     const renderAddCardSearchResults = () => {
         if (isAddCardSearching) {
             return (
@@ -729,12 +741,6 @@ export default function CardsPage() {
             return (
                 <div className="text-center py-8">
                     <p className="text-gray-500">검색 결과가 없습니다.</p>
-                    <Button
-                        className="mt-4 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
-                        onClick={handleResetAddCardSearch}
-                    >
-                        검색 초기화
-                    </Button>
                 </div>
             )
         }
@@ -754,16 +760,11 @@ export default function CardsPage() {
                         선택한 카드 타입({addCardSelectedType === "credit" ? "신용카드" : "체크카드"})에 해당하는 검색 결과가
                         없습니다.
                     </p>
-                    <Button
-                        className="mt-4 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
-                        onClick={handleResetAddCardSearch}
-                    >
-                        검색 초기화
-                    </Button>
                 </div>
             )
         }
 
+        // renderAddCardSearchResults 함수 내의 return filteredCards.map 부분을 다음과 같이 수정:
         return filteredCards.map((card) => (
             <div key={card.cardInfoId} className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100 mb-3">
                 <div className="flex">
@@ -785,20 +786,9 @@ export default function CardsPage() {
                             </p>
                         </div>
 
-                        <div className="flex gap-1 mt-2">
+                        <div className="flex mt-2">
                             <Button
-                                variant="outline"
-                                className="flex-1 text-xs py-1 h-7 text-[#00A949] border-[#75CB3B]/30 hover:bg-[#75CB3B]/10 hover:border-[#75CB3B]/50"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleFetchCardDetail(card.cardInfoId, card)
-                                }}
-                                disabled={isLoadingDetail}
-                            >
-                                {isLoadingDetail ? "로딩 중..." : "상세 보기"}
-                            </Button>
-                            <Button
-                                className="flex-1 text-xs py-1 h-7 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
+                                className="w-full text-xs py-1 h-7 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     handleAddUserCard(card.cardInfoId, card.cardType)
@@ -818,6 +808,23 @@ export default function CardsPage() {
 
     return (
         <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-hidden font-gmarket">
+            {/* 메인 검색용 커스텀 알림 */}
+            {alertOpen && !showAddCardModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
+                    <div className="w-[80%] max-w-sm rounded-lg bg-white p-6 shadow-lg">
+                        <div className="mb-6 text-center text-base font-medium">{alertMessage}</div>
+                        <div className="flex justify-end">
+                            <Button
+                                onClick={() => setAlertOpen(false)}
+                                className="bg-[#4CAF50] hover:bg-[#45a049] text-white px-6 py-2 rounded-md"
+                            >
+                                확인
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-1.5 flex items-center gap-2">
                 <Button
                     variant="ghost"
@@ -828,7 +835,11 @@ export default function CardsPage() {
                     <ChevronLeft className="h-3.5 w-3.5" />
                 </Button>
                 <h1 className="text-base font-bold flex-1">카드 관리</h1>
-                <Dialog>
+                {/* 카드 추가 모달 Dialog 컴포넌트의 onOpenChange 속성을 수정합니다 */}
+                {/* 다음 코드로 Dialog 컴포넌트의 onOpenChange 속성을 수정합니다: */}
+                {/* <Dialog open={showAddCardModal} onOpenChange={setShowAddCardModal}> */}
+                {/* 위 코드를 아래와 같이 변경: */}
+                <Dialog open={showAddCardModal} onOpenChange={handleAddCardModalChange}>
                     <DialogTrigger asChild>
                         <Button
                             variant="ghost"
@@ -840,80 +851,6 @@ export default function CardsPage() {
                             <Plus className="h-3.5 w-3.5" />
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-sm mx-auto">
-                        <DialogHeader>
-                            <DialogTitle>카드 추가하기</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="card-type">카드 종류</Label>
-                                <Select defaultValue="credit">
-                                    <SelectTrigger id="card-type">
-                                        <SelectValue placeholder="카드 종류 선택" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="credit">신용카드</SelectItem>
-                                        <SelectItem value="debit">체크카드</SelectItem>
-                                        <SelectItem value="prepaid">선불카드</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="card-company">카드사</Label>
-                                <Select>
-                                    <SelectTrigger id="card-company">
-                                        <SelectValue placeholder="카드사 선택" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="shinhan">신한카드</SelectItem>
-                                        <SelectItem value="samsung">삼성카드</SelectItem>
-                                        <SelectItem value="hyundai">현대카드</SelectItem>
-                                        <SelectItem value="kb">KB국민카드</SelectItem>
-                                        <SelectItem value="woori">우리카드</SelectItem>
-                                        <SelectItem value="hana">하나카드</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="card-number">카드 번호</Label>
-                                <Input id="card-number" placeholder="0000-0000-0000-0000" />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="expiry-date">유효기간</Label>
-                                    <Input id="expiry-date" placeholder="MM/YY" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="cvc">CVC</Label>
-                                    <Input id="cvc" placeholder="000" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>카드 이미지</Label>
-                                <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                                    <Button variant="outline" className="w-full">
-                                        <Camera className="h-4 w-4 mr-2" />
-                                        카드 촬영하기 (OCR)
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button variant="outline">취소</Button>
-                            </DialogClose>
-                            <Button
-                                className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
-                                onClick={handleAddCard}
-                            >
-                                추가하기
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
                 </Dialog>
             </header>
 
@@ -1228,8 +1165,25 @@ export default function CardsPage() {
             />
 
             {/* 카드 추가 모달 */}
-            <Dialog open={showAddCardModal} onOpenChange={setShowAddCardModal}>
+            <Dialog open={showAddCardModal} onOpenChange={handleAddCardModalChange}>
                 <DialogContent className="max-w-sm mx-auto">
+                    {/* 커스텀 알림을 모달 내부에 추가 */}
+                    {alertOpen && showAddCardModal && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60">
+                            <div className="w-[80%] max-w-sm rounded-lg bg-white p-6 shadow-lg">
+                                <div className="mb-6 text-center text-base font-medium">{alertMessage}</div>
+                                <div className="flex justify-end">
+                                    <Button
+                                        onClick={() => setAlertOpen(false)}
+                                        className="bg-[#4CAF50] hover:bg-[#45a049] text-white px-6 py-2 rounded-md"
+                                    >
+                                        확인
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <DialogHeader>
                         <DialogTitle>카드 추가하기</DialogTitle>
                     </DialogHeader>
