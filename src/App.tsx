@@ -28,7 +28,6 @@ function App() {
         <Route path="/map" element={<MapPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/coupons" element={<ProfileCouponsPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/cards" element={<CardsPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/attendance" element={<EventsAttendancePage />} />
