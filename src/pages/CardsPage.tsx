@@ -9,11 +9,13 @@ import {
     searchCards,
     addUserCard,
     fetchCardPerformance,
+    deleteUserCard,
 } from "../lib/card/cardApi"
-import type { CardListDTO, CardBenefitDetail, UserCardPerformanceDetail } from "../lib/card/cardTypes"
+import type { CardListDTO, CardBenefitDetail, UserCardPerformanceDetail, } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight, Plus, Trash2, Search, X, RotateCcw, PlusCircle, Calendar } from "lucide-react"
 
+import { CustomAlert } from "../components/custom-alert"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
@@ -84,6 +86,16 @@ export default function CardsPage() {
     // 년도와 월 옵션 생성
     const yearOptions = [2024, 2025, 2026]
     const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1)
+
+    // 카드 삭제용 상태 변수
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+    const [pendingDeleteCardId, setPendingDeleteCardId] = useState<number | null>(null)
+
+    // 카드 삭제 ㅇ요청 트리거 함수 
+    const requestDeleteCard = (cardId: number) => {
+        setPendingDeleteCardId(cardId)
+        setConfirmDeleteOpen(true)
+    }
 
     // 커스텀 알림 표시 함수
     const showAlert = (message: string) => {
@@ -435,59 +447,68 @@ export default function CardsPage() {
     const handleAddUserCard = async (cardInfoId: number, cardType: number) => {
         setIsAddingCard(true)
         try {
-            // 카드 타입 값 설정 (401: 신용카드, 402: 체크카드)
-            const userCardType = cardType
+            await addUserCard(userId, cardInfoId, cardType)
 
-            // 백엔드 API 호출
-            await addUserCard(userId, cardInfoId, userCardType)
+            setAlertMessage("카드가 추가되었습니다")
+            setAlertOpen(true)
 
-            toast({
-                title: "카드가 추가되었습니다",
-                description: "새로운 카드가 내 카드 목록에 추가되었습니다.",
-            })
-
-            // 모달 닫기
             setShowAddCardModal(false)
-
-            // 검색 초기화
             handleResetAddCardSearch()
 
-            // 내 카드 목록 새로고침 (activeTab을 변경했다가 다시 돌아오는 방식)
             if (activeTab === "my-cards") {
                 setActiveTab("all-cards")
-                setTimeout(() => {
-                    setActiveTab("my-cards")
-                }, 100)
+                setTimeout(() => setActiveTab("my-cards"), 100)
             } else {
                 setActiveTab("my-cards")
             }
-        } catch (error) {
-            console.error("카드 추가 실패:", error)
-            toast({
-                title: "카드 추가 실패",
-                description: "카드를 추가하는 중 오류가 발생했습니다.",
-                variant: "destructive",
-            })
+        } catch (error: any) {
+            const status = error?.response?.status
+            const message = error?.response?.data || "카드를 추가하는 중 오류가 발생했습니다."
+
+            if (status === 409 || message.includes("이미 등록된 카드")) {
+                setAlertMessage("이미 등록된 카드입니다")
+            } else {
+                setAlertMessage("카드 추가 실패: " + message)
+            }
+            setAlertOpen(true)
         } finally {
             setIsAddingCard(false)
         }
     }
 
-    // 기존 카드 추가 핸들러 (이전 모달용)
-    const handleAddCard = () => {
-        toast({
-            title: "카드가 추가되었습니다",
-            description: "새로운 카드가 내 카드 목록에 추가되었습니다.",
-        })
-    }
 
     // 카드 삭제 핸들러
-    const handleDeleteCard = (cardId: number) => {
-        toast({
-            title: "카드가 삭제되었습니다",
-            description: "선택한 카드가 내 카드 목록에서 삭제되었습니다.",
-            variant: "destructive",
-        })
+    const confirmDeleteCard = async () => {
+        if (pendingDeleteCardId === null) return
+        try {
+            await deleteUserCard(userId, pendingDeleteCardId)
+
+            toast({
+                title: "카드가 삭제되었습니다",
+                description: "선택한 카드가 내 카드 목록에서 삭제되었습니다.",
+                variant: "destructive",
+            })
+
+            setConfirmDeleteOpen(false)
+            setPendingDeleteCardId(null)
+
+            // 카드 목록 갱신
+            if (activeTab === "my-cards") {
+                setActiveTab("all-cards")
+                setTimeout(() => setActiveTab("my-cards"), 100)
+            } else {
+                setActiveTab("my-cards")
+            }
+        } catch (error) {
+            console.error("카드 삭제 실패:", error)
+            toast({
+                title: "카드 삭제 실패",
+                description: "삭제 중 문제가 발생했습니다.",
+                variant: "destructive",
+            })
+            setConfirmDeleteOpen(false)
+            setPendingDeleteCardId(null)
+        }
     }
 
     // 카드 신청 핸들러
@@ -985,7 +1006,7 @@ export default function CardsPage() {
                                                             className="h-6 w-6 text-red-600"
                                                             onClick={(e) => {
                                                                 e.stopPropagation()
-                                                                handleDeleteCard(card.cardInfoId)
+                                                                requestDeleteCard(card.cardInfoId)
                                                             }}
                                                         >
                                                             <Trash2 className="h-3 w-3" />
@@ -1239,6 +1260,33 @@ export default function CardsPage() {
                 </DialogContent>
             </Dialog>
 
+            <CustomAlert
+                isOpen={confirmDeleteOpen}
+                message="정말 삭제하시겠습니까?"
+                onClose={() => {
+                    setConfirmDeleteOpen(false)
+                    setPendingDeleteCardId(null)
+                }}
+            >
+                <div className="flex justify-end gap-2 mt-4">
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            setConfirmDeleteOpen(false)
+                            setPendingDeleteCardId(null)
+                        }}
+                    >
+                        취소
+                    </Button>
+                    <Button
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                        onClick={confirmDeleteCard}
+                    >
+                        삭제
+                    </Button>
+                </div>
+            </CustomAlert>
+
             {/* 카드 상세 정보 모달 */}
             {showCardDetail && selectedCard && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
@@ -1364,6 +1412,7 @@ export default function CardsPage() {
                     </div>
                 </div>
             )}
+
         </main>
     )
 }
