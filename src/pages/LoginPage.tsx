@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { FormEventHandler, useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -6,28 +6,41 @@ import { Label } from "../components/ui/label"
 import { useToast } from "../hooks/use-toast"
 import { CoffeeIcon as KakaoTalk } from "lucide-react"
 import rabbitClover from '../images/rabbit-clover.png';
+import { useAuthActions } from "../hooks/use-auth-action"
+import { CheckBox } from "../components/ui/checkbox"
 
 export default function LoginPage() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const { toast } = useToast()
     const navigate = useNavigate()
+    const authAction = useAuthActions()
 
-    const handleLogin = (e: React.FormEvent) => {
+    const [autoLogin, setAutoLogin] = useState(false);
+
+    const handleCheckboxChange = () => {
+      setAutoLogin(!autoLogin);
+    };
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
-        toast({
-            title: "로그인 성공",
-            description: "환영합니다!",
-        })
-        navigate("/map")
+        // toast({
+        //     title: "로그인 성공",
+        //     description: "환영합니다!",
+        // })
+        await authAction.login(email, password, autoLogin)
     }
 
     const handleSocialLogin = () => {
-        toast({
-            title: "카카오 로그인",
-            description: "카카오 로그인 처리 중...",
-        })
-        navigate("/map")
+        // toast({
+        //     title: "카카오 로그인",
+        //     description: "카카오 로그인 처리 중...",
+        // })
+        // navigate("/map")
+        
+    
+        window.location.href = "http://localhost:8080/oauth2/authorization/kakao";
+    
     }
 
     return (
@@ -67,6 +80,11 @@ export default function LoginPage() {
                             className="border-[#E5E7EB] focus-visible:ring-[#00A949] rounded-full"
                             required
                         />
+                        <div className="text-right">
+                            <Link to="/forgot-email" className="text-xs text-[#00A949] hover:underline">
+                                이메일 찾기
+                            </Link>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -74,9 +92,7 @@ export default function LoginPage() {
                             <Label htmlFor="password" className="text-[#5A3D2B]">
                                 비밀번호
                             </Label>
-                            <Link to="/forgot-password" className="text-xs text-[#00A949] hover:underline">
-                                비밀번호 찾기
-                            </Link>
+
                         </div>
                         <Input
                             id="password"
@@ -87,8 +103,18 @@ export default function LoginPage() {
                             className="border-[#E5E7EB] focus-visible:ring-[#00A949] rounded-full"
                             required
                         />
+                        <div className="text-right">
+                            <Link to="/forgot-password" className="text-xs text-[#00A949] hover:underline">
+                                비밀번호 찾기
+                            </Link>
+                        </div>
                     </div>
 
+                    <CheckBox label="자동 로그인" 
+                        checked={autoLogin}
+                        onCheckedChange={handleCheckboxChange}
+                    />
+                    
                     <Button
                         type="submit"
                         className="w-full py-5 text-base font-medium bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] text-white rounded-full"
