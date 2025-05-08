@@ -302,7 +302,7 @@ export default function MapPage() {
                     };
 
                     if (!addedStoreIds.has(store.id)) {
-                        console.log("중복되지 않는 매장 (취합):", store);
+                        //console.log("중복되지 않는 매장 (취합):", store);
                         allNewStores.push(store);
                         addedStoreIds.add(store.id);
                         displayMarker(store);
@@ -312,8 +312,8 @@ export default function MapPage() {
             });
 
             setNearbyStores((prev) => [...prev, ...allNewStores]);
-            console.log("최종 주변 매장:", allNewStores);
-            console.log("최종 bounds:", bounds);
+            //console.log("최종 주변 매장:", allNewStores);
+            // console.log("최종 bounds:", bounds);
 
             if (kakaoMapRef.current) {
                 kakaoMapRef.current.setBounds(bounds);
@@ -450,6 +450,9 @@ export default function MapPage() {
 
     const showAroundStore = () => {
         console.log("주변 매장 검색 시작");
+
+        setSelectedBrand(null);
+        setSelectedCategory(null);
         var center = kakaoMapRef.current.getCenter(); // 현재 지도 중심 좌표
         placesSearch(center); // 장소 검색 시작
     }
@@ -458,6 +461,7 @@ export default function MapPage() {
         <main className="flex flex-col h-full w-full mx-auto overflow-auto font-gmarket">
             {/* 헤더 */}
             <MapHeader
+                selectedBrand={selectedBrand}
                 onBrandSelect={(brand: brandCategory) =>
                     setSelectedBrand(prev => (prev === brand ? null : brand))
                 }
@@ -466,6 +470,7 @@ export default function MapPage() {
 
             {/* 카테고리 바 */}
             <CategoryBar
+                selectedCategory={selectedCategory}
                 onCategorySelect={(category) =>
                     setSelectedCategory(prev => (prev === category ? null : category))
                 }
