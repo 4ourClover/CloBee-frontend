@@ -27,6 +27,10 @@ export default function MapPage() {
     const nearbyStoresRef = useRef<Store[]>([]);
     const [showSearchStoreList, setSearchStoreList] = useState(false) // 주변 매장 목록을 보여줄지 여부를 저장하는 ref
     const searchStoreList = useRef<Store[]>([]); // 주변 매장 목록을 저장하는 ref
+    const watchIdRef = useRef<number | null>(null); // 위치 감시 ID를 저장하는 ref
+    const [searchRadius, setSearchRadius] = useState(200); // 초기 검색 반경 (예: 1km)
+    const [isNotificationOn, setIsNotificationOn] = useState(false); // 초기 알림 상태 (off)
+
 
     useEffect(() => {
         nearbyStoresRef.current = nearbyStores;
@@ -119,6 +123,8 @@ export default function MapPage() {
         return <IconComponent className="h-4 w-4" />
     }
 
+
+
     useEffect(() => {
         console.log("맵 로딩");
         if (navigator.geolocation) {
@@ -201,10 +207,33 @@ export default function MapPage() {
         currentOverlay.setMap(kakaoMapRef.current); // 지도에 마커 표시
         currentMarkerRef.current = currentOverlay; // 현재 위치 마커 ref에 저장
 
+        //watchPosition(lat, lng); // 위치 감시 시작
 
         placesSearch(currentPosition); // 장소 검색 시작
 
     }, []); // 의존성 배열 업데이트
+
+    function watchPosition(lat: number, lng: number) {
+        if (navigator.geolocation) {
+            watchIdRef.current = navigator.geolocation.watchPosition(
+                () => {
+                    setCurrentLocation({ lat, lng });
+                    console.log("현재 위치 업데이트:", lat, lng);
+                    if (currentMarkerRef.current) {
+                        const moveLatLon = new window.kakao.maps.LatLng(lat, lng);
+                        currentMarkerRef.current.setPosition(moveLatLon); // 현재 위치 마커 이동
+                        kakaoMapRef.current.setCenter(moveLatLon); // 지도 중심 이동
+                    }
+                },
+                (error) => {
+                    console.error("Geolocation 에러:", error);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            console.error("브라우저가 Geolocation을 지원하지 않습니다.");
+        }
+    }
 
     const searchPlacesMenu = (keyword: string) => {
         console.log("검색어:", keyword);
@@ -432,8 +461,6 @@ export default function MapPage() {
         updateMarkersBySelection<brandCategory>(brandMarkersRef, selectedBrand, kakaoMapRef.current);
     }, [selectedBrand]);
 
-
-
     // MapRefresh 버튼 클릭 핸들러
     const handleRefreshMap = () => {
         if (!currentLocation) {
@@ -461,6 +488,10 @@ export default function MapPage() {
         <main className="flex flex-col h-full w-full mx-auto overflow-auto font-gmarket">
             {/* 헤더 */}
             <MapHeader
+                searchRadius={searchRadius}
+                setSearchRadius={setSearchRadius}
+                isNotificationOn={isNotificationOn}
+                setIsNotificationOn={setIsNotificationOn}
                 selectedBrand={selectedBrand}
                 onBrandSelect={(brand: brandCategory) =>
                     setSelectedBrand(prev => (prev === brand ? null : brand))

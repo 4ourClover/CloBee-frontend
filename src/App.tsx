@@ -15,28 +15,36 @@ import EventsInvitePage from './pages/Event/EventsInvitePage';
 import EventsCloverPage from './pages/Event/EventsCloverPage';
 import EventsCouponPage from './pages/Event/EventsCouponPage';
 
+import { Toaster } from './components/ui/toaster'; // 올바른 경로
+import { ToastProvider } from './components/ui/toast'; // 올바른 경로
+
 function App() {
   return (
     <div
       className="mx-auto h-screen overflow-auto font-gmarket"
       style={{ width: "450px", aspectRatio: "16/7.4" }}
     >
-      <Routes>
-        <Route path="/" element={<WelcomePage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/map" element={<MapPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/coupons" element={<ProfileCouponsPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/cards" element={<CardsPage />} />
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/events/attendance" element={<EventsAttendancePage />} />
-        <Route path="/events/invite" element={<EventsInvitePage />} />
-        <Route path="/events/clover" element={<EventsCloverPage />} />
-        <Route path="/events/coupon" element={<EventsCouponPage />} />
+      <ToastProvider>
+        <Routes>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/map" element={<MapPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/coupons" element={<ProfileCouponsPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/cards" element={<CardsPage />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/events/attendance" element={<EventsAttendancePage />} />
+          <Route path="/events/invite" element={<EventsInvitePage />} />
+          <Route path="/events/clover" element={<EventsCloverPage />} />
+          <Route path="/events/coupon" element={<EventsCouponPage />} />
 
-      </Routes>
+        </Routes>
+
+
+        <Toaster />
+      </ToastProvider>
     </div>
   );
 }
