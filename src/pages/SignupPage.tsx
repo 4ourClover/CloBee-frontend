@@ -1,11 +1,14 @@
 import React, { useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button"; // 실제 경로에 맞게 수정
-import { Input } from "../components/ui/input"; // 실제 경로에 맞게 수정
-import { Label } from "../components/ui/label"; // 실제 경로에 맞게 수정
-import { useToast } from "../hooks/use-toast"; // 실제 useToast 훅의 경로 확인
+import { Button } from "../components/ui/button"; 
+import { Input } from "../components/ui/input"; 
+import { Label } from "../components/ui/label"; 
+import { useToast } from "../hooks/use-toast"; 
 import { CoffeeIcon as KakaoTalk } from "lucide-react"; // lucide-react 설치 필요
 import rabbitClover from '../images/rabbit-clover.png';
+import axiosInstance from "../lib/axiosInstance";
+import { CheckBox } from "../components/ui/checkbox";
+import { containsBadWords } from "../lib/badWordFilter";
 
 interface SignupPageProps { }
 
@@ -16,10 +19,13 @@ const SignupPage: React.FC<SignupPageProps> = () => {
     const [nickname, setNickname] = useState("");
     const [showVerification, setShowVerification] = useState(false);
     const [verificationCode, setVerificationCode] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+    const [isCodeVerified, setIsCodeVerified] = useState(false);
     const { toast } = useToast();
     const navigate = useNavigate();
 
-    const handleSignup = (e: FormEvent) => {
+    const handleSignup = async (e: FormEvent) => {
         e.preventDefault();
 
         if (password !== confirmPassword) {
@@ -30,6 +36,35 @@ const SignupPage: React.FC<SignupPageProps> = () => {
             });
             return;
         }
+
+        if (!isPhoneVerified || !isCodeVerified) {
+            toast({
+                title: "인증 필요",
+                description: "전화번호 인증과 인증번호 확인이 필요합니다.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (containsBadWords(nickname)) {
+            toast({
+                title: "부적절한 닉네임",
+                description: "부적절한 닉네임이 감지 되었습니다. 닉네임을 변경해주세요.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        await axiosInstance.post("/user/signup/email",
+            {
+                "userLoginType":102,
+                "userEmail": email,
+                "userPassword": password,
+                "userNickname": nickname,
+                "userPhone": phoneNumber,
+                "userAgreedPrivacy": true,
+            }
+        )
 
         // 회원가입 로직 구현
         toast({
@@ -64,7 +99,50 @@ const SignupPage: React.FC<SignupPageProps> = () => {
         });
     };
 
-    const handleVerifyCode = () => {
+    const handlePhoneVerification = async () => {
+        if (!phoneNumber) {
+          toast({
+            title: "전화번호 필요",
+            description: "전화번호를 입력해주세요.",
+            variant: "destructive",
+          });
+          return;
+        }
+      
+        try {
+          const response = await axiosInstance.post(
+            "/user/sendPhoneCode",
+            null,
+            { params: { user_phone: phoneNumber } }
+          );
+          
+          // 옵셔널 체이닝으로 안전하게 status 확인
+          if (response?.status === 200) {
+            setShowVerification(true);
+            setIsPhoneVerified(true);
+            toast({
+              title: "인증번호 발송",
+              description: "입력하신 전화번호로 인증번호가 발송되었습니다.",
+            });
+          } else {
+            toast({
+              title: "인증 실패",
+              description: "인증번호 발송에 실패했습니다.",
+              variant: "destructive",
+            });
+          }
+        } catch (err: any) {
+          console.error(err);
+          toast({
+            title: "서버 오류",
+            description: err.message || "인증 요청 중 오류가 발생했습니다.",
+            variant: "destructive",
+          });
+        }
+      };
+      
+
+    const handleVerifyCode = async () => {
         if (!verificationCode) {
             toast({
                 title: "인증번호 필요",
@@ -74,10 +152,25 @@ const SignupPage: React.FC<SignupPageProps> = () => {
             return;
         }
 
-        toast({
-            title: "인증 완료",
-            description: "이메일 인증이 완료되었습니다.",
-        });
+                
+        const res = await axiosInstance.post("/user/verifyPhoneCode",null,{params:{
+            user_phone: phoneNumber,
+            code:verificationCode
+        }});
+        
+        if (res.status == 200) {
+            setIsCodeVerified(true);
+
+        }else{
+            console.log("error")
+        }
+      
+    };
+
+   const [agreeTerms, setagreeTerms] = useState(false);
+
+    const handleCheckboxChange = () => {
+        setagreeTerms(!agreeTerms);
     };
 
     return (
@@ -98,7 +191,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                 </div>
 
                 {/* 회원가입 폼 */}
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSignup}>
                     <div className="space-y-2">
                         <Label htmlFor="nickname" className="text-[#5A3D2B]">
                             닉네임
@@ -108,7 +201,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                             type="text"
                             placeholder="닉네임 입력"
                             value={nickname}
-                            //onChange={(e) => setNickname(e.target.value)}
+                            onChange={(e) => setNickname(e.target.value)}
                             className="border-[#E5E7EB] focus-visible:ring-[#00A949] rounded-full"
                             required
                         />
@@ -124,43 +217,65 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                                 type="email"
                                 placeholder="이메일 주소 입력"
                                 value={email}
-                                //onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => setEmail(e.target.value)}
                                 className="border-[#E5E7EB] focus-visible:ring-[#00A949] rounded-full"
                                 required
                             />
-                            <Button
-                                type="button"
-                                //onClick={handleSendVerification}
-                                className="bg-[#00A949] hover:bg-[#009149] rounded-full"
-                            >
-                                인증
-                            </Button>
+                        
                         </div>
 
-                        {(
-                            <div className="mt-2 space-y-2">
-                                <Label htmlFor="verification-code" className="text-[#5A3D2B]">
-                                    인증번호
+
+                        <div className="mt-2 space-y-2">
+                                <Label htmlFor="phone-number" className="text-[#5A3D2B]">
+                                    전화번호
                                 </Label>
                                 <div className="flex gap-2">
                                     <Input
-                                        id="verification-code"
-                                        type="text"
-                                        placeholder="인증번호 입력"
-                                        value={verificationCode}
-                                        //onChange={(e) => setVerificationCode(e.target.value)}
+                                        id="phone-number"
+                                        type="tel"
+                                        placeholder="전화번호 입력"
+                                        value={phoneNumber}
+                                        disabled={isPhoneVerified}
+                                        onChange={(e) => setPhoneNumber(e.target.value)}
                                         className="border-[#E5E7EB] focus-visible:ring-[#00A949] rounded-full"
                                     />
                                     <Button
                                         type="button"
-                                        //onClick={handleVerifyCode}
+                                        onClick={handlePhoneVerification}
                                         className="bg-[#00A949] hover:bg-[#009149] rounded-full"
+                                        disabled={isPhoneVerified}
                                     >
-                                        확인
+                                        {isPhoneVerified ? "코드 전송완료" : "인증"}
                                     </Button>
                                 </div>
                             </div>
-                        )}
+                        
+                        
+                        <div className="mt-2 space-y-2">
+                            <Label htmlFor="verification-code" className="text-[#5A3D2B]">
+                                인증번호
+                            </Label>
+                            <div className="flex gap-2">
+                                <Input
+                                    id="verification-code"
+                                    type="text"
+                                    placeholder="인증번호 입력"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value)}
+                                    className="border-[#E5E7EB] focus-visible:ring-[#00A949] rounded-full"
+                                    disabled={!isPhoneVerified || isCodeVerified}
+                                />
+                                <Button
+                                    type="button"
+                                    onClick={handleVerifyCode}
+                                    className="bg-[#00A949] hover:bg-[#009149] rounded-full"
+                                    disabled={!isPhoneVerified || isCodeVerified}
+                                >
+                                    {isCodeVerified ? "확인됨" : "확인"}
+                                </Button>
+                            </div>
+                        </div>
+                    
                     </div>
 
                     <div className="space-y-2">
@@ -172,7 +287,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                             type="password"
                             placeholder="비밀번호 입력 (8자 이상)"
                             value={password}
-                            //onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => setPassword(e.target.value)}
                             className="border-[#E5E7EB] focus-visible:ring-[#00A949] rounded-full"
                             required
                             minLength={8}
@@ -188,19 +303,26 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                             type="password"
                             placeholder="비밀번호 재입력"
                             value={confirmPassword}
-                            //onChange={(e) => setConfirmPassword(e.target.value)}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
                             className="border-[#E5E7EB] focus-visible:ring-[#00A949] rounded-full"
                             required
                             minLength={8}
                         />
                     </div>
 
+                    <CheckBox label="약관에 동의합니다." 
+                        checked={agreeTerms}
+                        onCheckedChange={handleCheckboxChange}
+                    />
+
                     <Button
                         type="submit"
                         className="w-full py-5 text-base font-medium bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] text-white rounded-full"
+                        disabled={!(isCodeVerified && agreeTerms)} 
                     >
                         가입하기
                     </Button>
+            
                 </form>
 
                 {/* 소셜 회원가입 */}
