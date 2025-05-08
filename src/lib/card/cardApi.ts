@@ -129,7 +129,7 @@ export const addUserCard = async (userId: number, cardInfoId: number, userCardTy
 
 // 내 카드 삭제하기 함수 추가
 export const deleteUserCard = async (userId: number, cardInfoId: number): Promise<string> => {
-    const response = await axios.delete("http://localhost:8080/api/card/delCard", {
+    const response = await axios.delete<string>("http://localhost:8080/api/card/delCard", {
         params: { userId, cardInfoId },
     })
     return response.data
