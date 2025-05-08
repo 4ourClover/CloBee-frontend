@@ -860,19 +860,7 @@ export default function CardsPage() {
                 {/* 다음 코드로 Dialog 컴포넌트의 onOpenChange 속성을 수정합니다: */}
                 {/* <Dialog open={showAddCardModal} onOpenChange={setShowAddCardModal}> */}
                 {/* 위 코드를 아래와 같이 변경: */}
-                <Dialog open={showAddCardModal} onOpenChange={handleAddCardModalChange}>
-                    <DialogTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-white hover:bg-white/10 h-6 w-6"
-                            aria-label="카드 추가하기"
-                            onClick={() => setShowAddCardModal(true)}
-                        >
-                            <Plus className="h-3.5 w-3.5" />
-                        </Button>
-                    </DialogTrigger>
-                </Dialog>
+
             </header>
 
             <div className="bg-transparent border-b border-[#00A949]/20">
