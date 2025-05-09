@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { data, Link, useNavigate } from "react-router-dom"
 import {
     ChevronLeft,
     Clover,
@@ -10,59 +10,193 @@ import { useToast } from "../../hooks/use-toast"          // '@/hooks/...' → '
 // @ts-ignore
 import confetti from "canvas-confetti"
 import BottomNavigation from "../../components/bottom-navigation"
+import { useCurrentUser } from "../../hooks/use-current-user"
+
+
+// API URL 상수 정의
+const API_BASE_URL = 'http://localhost:8080/event/findClover'
 
 export default function CloverGamePage() {
     const [clovers, setClovers] = useState<Array<{ id: number; isLucky: boolean; isFlipped: boolean }>>([])
     const [gameStarted, setGameStarted] = useState(false)
     const [gameWon, setGameWon] = useState(false)
     const [attempts, setAttempts] = useState(0)
+    const [eventFindingCloverParticipationStatus, setEventFindingCloverParticipationStatus] = useState(false)
+    const [eventFindingCloverCurrentStage, setEventFindingCloverCurrentStage] = useState(0)
     const { toast } = useToast()
+    const navigate = useNavigate()
+
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+    const [confirmMessage, setConfirmMessage] = useState<string>("")
+    const [onConfirmAction, setOnConfirmAction] = useState<() => void>(() => { })
+
+    const [showSuccessAlert, setShowSuccessAlert] = useState(false)
+    const [nextStage, setNextStage] = useState(0)
+
+    const user = useCurrentUser()
+    const userId = user?.userId
+
+    // 모달을 띄우는 헬퍼
+    const showConfirmModal = (message: string, onConfirm: () => void) => {
+        setConfirmMessage(message)
+        setOnConfirmAction(() => onConfirm)
+        setIsConfirmModalOpen(true)
+    }
+    const closeConfirmModal = () => {
+        setIsConfirmModalOpen(false)
+    }
 
     // 게임 초기화
     useEffect(() => {
         if (!gameStarted) return
 
-        // 20개의 클로버 생성 (19개 네잎, 1개 세잎)
-        const newClovers = Array.from({ length: 20 }, (_, i) => ({
-            id: i,
-            isLucky: false,
-            isFlipped: false,
-        }))
 
-        // 랜덤하게 하나의 클로버를 행운의 클로버(세잎)로 지정
-        const luckyIndex = Math.floor(Math.random() * 20)
-        newClovers[luckyIndex].isLucky = true
+        // API 호출로 현재 스테이지 확인
+        fetch(`${API_BASE_URL}/status?user_id=${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                setEventFindingCloverParticipationStatus(data.eventFindingCloverParticipationStatus)
+                setEventFindingCloverCurrentStage(data.eventFindingCloverCurrentStage)
+                // 오늘 이미 참여한 경우 게임 종료
+                if (data.eventFindingCloverParticipationStatus === true) {
+                    showConfirmModal(
+                        '오늘은 이미 참여하셨습니다.',
+                        () => navigate('/events')
+                    )
+                    setGameStarted(false)
+                    setGameWon(true)
+                    return
+                }
 
-        setClovers(newClovers)
-        setGameWon(false)
-        setAttempts(0)
+
+                let newClovers: Array<{ id: number; isLucky: boolean; isFlipped: boolean }> = [];
+                // current stage에 따라 클로버 개수 변경
+                if (data.eventFindingCloverCurrentStage === 1) {
+                    newClovers = Array.from({ length: 16 }, (_, i) => ({
+                        id: i,
+                        isLucky: false,
+                        isFlipped: false,
+                    }))
+                } else if (data.eventFindingCloverCurrentStage === 2) {
+                    newClovers = Array.from({ length: 25 }, (_, i) => ({
+                        id: i,
+                        isLucky: false,
+                        isFlipped: false
+                    }))
+                } else if (data.eventFindingCloverCurrentStage === 3) {
+                    newClovers = Array.from({ length: 36 }, (_, i) => ({
+                        id: i,
+                        isLucky: false,
+                        isFlipped: false,
+                    }))
+                }
+
+                // 랜덤하게 하나의 클로버를 골드 클로버로 지정
+                const luckyIndex = Math.floor(Math.random() * newClovers.length)
+                newClovers[luckyIndex].isLucky = true
+
+                setClovers(newClovers)
+                setGameWon(false)
+                setAttempts(0)
+            })
+            .catch(error => {
+                console.error('Failed to fetch game status:', error)
+                toast({
+                    title: "오류 발생",
+                    description: "게임 상태를 불러오는데 실패했습니다.",
+                    variant: "destructive",
+                })
+            })
     }, [gameStarted])
 
     // 클로버 클릭 핸들러
-    const handleCloverClick = (id: number) => {
+    const handleCloverClick = async (id: number) => {
         if (!gameStarted || gameWon) return
 
         const updatedClovers = clovers.map((clover) => {
             if (clover.id === id && !clover.isFlipped) {
-                // 클릭한 클로버 뒤집기
                 const newClover = { ...clover, isFlipped: true }
 
-                // 행운의 클로버(세잎)를 찾았는지 확인
                 if (newClover.isLucky) {
                     setGameWon(true)
-                    // 승리 효과
-                    setTimeout(() => {
-                        confetti({
-                            particleCount: 100,
-                            spread: 70,
-                            origin: { y: 0.6 },
-                        })
-                    }, 300)
 
-                    toast({
-                        title: "축하합니다!",
-                        description: "행운의 세잎 클로버를 찾았습니다!",
+
+                    // 성공 시 API 호출
+                    fetch(`${API_BASE_URL}/status?user_id=${userId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.eventFindingCloverCurrentStage === 3) {
+                                // 축하 효과
+                                setTimeout(() => {
+                                    confetti({
+                                        particleCount: 100,
+                                        spread: 70,
+                                        origin: { y: 0.6 },
+                                    })
+                                }, 1000)
+                                // 쿠폰 지급 완료 알림 (3초 지연)
+                                if (!data.eventFindingCloverReceiveCoupon) {
+                                    setTimeout(() => {
+                                        showConfirmModal(
+                                            '쿠폰이 지급되었습니다!',
+                                            () => navigate('/events')
+                                        )
+                                    }, 3000)
+                                } else {
+                                    setTimeout(() => {
+                                        showConfirmModal(
+                                            '이미 쿠폰을 지급받았습니다',
+                                            () => navigate('/events')
+                                        )
+                                    }, 3000)
+                                }
+
+                            } else {
+                                const nextStage = data.eventFindingCloverCurrentStage + 1
+                                setNextStage(nextStage)
+                                setShowSuccessAlert(true)
+
+                                // 3초 후 게임 상태 초기화 및 다음 단계 시작
+                                setTimeout(() => {
+                                    setShowSuccessAlert(false)
+                                    setGameStarted(false)
+                                    setGameWon(false)
+                                    setAttempts(0)
+                                    handleStartGame()
+                                }, 3000)
+                            }
+
+                            // 마지막으로 시도 결과 전송
+                            return fetch(`${API_BASE_URL}/attempt?user_id=${userId}&success=true`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                        })
+                        .catch(error => console.error('Failed to fetch status:', error))
+                } else {
+                    // 실패 시 API 호출
+                    fetch(`${API_BASE_URL}/attempt?user_id=${userId}&success=false`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                     })
+                        .then(() => {
+                            // 실패 후 상태 확인
+                            return fetch(`${API_BASE_URL}/status?user_id=${userId}`)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.eventFindingCloverParticipationStatus === true || data.eventFindingCloverAttemptsLeft === 0) {
+                                showConfirmModal(
+                                    '횟수를 모두 소진하였습니다\n내일 다시 도전해주세요',
+                                    () => navigate('/events')
+                                )
+                            }
+                        })
+                        .catch(error => console.error('Failed to update attempt:', error))
                 }
 
                 return newClover
@@ -71,12 +205,68 @@ export default function CloverGamePage() {
         })
 
         setClovers(updatedClovers)
-        setAttempts((prev) => prev + 1)
+        setAttempts(prev => prev + 1)
     }
 
     // 게임 시작 핸들러
-    const handleStartGame = () => {
-        setGameStarted(true)
+    const handleStartGame = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/init?user_id=${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            //const response = await fetch(`${API_BASE_URL}/status?user_id=18`);
+            const data = await response.json();
+            console.log(data)
+
+            if (data.eventFindingCloverParticipationStatus === true) {
+                showConfirmModal(
+                    '오늘은 이미 참여하셨습니다.',
+                    () => navigate('/events')
+                )
+                return
+            }
+
+            // current stage에 따라 클로버 개수 변경
+            if (data.eventFindingCloverCurrentStage === 1) {
+                setClovers(Array.from({ length: 16 }, (_, i) => ({
+                    id: i,
+                    isLucky: false,
+                    isFlipped: false,
+                })))
+            } else if (data.eventFindingCloverCurrentStage === 2) {
+                setClovers(Array.from({ length: 25 }, (_, i) => ({
+                    id: i,
+                    isLucky: false,
+                    isFlipped: false,
+                })))
+            } else if (data.eventFindingCloverCurrentStage === 3) {
+                setClovers(Array.from({ length: 36 }, (_, i) => ({
+                    id: i,
+                    isLucky: false,
+                    isFlipped: false,
+                })))
+            }
+
+            // 랜덤하게 하나의 클로버를 골드 네잎클로버 지정
+            const luckyIndex = Math.floor(Math.random() * clovers.length)
+            const newClovers = clovers.map((clover, index) =>
+                index === luckyIndex ? { ...clover, isLucky: true } : clover
+            )
+
+            console.log("newClovers : ", newClovers)
+            console.log("clovers : ", clovers)
+
+
+            setClovers(newClovers)
+            setGameStarted(true)
+            setGameWon(false)
+            setAttempts(0)
+        } catch (error) {
+            console.error('Failed to start game:', error)
+        }
     }
 
     // 게임 재시작 핸들러
@@ -85,6 +275,33 @@ export default function CloverGamePage() {
         setTimeout(() => {
             setGameStarted(true)
         }, 100)
+    }
+
+    // 친구 초대 후 한판 더 진행
+    const handleInviteFriend = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/init?user_id=${userId}&invited=true`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            if (response.ok) {
+                toast({
+                    title: "성공!",
+                    description: "친구 초대로 한 번 더 도전할 수 있습니다!",
+                })
+                // 게임 상태 초기화 후 자동으로 게임 시작
+                setGameStarted(false)
+                setGameWon(false)
+                setAttempts(0)
+                setTimeout(() => {
+                    handleStartGame()
+                }, 100)
+            }
+        } catch (error) {
+            console.error('Failed to invite friend:', error)
+        }
     }
 
     return (
@@ -96,7 +313,7 @@ export default function CloverGamePage() {
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                 </Link>
-                <h1 className="text-lg font-bold flex-1">클로버 찾기 게임</h1>
+                <h1 className="text-lg font-bold flex-1">골드 네잎 클로버 찾기 게임</h1>
             </header>
 
             {/* 메인 콘텐츠 */}
@@ -106,40 +323,38 @@ export default function CloverGamePage() {
                         <div className="w-20 h-20 bg-[#75CB3B]/20 rounded-full flex items-center justify-center mb-4">
                             <Clover className="h-10 w-10 text-[#00A949]" />
                         </div>
-                        <h2 className="text-xl font-bold text-[#5A3D2B] mb-2">행운의 세잎 클로버 찾기</h2>
+                        <h2 className="text-xl font-bold text-[#5A3D2B] mb-2">골드 네잎 클로버 찾기</h2>
                         <p className="text-sm text-gray-600 mb-6 max-w-xs">
-                            많은 네잎 클로버 중에서 행운의 세잎 클로버를 찾아보세요! 찾으면 특별한 보상이 기다립니다.
+                            많은 네잎 클로버 중에서 골드 네잎 클로버를 찾아보세요! 찾으면 특별한 보상이 기다립니다.
                         </p>
-                        <Button
-                            className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
-                            onClick={handleStartGame}
-                        >
-                            게임 시작하기
-                        </Button>
+                        <div className="flex gap-4">
+                            <Button
+                                className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                                onClick={handleStartGame}
+                            >
+                                게임 시작하기
+                            </Button>
+                            <Button
+                                className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                                onClick={handleInviteFriend}
+                            >
+                                친구 초대 후 한판 더 진행하기
+                            </Button>
+                        </div>
                     </div>
                 ) : (
                     <div className="space-y-4">
                         <div className="bg-white rounded-lg p-4 text-center">
                             <h2 className="text-lg font-bold text-[#5A3D2B] mb-2">
-                                {gameWon ? "축하합니다!" : "행운의 세잎 클로버를 찾아보세요!"}
+                                {gameWon ? "축하합니다!" : "골드 네잎 클로버를 찾아보세요!"}
                             </h2>
-                            <p className="text-sm text-gray-600">
-                                {gameWon ? `${attempts}번 만에 찾았습니다!` : "네잎 클로버 사이에 숨어있는 세잎 클로버를 찾아보세요."}
-                            </p>
-                            {gameWon && (
-                                <div className="mt-4">
-                                    <Button
-                                        className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
-                                        onClick={handleRestartGame}
-                                    >
-                                        다시 도전하기
-                                    </Button>
-                                </div>
-                            )}
                         </div>
 
                         {/* 클로버 그리드 */}
-                        <div className="grid grid-cols-4 gap-3">
+                        <div className={`grid gap-3 ${eventFindingCloverCurrentStage === 1 ? 'grid-cols-4' :
+                            eventFindingCloverCurrentStage === 2 ? 'grid-cols-5' :
+                                eventFindingCloverCurrentStage === 3 ? 'grid-cols-6' : 'grid-cols-4'
+                            }`}>
                             {clovers.map((clover) => (
                                 <button
                                     key={clover.id}
@@ -174,30 +389,46 @@ export default function CloverGamePage() {
                                 </button>
                             ))}
                         </div>
-
-                        {gameWon && (
-                            <div className="bg-white rounded-lg p-4 mt-4">
-                                <h3 className="font-bold text-[#5A3D2B] mb-2">획득한 보상</h3>
-                                <div className="flex items-center gap-3 p-3 bg-[#75CB3B]/10 rounded-lg">
-                                    <div className="w-12 h-12 bg-[#FFD700]/20 rounded-full flex items-center justify-center">
-                                        <Gift className="h-6 w-6 text-[#FFD700]" />
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-[#5A3D2B]">행운의 쿠폰 팩</p>
-                                        <p className="text-sm text-gray-600">랜덤 매장 할인 쿠폰 3장</p>
-                                    </div>
-                                </div>
-                                <Button className="w-full mt-3 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]">
-                                    보상 받기
-                                </Button>
-                            </div>
-                        )}
                     </div>
                 )}
             </div>
 
             {/* 하단 내비게이션 */}
             <BottomNavigation />
+            {isConfirmModalOpen && (
+                <div className="fixed inset-0 bg-gray-900 bg-opacity-20 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full text-center">
+                        {/* 줄바꿈 지원을 위해 whitespace-pre-line 적용 */}
+                        <p className="mb-6 text-lg text-gray-800 whitespace-pre-line">
+                            {confirmMessage}
+                        </p>
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                                onClick={() => {
+                                    onConfirmAction()
+                                    closeConfirmModal()
+                                }}
+                            >
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 성공 알림 */}
+            {showSuccessAlert && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 text-center">
+                        <h3 className="text-xl font-bold text-green-600 mb-2">축하합니다!</h3>
+                        <p className="text-gray-700 mb-4">
+                            다음 단계({nextStage}단계)로 진행합니다!
+                        </p>
+                    </div>
+                </div>
+            )}
+
         </main>
     )
 }

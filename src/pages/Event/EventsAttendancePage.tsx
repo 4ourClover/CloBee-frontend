@@ -3,24 +3,53 @@ import { Button } from "../../components/ui/button" // <-- 상대 경로로 수�
 import { Badge } from "../../components/ui/badge"   // <-- 상대 경로로 수정
 import {
     ChevronLeft,
+    ChevronRight,
     Check,
 } from "lucide-react"
 import { Link } from "react-router-dom" // <-- next/link → react-router-dom
 import BottomNavigation from "../../components/bottom-navigation"
-import { getTotalAttend, addAttend, EventsAttendDetail } from "../../api/event";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+
+import { getTotalAttend, addAttend } from "../../api/event";
+import { UserDetail } from '@/types/event';
 
 export default function AttendanceEventPage() {
-    const detail : EventsAttendDetail = {
+    const detail : UserDetail = {
         userId: 1, // 세션 로그인 불러와야 함
         month: String(new Date().getMonth() + 1).padStart(2, '0')
     };
+
     // 출석체크 상태 (예시 데이터)
     const [attendanceData, setAttendanceData] = useState<Record<number, boolean>>({ 1: true });
 
     // 현재 날짜 정보
     const currentDate = new Date()
+    const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth())
+    const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
     const currentDay = currentDate.getDate()
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+
+    // 선택된 월의 날짜 정보
+    const selectedDate = new Date(selectedYear, selectedMonth, 1);
+    const isCurrentMonth = selectedMonth === currentDate.getMonth() && selectedYear === currentDate.getFullYear();
+    const daysInSelectedMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate()
+
+    // 이전 달 정보
+    const previousMonth = selectedMonth === 0 ? 11 : selectedMonth - 1
+    const previousYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear
+    const previousMonthName = new Date(previousYear, previousMonth, 1).toLocaleString("ko-KR", { month: "long" })
+
+    // 다음 달 정보
+    const nextMonth = selectedMonth === 11 ? 0 : selectedMonth + 1
+    const nextYear = selectedMonth === 11 ? selectedYear + 1 : selectedYear
+    const canGoToNextMonth = !(nextMonth > currentDate.getMonth() && nextYear >= currentDate.getFullYear());
+
+    // 월 선택 핸들러
+    const handleMonthChange = (value: string) => {
+        const [year, month] = value.split("-").map(Number);
+        setSelectedYear(year);
+        setSelectedMonth(month);
+    }
 
     // 오늘 출석체크 여부
     const [todayChecked, setTodayChecked] = useState(attendanceData[currentDay] || false)
@@ -43,7 +72,54 @@ export default function AttendanceEventPage() {
 
     // 달력 데이터 생성
     const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+    // 이전 달로 이동
+    const goToPreviousMonth = () => {
+        if (selectedMonth === 0) {
+        setSelectedMonth(11)
+        setSelectedYear(selectedYear - 1)
+        } else {
+        setSelectedMonth(selectedMonth - 1)
+        }
+    }
+
+    // 다음 달로 이동
+    const goToNextMonth = () => {
+        if (selectedMonth === 11) {
+        setSelectedMonth(0)
+        setSelectedYear(selectedYear + 1)
+        } else {
+        setSelectedMonth(selectedMonth + 1)
+        }
+    }
+
+    // 최근 6개월 옵션 생성
+    const getMonthOptions = () => {
+        const options = []
+        let year = currentDate.getFullYear()
+        let month = currentDate.getMonth()
+
+        for (let i = 0; i < 6; i++) {
+        const date = new Date(year, month, 1)
+        const value = `${date.getFullYear()}-${date.getMonth()}`
+        const label = date.toLocaleString("ko-KR", { year: "numeric", month: "long" })
+
+        options.push({ value, label })
+
+        if (month === 0) {
+            month = 11
+            year--
+        } else {
+            month--
+        }
+        }
+
+        return options
+    }
+
+    const monthOptions = getMonthOptions();
     
+    // 출석 체크 상태 불러오기
     const fetchTotalAttend = async () => {
         try {
             const response = await getTotalAttend(detail);
@@ -100,6 +176,37 @@ export default function AttendanceEventPage() {
                         >
                             {todayChecked ? "오늘 출석완료" : "오늘 출석체크하기"}
                         </Button>
+                    </div>
+
+                    {/* 월 선택 */}
+                    <div className="flex items-center justify-between mb-4">
+                        <Select value={`${selectedYear}-${selectedMonth}`} onValueChange={handleMonthChange}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="월 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {monthOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+
+                        <div className="flex gap-2">
+                        <Button variant="outline" size="icon" onClick={goToPreviousMonth} className="h-8 w-8 p-0">
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={goToNextMonth}
+                            disabled={!canGoToNextMonth}
+                            className="h-8 w-8 p-0"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        </div>
                     </div>
 
                     {/* 달력 */}
