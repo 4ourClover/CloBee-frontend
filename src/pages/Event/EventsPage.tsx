@@ -22,7 +22,8 @@ import { getCardEvents } from "../../api/event";
 
 export default function EventsPage() {
     const [activeTab, setActiveTab] = useState("app")
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const [page, setPage] = useState(1);
 
     // 더미 데이터: 앱 이벤트
     const appEvents = [
@@ -60,33 +61,6 @@ export default function EventsPage() {
         },
     ]
 
-    // 더미 데이터: 카드사 이벤트
-    // const cardEvents = [
-    //     {
-    //         id: 1,
-    //         title: "네이버플러스 스토어",
-    //         description: "앱 첫 구매 할인 쿠폰, 쿠키 2개",
-    //         image: "/placeholder.svg?height=200&width=320",
-    //         discount: "10% 할인",
-    //         cookies: 2,
-    //     },
-    //     {
-    //         id: 2,
-    //         title: "카르나크",
-    //         description: "앱 첫 접속하면 쿠키 2개",
-    //         image: "/placeholder.svg?height=200&width=320",
-    //         discount: "게임 아이템 증정",
-    //         cookies: 2,
-    //     },
-    //     {
-    //         id: 3,
-    //         title: "신한카드 이벤트",
-    //         description: "신한카드로 결제 시 추가 할인",
-    //         image: "/placeholder.svg?height=200&width=320",
-    //         discount: "5% 추가 할인",
-    //         cookies: 1,
-    //     },
-    // ]
     const [cardEvents, setCardEvents] = useState<CardEvent[]>([]);
 
     // 주변 이벤트 매장 데이터 (예시)
@@ -110,11 +84,11 @@ export default function EventsPage() {
             const userDetail : UserDetail = {
                 userId: 1, // 세션 로그인 불러와야 함
             }
-            const response = await getCardEvents(userDetail);
-            console.log("response ", response.data)
+            const pageSize = 6;
+            const response = await getCardEvents(userDetail, pageSize, page);
             const data: CardEvent[] = response.data;
 
-            const parsed: CardEvent[] = data.map((event) => ({
+            const newData: CardEvent[] = data.map((event) => ({
                 eventInfoId: event.eventInfoId,
                 eventTitle: event.eventTitle,
                 eventDesc: event.eventDesc,
@@ -124,9 +98,9 @@ export default function EventsPage() {
                 eventStartDay: event.eventStartDay,
                 eventEndDay: event.eventEndDay
             }));
-            console.log(parsed)
+            // console.log(newData)
             
-            setCardEvents(parsed);
+            setCardEvents(prevData => [...prevData, ...newData]);
         } catch (err) {
             console.error(err);
         }
@@ -134,7 +108,19 @@ export default function EventsPage() {
 
     useEffect(() => {
         fetchCardEvents();
+    }, [page]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+                setPage(prevPage => prevPage + 1);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+    
 
     return (
         <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-hidden font-gmarket">

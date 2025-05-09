@@ -8,6 +8,10 @@ import { useToast } from "../hooks/use-toast"
 import rabbitClover from '../images/rabbit-clover.png';
 import axiosInstance from "../lib/axiosInstance"
 
+interface ErrorResponse {
+    errorMessage: string;
+}
+
 export default function ForgotPasswordPage() {
     const [phone, setPhone] = useState("")
     const [isSubmitted, setIsSubmitted] = useState(false)
@@ -26,7 +30,7 @@ export default function ForgotPasswordPage() {
             return
         }
 
-        const res = await axiosInstance.post("/user/temp-password", {phone:phone});
+        const res = await axiosInstance.post<ErrorResponse>("/user/temp-password", {phone:phone});
         if (res.status === 200){
             setIsSubmitted(true)
 
