@@ -8,13 +8,16 @@ import { useToast } from "../hooks/use-toast"
 import rabbitClover from '../images/rabbit-clover.png';
 import axiosInstance from "../lib/axiosInstance"
 
-interface ErrorResponse {
+interface ForgotEmailResponse {
+    email: string;
     errorMessage: string;
 }
 
-export default function ForgotPasswordPage() {
+export default function ForgotEmailPage() {
     const [phone, setPhone] = useState("")
     const [isSubmitted, setIsSubmitted] = useState(false)
+    
+    const [email, setEmail] = useState("");
     const { toast } = useToast()
     const navigate = useNavigate()
 
@@ -24,19 +27,25 @@ export default function ForgotPasswordPage() {
         if (!phone) {
             toast({
                 title: "휴대폰 번호 입력해주세요",
-                description: "임시 비밀번호를 받을 번호가 필요합니다.",
+                description: "가입한 이메일을 받을 번호가 필요합니다.",
                 variant: "destructive",
             })
             return
         }
 
-        const res = await axiosInstance.post<ErrorResponse>("/user/temp-password", {phone:phone});
+        const res = await axiosInstance.get<ForgotEmailResponse>("/user/find-email", {
+            params: {
+                phone: phone
+            }
+        });
+        
         if (res.status === 200){
             setIsSubmitted(true)
-
+            
+            setEmail(res.data.email)
             toast({
-                title: "임시 비밀번호 발송 완료",
-                description: `${phone}로 임시 비밀번호가 발송되었습니다.`,
+                title: "가입한 이메일 발송 완료",
+                description: `${phone}로 가입한 이메일이 발송되었습니다.`,
             })
         }else{
             toast({
@@ -68,10 +77,10 @@ export default function ForgotPasswordPage() {
                             className="rounded-full"
                         />
                     </div>
-                    <h1 className="text-xl font-bold text-[#00A949] mt-4">비밀번호 찾기</h1>
+                    <h1 className="text-xl font-bold text-[#00A949] mt-4">이메일 찾기</h1>
                     <p className="text-sm text-center text-[#5A3D2B]/80 mt-2 px-6 leading-relaxed">
                         가입하신 전화번호를 입력하시면
-                        <br />임시 비밀번호를 보내드립니다
+                        <br />가입된 이메일을 보여드립니다
                     </p>
                 </div>
 
@@ -96,7 +105,7 @@ export default function ForgotPasswordPage() {
                             type="submit"
                             className="w-full py-5 text-base font-medium bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] text-white rounded-full"
                         >
-                            임시 비밀번호 받기
+                            가입한 이메일 확인
                         </Button>
                     </form>
                 ) : (
@@ -105,9 +114,9 @@ export default function ForgotPasswordPage() {
                             <div className="w-16 h-16 bg-[#75CB3B]/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <PhoneCall className="h-8 w-8 text-[#00A949]" />
                             </div>
-                            <h2 className="text-lg font-bold text-[#5A3D2B] mb-2">메시지 발송 완료</h2>
-                            <p className="text-sm text-[#5A3D2B]/80 mb-1">{phone}로 임시 비밀번호가 발송되었습니다.</p>
-                            <p className="text-xs text-[#5A3D2B]/60">메시지를 확인 해주세요.</p>
+                            <h2 className="text-lg font-bold text-[#5A3D2B] mb-2">가입한 이메일 확인 완료</h2>
+                            <p className="text-sm text-[#5A3D2B]/80 mb-1">{phone}으로 가입한 이메일은 {email} 입니다.</p>
+                            
                         </div>
 
                         <Link to="/login">

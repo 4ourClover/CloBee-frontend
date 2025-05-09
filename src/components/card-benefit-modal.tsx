@@ -1,73 +1,66 @@
 import { Button } from "components/ui/button"
 import { X, ThumbsUp } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
-//import Image from "next/image"
+import { BenefitCard, Store } from "../types/store"
 
-interface Store {
-  id: number
-  name: string
-  distance: number
-  address: string
-  bestCard: string
-  discount: string
-}
+type CardBenefitModalProps = {
+  store: Store;
+  onClose: () => void;
+  benefitCards: BenefitCard[];
+  recommendedCards: BenefitCard[];
+};
 
-interface CardBenefitModalProps {
-  store: Store
-  onClose: () => void
-}
-
-export default function CardBenefitModal({ store, onClose }: CardBenefitModalProps) {
+export default function CardBenefitModal({ store, onClose, benefitCards, recommendedCards }: CardBenefitModalProps) {
   // 더미 데이터: 내 카드 혜택
-  const myCardBenefits = [
-    {
-      cardName: "신한카드 Deep Dream",
-      discount: "20%",
-      maxDiscount: "5,000원",
-      isRecommended: false,
-    },
-    {
-      cardName: "현대카드 The Green",
-      discount: "10%",
-      maxDiscount: "3,000원",
-      isRecommended: false,
-    },
-  ]
+  // const myCardBenefits = [
+  //   {
+  //     cardName: "신한카드 Deep Dream",
+  //     discount: "20%",
+  //     maxDiscount: "5,000원",
+  //     isRecommended: false,
+  //   },
+  //   {
+  //     cardName: "현대카드 The Green",
+  //     discount: "10%",
+  //     maxDiscount: "3,000원",
+  //     isRecommended: false,
+  //   },
+  // ]
 
-  // 더미 데이터: 추천 카드 혜택
-  const recommendedCards = [
-    {
-      cardName: store.bestCard,
-      discount: store.discount,
-      maxDiscount: "10,000원",
-      isRecommended: true,
-      image: "/placeholder.svg?height=200&width=320",
-    },
-    {
-      cardName: "삼성카드 taptap O",
-      discount: "25%",
-      maxDiscount: "8,000원",
-      isRecommended: true,
-      image: "/placeholder.svg?height=200&width=320",
-    },
-  ]
+  // // 더미 데이터: 추천 카드 혜택
+  // const recommendedCards = [
+  //   {
+  //     cardName: "신한카드",
+  //     discount: "30%",
+  //     maxDiscount: "10,000원",
+  //     isRecommended: true,
+  //     image: "/placeholder.svg?height=200&width=320",
+  //   },
+  //   {
+  //     cardName: "삼성카드 taptap O",
+  //     discount: "25%",
+  //     maxDiscount: "8,000원",
+  //     isRecommended: true,
+  //     image: "/placeholder.svg?height=200&width=320",
+  //   },
+  // ]
 
-  // 모든 카드 혜택 (내 카드 + 추천 카드)
-  const allCardBenefits = [...myCardBenefits, ...recommendedCards]
+  // // 모든 카드 혜택 (내 카드 + 추천 카드)
+  // const allCardBenefits = [...myCardBenefits, ...recommendedCards]
 
   // 혜택 순으로 정렬
-  const sortedBenefits = [...allCardBenefits].sort((a, b) => {
-    const discountA = Number.parseInt(a.discount.replace("%", ""))
-    const discountB = Number.parseInt(b.discount.replace("%", ""))
-    return discountB - discountA
-  })
+  // const sortedBenefits = [...allCardBenefits].sort((a, b) => {
+  //   const discountA = Number.parseInt(a.discount.replace("%", ""))
+  //   const discountB = Number.parseInt(b.discount.replace("%", ""))
+  //   return discountB - discountA
+  // })
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
       <div className="bg-white rounded-t-lg sm:rounded-lg w-full max-w-sm max-h-[80vh] overflow-hidden flex flex-col">
         {/* 헤더 */}
         <div className="p-3 border-b flex justify-between items-center">
-          <h2 className="font-bold text-lg text-[#5A3D2B]">{store.name} 혜택</h2>
+          <h2 className="font-bold text-lg text-[#5A3D2B]">{store.place_name} 혜택</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
@@ -76,7 +69,7 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
         {/* 내용 */}
         <div className="flex-1 overflow-auto">
           <div className="p-4 space-y-2">
-            <p className="text-sm text-[#5A3D2B]/70">{store.address}</p>
+            <p className="text-sm text-[#5A3D2B]/70">{store.address_name}</p>
             <div className="flex items-center">
               <span className="text-xs bg-[#75CB3B]/20 text-[#00A949] px-2 py-1 rounded-full">{store.distance}m</span>
             </div>
@@ -106,10 +99,10 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
                 <h3 className="font-medium text-[#5A3D2B] mb-2">최고 혜택 카드</h3>
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-lg text-[#00A949]">{store.bestCard}</p>
-                    <p className="text-sm text-[#5A3D2B]/70">최대 할인: {sortedBenefits[0].maxDiscount}</p>
+                    <p className="font-bold text-lg text-[#00A949]">{recommendedCards[0].card_name}</p>
+                    <p className="text-sm text-[#5A3D2B]/70">최대 할인: {recommendedCards[0].max_discount}</p>
                   </div>
-                  <div className="text-2xl font-bold text-[#00A949]">{store.discount}</div>
+                  <div className="text-2xl font-bold text-[#00A949]">{recommendedCards[0].discount}</div>
                 </div>
               </div>
 
@@ -117,7 +110,7 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
               <div className="space-y-3">
                 <h3 className="font-medium text-[#5A3D2B]">혜택 순위</h3>
                 <div className="space-y-2">
-                  {sortedBenefits.map((card, index) => (
+                  {benefitCards.map((card, index) => (
                     <div
                       key={index}
                       className={`flex items-center p-3 rounded-lg ${index === 0 ? "bg-[#75CB3B]/20 border border-[#75CB3B]/30" : "bg-gray-50"
@@ -128,9 +121,9 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
                       </div>
                       <div className="flex-1">
                         <p className={`font-medium ${index === 0 ? "text-[#00A949]" : "text-[#5A3D2B]"}`}>
-                          {card.cardName}
+                          {card.card_name}
                         </p>
-                        <p className="text-xs text-[#5A3D2B]/70">최대 {card.maxDiscount} 할인</p>
+                        <p className="text-xs text-[#5A3D2B]/70">최대 {card.max_discount} 할인</p>
                       </div>
                       <div className="text-lg font-bold text-[#00A949]">{card.discount}</div>
                     </div>
@@ -149,14 +142,15 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
                       fill
                       className="object-contain p-4"
                     /> */}
-                    {card.isRecommended && (
-                      <div className="absolute top-2 right-2 bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white text-xs px-2 py-1 rounded-full">
-                        추천
-                      </div>
-                    )}
+                    {/* {card.isRecommended && (
+                      
+                    )} */}
+                    <div className="absolute top-2 right-2 bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white text-xs px-2 py-1 rounded-full">
+                      추천
+                    </div>
                   </div>
                   <div className="p-4 space-y-3">
-                    <h3 className="font-medium text-[#5A3D2B]">{card.cardName}</h3>
+                    <h3 className="font-medium text-[#5A3D2B]">{card.card_name}</h3>
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="text-sm text-[#5A3D2B]/70">할인율</p>
@@ -164,7 +158,7 @@ export default function CardBenefitModal({ store, onClose }: CardBenefitModalPro
                       </div>
                       <div>
                         <p className="text-sm text-[#5A3D2B]/70">최대 할인</p>
-                        <p className="font-medium text-[#5A3D2B]">{card.maxDiscount}</p>
+                        <p className="font-medium text-[#5A3D2B]">{card.max_discount}</p>
                       </div>
                       <Button className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none">
                         신청하기

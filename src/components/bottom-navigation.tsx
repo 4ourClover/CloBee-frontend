@@ -10,6 +10,13 @@ interface BottomNavigationProps {
 export default function BottomNavigation({ floatingActionButton }: BottomNavigationProps) {
     const location = useLocation();
     const currentPath = location.pathname;
+    const isActive = [
+        "/events",
+        "/events/attendance",
+        "/events/invite",
+        "/events/clover",
+        "/events/coupon",
+    ].includes(currentPath);
 
     return (
         <div className="bg-white border-t py-1.5 px-4 flex justify-around items-center relative">
@@ -32,7 +39,7 @@ export default function BottomNavigation({ floatingActionButton }: BottomNavigat
                 </Button>
             </Link>
             <Link to="/events">
-                <Button variant="ghost" className={`flex flex-col items-center h-auto py-1 rounded-full ${currentPath === "/events" || "/events/attendance" || "/events/invite" || "/events/clover" || "/events/coupon" ? "text-[#00A949]" : ""}`}>
+                <Button variant="ghost" className={`flex flex-col items-center h-auto py-1 rounded-full ${isActive ? "text-[#00A949]" : ""}`}>
                     <Calendar className="h-6 w-6" />
                     <span className="text-[10px] mt-0.5">이벤트</span>
                 </Button>

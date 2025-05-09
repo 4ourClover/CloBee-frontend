@@ -45,14 +45,20 @@ function App() {
           <PublicOnlyRoute>
             <LoginPage />
           </PublicOnlyRoute>
+
         
         } />
-       <Route path="/forgot-password" element={
+       
+        <Route path="/forgot-password" element={
+
           <PublicOnlyRoute>
             <ForgotPasswordPage />
           </PublicOnlyRoute>
         } />
-          <Route path="/forgot-email" element={
+
+
+
+        <Route path="/forgot-email" element={
           <PublicOnlyRoute>
             <ForgotEmailPage />
           </PublicOnlyRoute>
@@ -67,6 +73,7 @@ function App() {
         <Route path="/events/invite" element={<EventsInvitePage />} />
         <Route path="/events/clover" element={<EventsCloverPage />} />
         <Route path="/events/coupon" element={<EventsCouponPage />} />
+
       </Routes>
     </div>
   );
@@ -89,7 +96,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
 
   if (allowed === null) return null; // 로딩 중엔 아무것도 렌더링하지 않음
   if (!allowed) return <Navigate to="/login" replace />;
-  
+
   return children;
 };
 
@@ -106,6 +113,7 @@ const PublicOnlyRoute = ({ children }: { children: React.ReactElement }) => {
       });
   }, []);
 
+
   if (isAuthenticated === null) return null; 
 
   if (isAuthenticated) {
@@ -114,3 +122,5 @@ const PublicOnlyRoute = ({ children }: { children: React.ReactElement }) => {
 
   return children; 
 };
+
+
