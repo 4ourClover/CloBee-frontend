@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useState } from "react"
 import { Switch } from "../../components/ui/switch"
 import { Button } from "../../components/ui/button"
 import { useNavigate } from "react-router-dom"
@@ -22,7 +22,8 @@ import { getCardEvents } from "../../api/event";
 
 export default function EventsPage() {
     const [activeTab, setActiveTab] = useState("app")
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const [page, setPage] = useState(1);
 
     // 더미 데이터: 앱 이벤트
     const appEvents = [
@@ -60,33 +61,6 @@ export default function EventsPage() {
         },
     ]
 
-    // 더미 데이터: 카드사 이벤트
-    // const cardEvents = [
-    //     {
-    //         id: 1,
-    //         title: "네이버플러스 스토어",
-    //         description: "앱 첫 구매 할인 쿠폰, 쿠키 2개",
-    //         image: "/placeholder.svg?height=200&width=320",
-    //         discount: "10% 할인",
-    //         cookies: 2,
-    //     },
-    //     {
-    //         id: 2,
-    //         title: "카르나크",
-    //         description: "앱 첫 접속하면 쿠키 2개",
-    //         image: "/placeholder.svg?height=200&width=320",
-    //         discount: "게임 아이템 증정",
-    //         cookies: 2,
-    //     },
-    //     {
-    //         id: 3,
-    //         title: "신한카드 이벤트",
-    //         description: "신한카드로 결제 시 추가 할인",
-    //         image: "/placeholder.svg?height=200&width=320",
-    //         discount: "5% 추가 할인",
-    //         cookies: 1,
-    //     },
-    // ]
     const [cardEvents, setCardEvents] = useState<CardEvent[]>([]);
 
     // 주변 이벤트 매장 데이터 (예시)
@@ -105,16 +79,20 @@ export default function EventsPage() {
         },
     ]
 
+    const [isFetching, setIsFetching] = useState(false);
+
     const fetchCardEvents = async () => {
+        if (isFetching) return; // 중복 방지
+        setIsFetching(true);
         try {
-            const userDetail : UserDetail = {
-                userId: 1, // 세션 로그인 불러와야 함
-            }
-            const response = await getCardEvents(userDetail);
-            console.log("response ", response.data)
+            const userDetail: UserDetail = {
+                userId: 1 // 세션 받아와야 함
+            };
+            const pageSize = 6;
+            const response = await getCardEvents(userDetail, pageSize, page);
             const data: CardEvent[] = response.data;
 
-            const parsed: CardEvent[] = data.map((event) => ({
+            const newData: CardEvent[] = data.map((event) => ({
                 eventInfoId: event.eventInfoId,
                 eventTitle: event.eventTitle,
                 eventDesc: event.eventDesc,
@@ -124,18 +102,48 @@ export default function EventsPage() {
                 eventStartDay: event.eventStartDay,
                 eventEndDay: event.eventEndDay
             }));
-            console.log(parsed)
+            // console.log(newData)
             
-            setCardEvents(parsed);
+            setCardEvents(prevData => [...prevData, ...newData]);
         } catch (err) {
             console.error(err);
+        } finally {
+            setIsFetching(false);
         }
     }
 
     useEffect(() => {
         fetchCardEvents();
-    }, []);
+    }, [page]);
 
+    useEffect(() => {
+        if (activeTab !== "card") return;
+        
+        const el = document.getElementById("card-events-scroll");
+        if (!el) return;
+        console.log("hello", 111);
+
+        const handleScroll = () => {
+            const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
+
+            if (nearBottom) {
+                setPage(prev => prev + 1);
+            }
+
+            console.log("scrollTop", el.scrollTop);
+            console.log("clientHeight", el.clientHeight);
+            console.log("scrollHeight", el.scrollHeight);
+            console.log("page", page);
+        };
+        console.log("scrollHeight", el.scrollHeight);
+        console.log("clientHeight", el.clientHeight);
+        console.log("isScrollable?", el.scrollHeight > el.clientHeight);
+        console.log("hello", 222);
+
+        el.addEventListener("scroll", handleScroll);
+        return () => el.removeEventListener("scroll", handleScroll);
+    }, [activeTab]);
+    
     return (
         <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-hidden font-gmarket">
             {/* 헤더 */}
@@ -230,7 +238,7 @@ export default function EventsPage() {
 
                 {/* 카드사 이벤트 콘텐츠 */}
                 <TabsContent value="card" className="flex-1 overflow-auto p-0 m-0 data-[state=inactive]:hidden">
-                    <div className="bg-[#F5FAF0] min-h-full flex flex-col">
+                    <div id="card-events-scroll" className="bg-[#F5FAF0] flex flex-col h-[90vh] overflow-y-auto">
                         <div className="p-4 border-b bg-white">
                             <div className="flex justify-between items-center">
                                 <h2 className="font-bold text-[#5A3D2B]">전체</h2>
@@ -241,7 +249,7 @@ export default function EventsPage() {
                             </div>
                         </div>
 
-                        <div className="p-4 space-y-4 flex-1 overflow-auto">
+                        <div className="p-4 space-y-4 flex-1">
                             {cardEvents.map((event) => (
                                 <div key={event.eventInfoId} className={`relative bg-white rounded-lg overflow-hidden shadow-sm ${
                                         event.haveCard ? 'border border-amber-400' : 'border'

@@ -8,6 +8,11 @@ import { useToast } from "../hooks/use-toast"
 import rabbitClover from '../images/rabbit-clover.png';
 import axiosInstance from "../lib/axiosInstance"
 
+interface ForgotEmailResponse {
+    email: string;
+    errorMessage: string;
+}
+
 export default function ForgotEmailPage() {
     const [phone, setPhone] = useState("")
     const [isSubmitted, setIsSubmitted] = useState(false)
@@ -28,12 +33,12 @@ export default function ForgotEmailPage() {
             return
         }
 
-        const res = await axiosInstance.get("/user/find-email", {
+        const res = await axiosInstance.get<ForgotEmailResponse>("/user/find-email", {
             params: {
-              phone: phone
+                phone: phone
             }
-          });
-          
+        });
+        
         if (res.status === 200){
             setIsSubmitted(true)
             

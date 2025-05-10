@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import {
@@ -37,24 +37,40 @@ const CategoryItem = ({ icon, label, color, category, selected, onClick }: Categ
 );
 
 interface CategoryBarProps {
+  selectedCategory: StoreCategory | null; // ✅ null도 전달
   onCategorySelect: (category: StoreCategory | null) => void; // ✅ null도 전달
 }
 
-export default function CategoryBar({ onCategorySelect }: CategoryBarProps) {
+export default function CategoryBar({ selectedCategory, onCategorySelect }: CategoryBarProps) {
   const [selected, setSelected] = useState<StoreCategory | null>(null);
 
-  const handleClick = (category: StoreCategory) => {
-    if (selected === category) {
-      setSelected(null); // ✅ 다시 누르면 해제
-      onCategorySelect(null);
-    } else {
-      setSelected(category);
-      onCategorySelect(category);
+  // const handleClick = (category: StoreCategory) => {
+  //   if (selected === category) {
+  //     setSelected(null); // ✅ 다시 누르면 해제
+  //     onCategorySelect(null);
+  //   } else {
+  //     setSelected(category);
+  //     onCategorySelect(category);
+  //   }
+  // };
+
+  // ✅ useCallback으로 감싸 함수 재사용
+  const handleClick = useCallback((category: StoreCategory | null) => {
+    setSelected(category);
+    onCategorySelect(category);
+  }, [onCategorySelect]);
+
+  useEffect(() => {
+
+    // 상위 컴포넌트에서 전달된 selectedCategory가 변경되면 실행
+    if (selectedCategory !== selected) {
+      handleClick(selectedCategory);
     }
-  };
+  }, [selectedCategory, selected, handleClick]); // 의존성 배열에 selected와 handleClick 추가
+
 
   return (
-    <div className="w-full bg-transparent py-1.5 absolute top-[40px] z-10 left-0 max-w-sm mx-auto right-0">
+    <div className="w-full bg-transparent py-1.5 absolute top-[40px] z-10 left-0 max-w-md mx-auto right-0">
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex px-2 py-0.5">
           <CategoryItem icon={<Utensils size={16} />} label="음식점" category="FD6" color={categoryConfig["FD6"].color} selected={selected === "FD6"} onClick={handleClick} />

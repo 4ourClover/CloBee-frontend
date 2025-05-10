@@ -7,4 +7,13 @@ export const getTotalAttend = (data: UserDetail) => api.get(`/event/getTotalAtte
 export const addAttend = (data: UserDetail) => api.post('/event/addAttend', data);
 
 // 카드사 이벤트
-export const getCardEvents = (data: UserDetail) => api.get<CardEvent[]>(`/event/getCardEvent?userId=${data.userId}`);
+//export const getCardEvents = (data: UserDetail) => api.get<CardEvent[]>(`/event/getCardEvent?userId=${data.userId}`);
+export const getCardEvents = (userDetail: UserDetail, size: number, pageNumber: number) => {
+  return api.get<CardEvent[]>('/event/getCardEvent', {
+      params: {
+          userId: userDetail.userId,
+          pageSize: size,
+          pageNumber: pageNumber
+      }
+  });
+};

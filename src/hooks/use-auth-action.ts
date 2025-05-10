@@ -8,6 +8,11 @@ interface IUseAuth {
     logout: () => void;
 }
 
+interface TokenResponse {
+    access: string;
+    refresh: string;
+}
+
 export const useAuthActions = (): IUseAuth => {
     const navigate = useNavigate();
 
@@ -18,7 +23,7 @@ export const useAuthActions = (): IUseAuth => {
                 password,
             });
             if (response.status === 200) {
-                const { access, refresh } = response.data;
+                const { access, refresh } = response.data as TokenResponse;
                 console.log(autoLogin)
                 if (autoLogin) {
                     Cookies.set("accessToken", access, { expires: 7 });
@@ -26,7 +31,7 @@ export const useAuthActions = (): IUseAuth => {
                 }else{
                     Cookies.set("accessToken", access, { expires: 1 });
                 }
-                    
+                
                 navigate("/map");
             }
         } catch (error) {
