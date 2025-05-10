@@ -121,24 +121,14 @@ export default function EventsPage() {
         
         const el = document.getElementById("card-events-scroll");
         if (!el) return;
-        console.log("hello", 111);
-
+        
         const handleScroll = () => {
             const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
 
             if (nearBottom) {
                 setPage(prev => prev + 1);
             }
-
-            console.log("scrollTop", el.scrollTop);
-            console.log("clientHeight", el.clientHeight);
-            console.log("scrollHeight", el.scrollHeight);
-            console.log("page", page);
         };
-        console.log("scrollHeight", el.scrollHeight);
-        console.log("clientHeight", el.clientHeight);
-        console.log("isScrollable?", el.scrollHeight > el.clientHeight);
-        console.log("hello", 222);
 
         el.addEventListener("scroll", handleScroll);
         return () => el.removeEventListener("scroll", handleScroll);
