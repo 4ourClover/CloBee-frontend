@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useState } from "react"
 import { Switch } from "../../components/ui/switch"
 import { Button } from "../../components/ui/button"
 import { useNavigate } from "react-router-dom"
@@ -79,11 +79,15 @@ export default function EventsPage() {
         },
     ]
 
+    const [isFetching, setIsFetching] = useState(false);
+
     const fetchCardEvents = async () => {
+        if (isFetching) return; // 중복 방지
+        setIsFetching(true);
         try {
-            const userDetail : UserDetail = {
-                userId: 1, // 세션 로그인 불러와야 함
-            }
+            const userDetail: UserDetail = {
+                userId: 1 // 세션 받아와야 함
+            };
             const pageSize = 6;
             const response = await getCardEvents(userDetail, pageSize, page);
             const data: CardEvent[] = response.data;
@@ -103,6 +107,8 @@ export default function EventsPage() {
             setCardEvents(prevData => [...prevData, ...newData]);
         } catch (err) {
             console.error(err);
+        } finally {
+            setIsFetching(false);
         }
     }
 
@@ -111,17 +117,33 @@ export default function EventsPage() {
     }, [page]);
 
     useEffect(() => {
+        if (activeTab !== "card") return;
+        
+        const el = document.getElementById("card-events-scroll");
+        if (!el) return;
+        console.log("hello", 111);
+
         const handleScroll = () => {
-            if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
-                setPage(prevPage => prevPage + 1);
+            const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
+
+            if (nearBottom) {
+                setPage(prev => prev + 1);
             }
+
+            console.log("scrollTop", el.scrollTop);
+            console.log("clientHeight", el.clientHeight);
+            console.log("scrollHeight", el.scrollHeight);
+            console.log("page", page);
         };
+        console.log("scrollHeight", el.scrollHeight);
+        console.log("clientHeight", el.clientHeight);
+        console.log("isScrollable?", el.scrollHeight > el.clientHeight);
+        console.log("hello", 222);
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+        el.addEventListener("scroll", handleScroll);
+        return () => el.removeEventListener("scroll", handleScroll);
+    }, [activeTab]);
     
-
     return (
         <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-hidden font-gmarket">
             {/* 헤더 */}
@@ -216,7 +238,7 @@ export default function EventsPage() {
 
                 {/* 카드사 이벤트 콘텐츠 */}
                 <TabsContent value="card" className="flex-1 overflow-auto p-0 m-0 data-[state=inactive]:hidden">
-                    <div className="bg-[#F5FAF0] min-h-full flex flex-col">
+                    <div id="card-events-scroll" className="bg-[#F5FAF0] flex flex-col h-[90vh] overflow-y-auto">
                         <div className="p-4 border-b bg-white">
                             <div className="flex justify-between items-center">
                                 <h2 className="font-bold text-[#5A3D2B]">전체</h2>
@@ -227,7 +249,7 @@ export default function EventsPage() {
                             </div>
                         </div>
 
-                        <div className="p-4 space-y-4 flex-1 overflow-auto">
+                        <div className="p-4 space-y-4 flex-1">
                             {cardEvents.map((event) => (
                                 <div key={event.eventInfoId} className={`relative bg-white rounded-lg overflow-hidden shadow-sm ${
                                         event.haveCard ? 'border border-amber-400' : 'border'
