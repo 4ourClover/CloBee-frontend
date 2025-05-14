@@ -150,22 +150,21 @@ export default function MapPage() {
                     // }
 
                     // Kakao Maps SDK 로드 완료 후에 지도 초기화
-                    if (window.kakao?.maps?.load) {
-                        window.kakao.maps.load(() => {
-                            //맵 생성
-                            const options = {
-                                center: new window.kakao.maps.LatLng(lat, lng),
-                                level: 3,
-                            };
-                            const map = new window.kakao.maps.Map(container, options);
 
-                            kakaoMapRef.current = map; // 지도 인스턴스를 ref에 저장
+                    window.kakao.maps.load(() => {
+                        console.log("Kakao Maps SDK 로드 완료");
+                        //맵 생성
+                        const options = {
+                            center: new window.kakao.maps.LatLng(lat, lng),
+                            level: 3,
+                        };
+                        const map = new window.kakao.maps.Map(container, options);
 
-                            loadKakaoMap(lat, lng); // 현재 위치로 지도 로드
-                        });
-                    } else {
-                        console.error("Kakao Maps SDK 로드 실패");
-                    }
+                        kakaoMapRef.current = map; // 지도 인스턴스를 ref에 저장
+
+                        loadKakaoMap(lat, lng); // 현재 위치로 지도 로드
+                    });
+
                 },
                 (error) => {
                     // 실패 시: 에러 처리 및 기본 위치로 지도 로드
