@@ -143,6 +143,12 @@ export default function MapPage() {
                         return;
                     }
 
+                    if (!window.kakao?.maps) {
+                        console.error("Kakao Maps API가 로드되지 않았습니다.");
+                        setTimeout(() => loadKakaoMap(lat, lng), 500);
+                        return;
+                    }
+
                     //맵 생성
                     const options = {
                         center: new window.kakao.maps.LatLng(lat, lng),
@@ -184,11 +190,6 @@ export default function MapPage() {
 
     // 지도 로드 함수 (위도, 경도 받아서 처리)
     const loadKakaoMap = useCallback((lat: number, lng: number) => {
-        if (!window.kakao?.maps) {
-            console.error("Kakao Maps API가 로드되지 않았습니다.");
-            setTimeout(() => loadKakaoMap(lat, lng), 500);
-            return;
-        }
 
         // 현재 위치 마커
         const currentPosition = new window.kakao.maps.LatLng(lat, lng);
