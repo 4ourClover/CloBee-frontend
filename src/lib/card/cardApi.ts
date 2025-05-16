@@ -1,11 +1,12 @@
 import axios from "axios"
+import api from '../../api/index';
 import type { CardPageDTO, CardBenefitDetail, CardListDTO, UserCardPerformanceDetail, UserCardListDTO } from "./cardTypes"
 
 // fetchAllCards 함수 수정 - 페이지 인덱스 조정 및 에러 처리 개선
 export const fetchAllCards = async (cardType: string, page: number, size: number): Promise<CardPageDTO> => {
     try {
         console.log("API 호출:", { cardType, page, size })
-        const response = await axios.get<CardPageDTO>("http://localhost:8080/api/card/getCardList", {
+        const response = await api.get<CardPageDTO>("/card/getCardList", {
             params: { cardType, page, size },
         })
         console.log("API 응답:", response.data)
@@ -18,7 +19,7 @@ export const fetchAllCards = async (cardType: string, page: number, size: number
 }
 
 export const fetchCardDetail = async (cardInfoId: number): Promise<CardBenefitDetail[]> => {
-    const response = await axios.get<CardBenefitDetail[]>("http://localhost:8080/api/card/getCardDetail", {
+    const response = await api.get<CardBenefitDetail[]>("/card/getCardDetail", {
         params: { cardInfoId },
     })
     return response.data
@@ -27,7 +28,7 @@ export const fetchCardDetail = async (cardInfoId: number): Promise<CardBenefitDe
 // applyCard 함수를 컨트롤러 응답 형식에 맞게 수정
 export const applyCard = async (cardInfoId: number, cardBrand: number): Promise<string> => {
     try {
-        const response = await axios.get<string>("http://localhost:8080/api/card/apply", {
+        const response = await api.get<string>("/card/apply", {
             params: { cardInfoId, cardBrand },
         })
 
@@ -43,7 +44,7 @@ export const applyCard = async (cardInfoId: number, cardBrand: number): Promise<
 // 내 카드 목록 가져오기 함수 추가
 
 export const fetchMyCards = async (userId: number): Promise<UserCardListDTO[]> => {
-    const response = await axios.get<UserCardListDTO[]>("http://localhost:8080/api/card/getMyCardList", {
+    const response = await api.get<UserCardListDTO[]>("/card/getMyCardList", {
         params: { userId },
     })
     return response.data
@@ -67,7 +68,7 @@ export const fetchCardPerformance = async (
 
         console.log("API params:", params)
 
-        const response = await axios.get<UserCardPerformanceDetail>("http://localhost:8080/api/card/getPerformance", { params })
+        const response = await api.get<UserCardPerformanceDetail>("/card/getPerformance", { params })
         console.log("API response:", response.data)
 
         // 응답이 없거나 비어있는 경우 기본값 반환
@@ -100,7 +101,7 @@ export const fetchCardPerformance = async (
 export const searchCards = async (cardName: string): Promise<CardListDTO[]> => {
     try {
         console.log("검색 API 호출:", { cardName })
-        const response = await axios.get<CardListDTO[]>("http://localhost:8080/api/card/search", {
+        const response = await api.get<CardListDTO[]>("/card/search", {
             params: { cardName },
         })
         console.log("검색 API 응답:", response.data)
@@ -115,7 +116,7 @@ export const searchCards = async (cardName: string): Promise<CardListDTO[]> => {
 // 내 카드 추가하기 함수 추가
 export const addUserCard = async (userId: number, cardInfoId: number, userCardType: number): Promise<string> => {
     try {
-        const response = await axios.post<string>("http://localhost:8080/api/card/addCard", {
+        const response = await api.post<string>("/card/addCard", {
             userId,
             cardInfoId,
             userCardType,
@@ -129,7 +130,7 @@ export const addUserCard = async (userId: number, cardInfoId: number, userCardTy
 
 // 내 카드 삭제하기 함수 추가
 export const deleteUserCard = async (userId: number, cardInfoId: number): Promise<string> => {
-    const response = await axios.delete<string>("http://localhost:8080/api/card/delCard", {
+    const response = await api.delete<string>("/card/delCard", {
         params: { userId, cardInfoId },
     })
     return response.data
