@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import Cookies from "js-cookie";
 
-interface IUseAuth {
+export interface IUseAuth {
     login: (email: string, password: string, autoLogin: boolean) => Promise<{ success: boolean, error?: string }>;
     logout: () => void;
 }
