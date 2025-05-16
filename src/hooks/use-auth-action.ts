@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 
 interface IUseAuth {
-    login: (email: string, password: string, autoLogin: boolean) => Promise<void>;
+    login: (email: string, password: string, autoLogin: boolean) => Promise<{ success: boolean, error?: string }>;
     logout: () => void;
 }
 
@@ -33,9 +33,12 @@ export const useAuthActions = (): IUseAuth => {
                 }
                 
                 navigate("/map");
+                return { success: true };
             }
+            return { success: false, error: "로그인에 실패했습니다." };
         } catch (error) {
             console.error("Login error:", error);
+            return { success: false, error: "이메일 또는 비밀번호가 일치하지 않습니다." };
         }
     };
 

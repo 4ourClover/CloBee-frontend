@@ -14,7 +14,7 @@ import { useCurrentUser } from "../../hooks/use-current-user"
 
 
 // API URL 상수 정의
-const API_BASE_URL = 'http://localhost:8080/event/findClover'
+const API_BASE_URL = 'http://localhost:8080/api/event/findClover'
 
 export default function CloverGamePage() {
     const [clovers, setClovers] = useState<Array<{ id: number; isLucky: boolean; isFlipped: boolean }>>([])
