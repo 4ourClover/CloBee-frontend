@@ -1,4 +1,4 @@
-import axiosInstance from "../lib/axiosInstance";
+import axiosInstance from "../api/axios/axiosInstance";
 import { useNavigate } from "react-router-dom";
 
 import Cookies from "js-cookie";
