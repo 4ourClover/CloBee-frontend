@@ -18,12 +18,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/pop
 import BottomNavigation from "../../components/bottom-navigation"
 import { CardEvent, UserDetail } from "@/types/event";
 
+import { useCurrentUser } from "../../hooks/use-current-user"
 import { getCardEvents } from "../../api/event";
 
 export default function EventsPage() {
     const [activeTab, setActiveTab] = useState("app")
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
+    const user = useCurrentUser()
+    const userId = user?.userId
 
     // 더미 데이터: 앱 이벤트
     const appEvents = [

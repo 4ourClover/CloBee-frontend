@@ -41,13 +41,6 @@ const WelcomePage: React.FC = () => {
                             회원가입
                         </Link>
                     </div>
-
-                    {/* 로그인 없이 지도로 이동 */}
-                    <Link to="/map" className="w-full block mt-4">
-                        <button className="w-full text-[#00A949] hover:text-[#009149] underline underline-offset-4">
-                            로그인 없이 지도 보기
-                        </button>
-                    </Link>
                 </div>
             </div>
         </main>
