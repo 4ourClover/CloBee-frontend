@@ -3,6 +3,7 @@ export type CardListDTO = {
     cardRank: number
     cardName: string
     cardBrand: string
+    cardBrandName: string
     cardDomesticAnnualFee: number
     cardGlobalAnnualFee: number
     cardType: number
@@ -55,6 +56,7 @@ export type UserCardListDTO = {
     cardRank: number
     cardName: string
     cardBrand: string
+    cardBrandName: string;
     cardDomesticAnnualFee: number
     cardGlobalAnnualFee: number
     cardType: number

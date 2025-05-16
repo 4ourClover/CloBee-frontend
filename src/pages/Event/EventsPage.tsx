@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useLayoutEffect, useState } from "react"
 import { Switch } from "../../components/ui/switch"
 import { Button } from "../../components/ui/button"
 import { useNavigate } from "react-router-dom"
@@ -17,6 +17,7 @@ import { Badge } from "../../components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover"
 import BottomNavigation from "../../components/bottom-navigation"
 import { CardEvent, UserDetail } from "@/types/event";
+
 import { useCurrentUser } from "../../hooks/use-current-user"
 import { getCardEvents } from "../../api/event";
 
@@ -26,7 +27,7 @@ export default function EventsPage() {
     const [page, setPage] = useState(1);
     const user = useCurrentUser()
     const userId = user?.userId
-    
+
     // 더미 데이터: 앱 이벤트
     const appEvents = [
         {
@@ -63,33 +64,7 @@ export default function EventsPage() {
         },
     ]
 
-    // 더미 데이터: 카드사 이벤트
-    const cardEvents = [
-        {
-            id: 1,
-            title: "네이버플러스 스토어",
-            description: "앱 첫 구매 할인 쿠폰, 쿠키 2개",
-            image: "/placeholder.svg?height=200&width=320",
-            discount: "10% 할인",
-            cookies: 2,
-        },
-        {
-            id: 2,
-            title: "카르나크",
-            description: "앱 첫 접속하면 쿠키 2개",
-            image: "/placeholder.svg?height=200&width=320",
-            discount: "게임 아이템 증정",
-            cookies: 2,
-        },
-        {
-            id: 3,
-            title: "신한카드 이벤트",
-            description: "신한카드로 결제 시 추가 할인",
-            image: "/placeholder.svg?height=200&width=320",
-            discount: "5% 추가 할인",
-            cookies: 1,
-        },
-    ]
+    const [cardEvents, setCardEvents] = useState<CardEvent[]>([]);
 
     // 주변 이벤트 매장 데이터 (예시)
     const nearbyEventStores = [
@@ -107,6 +82,61 @@ export default function EventsPage() {
         },
     ]
 
+    const [isFetching, setIsFetching] = useState(false);
+
+    const fetchCardEvents = async () => {
+        if (isFetching) return; // 중복 방지
+        setIsFetching(true);
+        try {
+            const userDetail: UserDetail = {
+                userId: 1 // 세션 받아와야 함
+            };
+            const pageSize = 6;
+            const response = await getCardEvents(userDetail, pageSize, page);
+            const data: CardEvent[] = response.data;
+
+            const newData: CardEvent[] = data.map((event) => ({
+                eventInfoId: event.eventInfoId,
+                eventTitle: event.eventTitle,
+                eventDesc: event.eventDesc,
+                eventCardUrl : event.eventCardUrl,
+                eventCardtype: event.eventCardtype,
+                haveCard: event.haveCard,
+                eventStartDay: event.eventStartDay,
+                eventEndDay: event.eventEndDay
+            }));
+            // console.log(newData)
+            
+            setCardEvents(prevData => [...prevData, ...newData]);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsFetching(false);
+        }
+    }
+
+    useEffect(() => {
+        fetchCardEvents();
+    }, [page]);
+
+    useEffect(() => {
+        if (activeTab !== "card") return;
+        
+        const el = document.getElementById("card-events-scroll");
+        if (!el) return;
+        
+        const handleScroll = () => {
+            const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
+
+            if (nearBottom) {
+                setPage(prev => prev + 1);
+            }
+        };
+
+        el.addEventListener("scroll", handleScroll);
+        return () => el.removeEventListener("scroll", handleScroll);
+    }, [activeTab]);
+    
     return (
         <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-hidden font-gmarket">
             {/* 헤더 */}
@@ -201,7 +231,7 @@ export default function EventsPage() {
 
                 {/* 카드사 이벤트 콘텐츠 */}
                 <TabsContent value="card" className="flex-1 overflow-auto p-0 m-0 data-[state=inactive]:hidden">
-                    <div className="bg-[#F5FAF0] min-h-full flex flex-col">
+                    <div id="card-events-scroll" className="bg-[#F5FAF0] flex flex-col h-[90vh] overflow-y-auto">
                         <div className="p-4 border-b bg-white">
                             <div className="flex justify-between items-center">
                                 <h2 className="font-bold text-[#5A3D2B]">전체</h2>
@@ -212,26 +242,41 @@ export default function EventsPage() {
                             </div>
                         </div>
 
-                        <div className="p-4 space-y-4 flex-1 overflow-auto">
+                        <div className="p-4 space-y-4 flex-1">
                             {cardEvents.map((event) => (
-                                <div key={event.id} className="bg-white border rounded-lg overflow-hidden shadow-sm">
-                                    <div className="relative h-40">
-                                        <img src={event.image || "/placeholder.svg"} alt={event.title} className="w-full h-full object-cover" />
-                                    </div>
+                                <div key={event.eventInfoId} className={`relative bg-white rounded-lg overflow-hidden shadow-sm ${
+                                        event.haveCard ? 'border border-amber-400' : 'border'
+                                    }`}
+                                    onClick={() => {window.location.href=`${event.eventCardUrl}`}}>
+                                    {/* <div className="relative h-40">
+                                        <img src={event.eventImage || "/placeholder.svg"} alt={event.eventTitle} className="w-full h-full object-cover" />
+                                    </div> */}
+                                    {event.haveCard && (
+                                        <div className="absolute top-2 right-2">
+                                            <Badge className="bg-amber-400 hover:bg-amber-400 text-amber-900 border-none font-medium">
+                                            내 카드 혜택
+                                            </Badge>
+                                        </div>
+                                    )}
                                     <div className="p-4">
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center mb-3">
+                                                <span className="text-sm text-gray-500">{event.eventCardtype}</span>
+                                            </div>
+                                        </div>
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <h3 className="font-bold text-lg text-[#5A3D2B]">{event.title}</h3>
-                                                <p className="text-sm text-gray-500 mt-1">{event.description}</p>
+                                                <h3 className="font-bold text-lg text-[#5A3D2B]">{event.eventTitle}</h3>
+                                                <p className="text-sm text-gray-500 mt-1">{event.eventDesc}</p>
                                             </div>
-                                            <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">{event.discount}</Badge>
+                                            {/* <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">{event.event}</Badge> */}
                                         </div>
                                         <div className="flex justify-between items-center mt-4">
                                             <div className="flex items-center">
-                                                <span className="text-sm text-gray-500">앱 첫 접속하면</span>
-                                                <span className="text-[#00A949] font-medium ml-1">쿠키 {event.cookies}개</span>
+                                                <span className="text-sm text-gray-500">{event.eventStartDay} ~ {event.eventEndDay}</span>
+                                                {/* <span className="text-[#00A949] font-medium ml-1">쿠키 {event.cookies}개</span> */}
                                             </div>
-                                            <Button className="bg-[#4CD964] hover:bg-[#3BC953] text-white border-none">쿠키받기</Button>
+                                            {/* <Button className="bg-[#4CD964] hover:bg-[#3BC953] text-white border-none">쿠키받기</Button> */}
                                         </div>
                                     </div>
                                 </div>

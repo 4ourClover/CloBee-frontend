@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 import Cookies from "js-cookie";
 
 const baseURL = "http://localhost:8080/api";
@@ -9,17 +9,22 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+interface TokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 axiosInstance.interceptors.request.use(
-  async (config) => {
+  (config) => {
     const token = Cookies.get("accessToken");
+    config.headers = config.headers || {};
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 axiosInstance.interceptors.response.use(

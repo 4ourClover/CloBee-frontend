@@ -61,5 +61,3 @@ function AppRoutes() {
     </div>
   );
 }
-
-export default App;
