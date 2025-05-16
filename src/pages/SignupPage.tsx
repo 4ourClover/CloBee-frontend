@@ -158,7 +158,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
         try {
             updateState("isCheckingEmail", true);
             const response = await axiosInstance.get(`/user/check-email?email=${formData.email}`);
-            if (response.data.exists) {
+            if (response.data) {
                 updateError("emailError", "이미 사용중인 이메일 입니다");
             }
         } catch (error) {
@@ -175,7 +175,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
         try {
             updateState("isCheckingPhone", true);
             const response = await axiosInstance.get(`/user/check-phone?phone=${formData.phoneNumber}`);
-            if (response.data.exists) {
+            if (response.data) {
                 updateError("phoneError", "이미 사용중인 전화번호 입니다");
             } else {
                 updateError("phoneError", "");
