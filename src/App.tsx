@@ -20,7 +20,7 @@ import Cookies from "js-cookie";
 import ForgotEmailPage from './pages/ForgotEmailPage';
 import { AuthProvider, AuthContext } from './contexts/AuthContext';
 
-function App() {
+export default function App() {
   return (
     <AuthProvider>
       <AppRoutes />

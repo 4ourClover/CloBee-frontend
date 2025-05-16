@@ -1,4 +1,4 @@
-import api from '@/api/axios/index';
+import api from '../../api/axios/index';
 import type { CardPageDTO, CardBenefitDetail, CardListDTO, UserCardPerformanceDetail, UserCardListDTO } from "./cardTypes"
 
 // fetchAllCards 함수 수정 - 페이지 인덱스 조정 및 에러 처리 개선
