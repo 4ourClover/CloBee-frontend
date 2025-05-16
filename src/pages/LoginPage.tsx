@@ -63,7 +63,7 @@ export default function LoginPage() {
     }
 
     const handleSocialLogin = () => {
-        window.location.href = "http://localhost:8080/api/oauth2/authorization/kakao";
+        window.location.href = process.env.REACT_APP_API_BASE_URL + "/oauth2/authorization/kakao";
     }
 
     return (

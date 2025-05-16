@@ -6,7 +6,7 @@ import { Label } from "../components/ui/label";
 import { useToast } from "../hooks/use-toast"; 
 import { CoffeeIcon as KakaoTalk } from "lucide-react";
 import rabbitClover from '../images/rabbit-clover.png';
-import axiosInstance from "../lib/axiosInstance";
+import axiosInstance from "../api/axios/axiosInstance";
 import { CheckBox } from "../components/ui/checkbox";
 import { containsBadWords } from "../lib/badWordFilter";
 
@@ -224,43 +224,43 @@ const SignupPage: React.FC<SignupPageProps> = () => {
     };
 
     const handleSocialLogin = () => {
-        window.location.href = "http://localhost:8080/api/oauth2/authorization/kakao";
+        window.location.href = process.env.REACT_APP_API_BASE_URL + "/oauth2/authorization/kakao";
     }
 
     const handlePhoneVerification = async () => {
         if (!phoneNumber) {
-          showConfirmModal("전화번호를 입력해주세요.");
-          return;
+            showConfirmModal("전화번호를 입력해주세요.");
+            return;
         }
 
         if (phoneError) {
-          showConfirmModal("이미 사용중인 전화번호 입니다.");
-          return;
+            showConfirmModal("이미 사용중인 전화번호 입니다.");
+            return;
         }
-      
+        
         try {
-          const response = await axiosInstance.post(
-            "/user/sendPhoneCode",
-            null,
-            { params: { user_phone: phoneNumber } }
-          );
-          
-          if (response?.status === 200) {
-            setShowVerification(true);
-            setIsPhoneVerified(true);
-            toast({
-              title: "인증번호 발송",
-              description: "입력하신 전화번호로 인증번호가 발송되었습니다.",
-            });
-          } else {
-            showConfirmModal("인증번호 발송에 실패했습니다.");
-          }
+            const response = await axiosInstance.post(
+                "/user/sendPhoneCode",
+                null,
+                { params: { user_phone: phoneNumber } }
+            );
+            
+            if (response?.status === 200) {
+                setShowVerification(true);
+                setIsPhoneVerified(true);
+                toast({
+                title: "인증번호 발송",
+                description: "입력하신 전화번호로 인증번호가 발송되었습니다.",
+                });
+            } else {
+                showConfirmModal("인증번호 발송에 실패했습니다.");
+            }
         } catch (err: any) {
-          console.error(err);
-          showConfirmModal("서버 오류가 발생했습니다.");
+            console.error(err);
+            showConfirmModal("서버 오류가 발생했습니다.");
         }
     };
-      
+    
     const handleVerifyCode = async () => {
         if (!verificationCode) {
             showConfirmModal("인증번호를 입력해주세요.");

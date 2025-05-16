@@ -1,10 +1,9 @@
 import axios from 'axios';
+import api from '@/api/axios/index';
 import Cookies from "js-cookie";
 
-const baseURL = "http://localhost:8080/api";
-
 const axiosInstance = axios.create({
-  baseURL: baseURL,
+  baseURL: process.env.REACT_APP_API_BASE_URL,
   timeout: 5000,
   withCredentials: true,
 });
@@ -41,7 +40,7 @@ axiosInstance.interceptors.response.use(
       const storedToken = Cookies.get("refreshToken");
 
       try {
-        const { data } = await axios.post<TokenResponse>(`${baseURL}/user/refresh`, {
+        const { data } = await api.post<TokenResponse>(`/user/refresh`, {
           refreshToken: storedToken,
         });
 

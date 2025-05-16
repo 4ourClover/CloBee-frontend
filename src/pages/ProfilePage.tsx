@@ -42,8 +42,8 @@ export default function ProfilePage() {
 
     // 사용자 정보 가져오기
     useEffect(() => {
-        fetch("http://localhost:8080/api/user/me", {
-            credentials: "include", // 쿠키 기반 로그인이라면 반드시 필요
+        fetch(process.env.REACT_APP_API_BASE_URL + "/user/me", {
+            credentials: "include",
         })
             .then((res) => {
                 if (!res.ok) {
@@ -94,7 +94,7 @@ export default function ProfilePage() {
     const performLogout = async () => {
         try {
             // 서버에 로그아웃 요청 보내기
-            const response = await fetch("http://localhost:8080/api/user/logout", {
+            const response = await fetch(process.env.REACT_APP_API_BASE_URL + "/user/logout", {
                 method: "POST",
                 credentials: "include",
                 headers: {

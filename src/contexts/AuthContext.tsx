@@ -1,6 +1,6 @@
 // src/contexts/AuthContext.tsx
 import React, { createContext, useState, useEffect } from 'react';
-import axiosInstance from '../lib/axiosInstance';
+import axiosInstance from '../api/axios/axiosInstance';
 import Cookies from "js-cookie";
 
 interface AuthContextType {
