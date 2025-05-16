@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import WelcomePage from './pages/WelcomePage';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
@@ -16,102 +16,50 @@ import EventsCloverPage from './pages/Event/EventsCloverPage';
 import EventsCouponPage from './pages/Event/EventsCouponPage';
 import Redirection from './pages/RedirectionPage';
 
-import axiosInstance from './lib/axiosInstance';
 import Cookies from "js-cookie";
 import ForgotEmailPage from './pages/ForgotEmailPage';
-
-
+import { AuthProvider, AuthContext } from './contexts/AuthContext';
 
 function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
+  );
+}
+
+function AppRoutes() {
+  const { isAuthenticated } = React.useContext(AuthContext);
+
+  // 로딩 중일 때 표시할 컴포넌트
+  if (isAuthenticated === null) {
+    return <div className="flex h-screen items-center justify-center">로딩 중...</div>;
+  }
 
   return (
-    <div
-      className="max-w-sm mx-auto h-screen overflow-auto font-gmarket"
-      style={{ aspectRatio: "16/7.4" }}
-    >
+    <div className="max-w-sm mx-auto h-screen overflow-auto font-gmarket" style={{ aspectRatio: "16/7.4" }}>
       <Routes>
-        <Route path="/" element={
-          <PublicOnlyRoute>
-            <WelcomePage />
-          </PublicOnlyRoute>
-
-        } />
-        <Route path="/signup" element={
-          <PublicOnlyRoute>
-            <SignupPage />
-          </PublicOnlyRoute>
-        } />
-        <Route path="/login" element={
-          <PublicOnlyRoute>
-            <LoginPage />
-          </PublicOnlyRoute>
-        
-        } />
-       <Route path="/forgot-password" element={
-          <PublicOnlyRoute>
-            <ForgotPasswordPage />
-          </PublicOnlyRoute>
-        } />
-          <Route path="/forgot-email" element={
-          <PublicOnlyRoute>
-            <ForgotEmailPage />
-          </PublicOnlyRoute>
-        } />
+        {/* 공개 라우트 - 인증 없이 접근 가능 */}
+        <Route path="/" element={isAuthenticated ? <Navigate to="/map" /> : <WelcomePage />} />
+        <Route path="/signup" element={isAuthenticated ? <Navigate to="/map" /> : <SignupPage />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/map" /> : <LoginPage />} />
+        <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/map" /> : <ForgotPasswordPage />} />
+        <Route path="/forgot-email" element={isAuthenticated ? <Navigate to="/map" /> : <ForgotEmailPage />} />
         <Route path='/kakao/callback' element={<Redirection />} />
-        <Route path="/map" element={<MapPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/coupons" element={<ProfileCouponsPage />} />
-        <Route path="/cards" element={<CardsPage />} />
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/events/attendance" element={<EventsAttendancePage />} />
-        <Route path="/events/invite" element={<EventsInvitePage />} />
-        <Route path="/events/clover" element={<EventsCloverPage />} />
-        <Route path="/events/coupon" element={<EventsCouponPage />} />
-
+        
+        {/* 보호된 라우트 - 인증 필요 */}
+        <Route path="/map" element={isAuthenticated ? <MapPage /> : <Navigate to="/login" />} />
+        <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />} />
+        <Route path="/profile/coupons" element={isAuthenticated ? <ProfileCouponsPage /> : <Navigate to="/login" />} />
+        <Route path="/cards" element={isAuthenticated ? <CardsPage /> : <Navigate to="/login" />} />
+        <Route path="/events" element={isAuthenticated ? <EventsPage /> : <Navigate to="/login" />} />
+        <Route path="/events/attendance" element={isAuthenticated ? <EventsAttendancePage /> : <Navigate to="/login" />} />
+        <Route path="/events/invite" element={isAuthenticated ? <EventsInvitePage /> : <Navigate to="/login" />} />
+        <Route path="/events/clover" element={isAuthenticated ? <EventsCloverPage /> : <Navigate to="/login" />} />
+        <Route path="/events/coupon" element={isAuthenticated ? <EventsCouponPage /> : <Navigate to="/login" />} />
       </Routes>
     </div>
   );
 }
 
 export default App;
-
-const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-  const [allowed, setAllowed] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    axiosInstance.get("/user/me")
-      .then(() => setAllowed(true))
-      .catch(() => {
-        setAllowed(false)
-        Cookies.remove("accessToken")
-        Cookies.remove("refreshToken")
-      })
-  }, []);
-
-  if (allowed === null) return null; // 로딩 중엔 아무것도 렌더링하지 않음
-  if (!allowed) return <Navigate to="/login" replace />;
-  
-  return children;
-};
-
-const PublicOnlyRoute = ({ children }: { children: React.ReactElement }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    axiosInstance.get("/user/me")
-      .then(() => setIsAuthenticated(true))
-      .catch(() => {
-        setIsAuthenticated(false)
-        Cookies.remove("accessToken")
-        Cookies.remove("refreshToken")
-      });
-  }, []);
-
-  if (isAuthenticated === null) return null; 
-
-  if (isAuthenticated) {
-    return <Navigate to="/map" replace />; 
-  }
-
-  return children; 
-};

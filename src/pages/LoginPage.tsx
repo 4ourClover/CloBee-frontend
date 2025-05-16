@@ -1,4 +1,4 @@
-import React, { FormEventHandler, useState } from "react"
+import React, { FormEventHandler, useState, useContext } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -8,6 +8,7 @@ import { CoffeeIcon as KakaoTalk } from "lucide-react"
 import rabbitClover from '../images/rabbit-clover.png';
 import { useAuthActions } from "../hooks/use-auth-action"
 import { CheckBox } from "../components/ui/checkbox"
+import { AuthContext } from "../contexts/AuthContext"
 
 export default function LoginPage() {
     const [email, setEmail] = useState("")
@@ -15,32 +16,54 @@ export default function LoginPage() {
     const { toast } = useToast()
     const navigate = useNavigate()
     const authAction = useAuthActions()
+    const { setAuth } = useContext(AuthContext) // AuthContext 사용
 
     const [autoLogin, setAutoLogin] = useState(false);
 
+    // 모달 상태 추가
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [confirmMessage, setConfirmMessage] = useState<string>("");
+    const [onConfirmAction, setOnConfirmAction] = useState<() => void>(() => { });
+
+    // 모달 헬퍼 함수 추가
+    const showConfirmModal = (message: string, onConfirm: () => void) => {
+        setConfirmMessage(message);
+        setOnConfirmAction(() => onConfirm);
+        setIsConfirmModalOpen(true);
+    };
+
+    const closeConfirmModal = () => {
+        setIsConfirmModalOpen(false);
+    };
+
     const handleCheckboxChange = () => {
-      setAutoLogin(!autoLogin);
+        setAutoLogin(!autoLogin);
     };
 
     const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault()
-        // toast({
-        //     title: "로그인 성공",
-        //     description: "환영합니다!",
-        // })
-        await authAction.login(email, password, autoLogin)
+        e.preventDefault();
+        const result = await authAction.login(email, password, autoLogin);
+        if (result.success) {
+            // 로그인 성공 시 인증 상태 업데이트
+            setAuth(true);
+            
+            // 토스트 메시지 표시 (선택사항)
+            toast({
+                title: "로그인 성공!",
+                description: "환영합니다!",
+            });
+            
+            // 약간의 지연 후 리다이렉트
+            setTimeout(() => {
+                navigate("/map");
+            }, 100);
+        } else {
+            showConfirmModal(result.error || "이메일 또는 비밀번호가 일치하지 않습니다.", () => { });
+        }
     }
 
     const handleSocialLogin = () => {
-        // toast({
-        //     title: "카카오 로그인",
-        //     description: "카카오 로그인 처리 중...",
-        // })
-        // navigate("/map")
-        
-    
-        window.location.href = "http://localhost:8080/oauth2/authorization/kakao";
-    
+        window.location.href = "http://localhost:8080/api/oauth2/authorization/kakao";
     }
 
     return (
@@ -110,11 +133,11 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    <CheckBox label="자동 로그인" 
+                    <CheckBox label="자동 로그인"
                         checked={autoLogin}
                         onCheckedChange={handleCheckboxChange}
                     />
-                    
+
                     <Button
                         type="submit"
                         className="w-full py-5 text-base font-medium bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] text-white rounded-full"
@@ -149,14 +172,30 @@ export default function LoginPage() {
                         회원가입
                     </Link>
                 </div>
-
-                {/* 로그인 없이 지도 보기 */}
-                <div className="text-center mt-4">
-                    <Link to="/map" className="text-sm text-[#00A949] hover:underline">
-                        로그인 없이 지도 보기
-                    </Link>
-                </div>
             </div>
+
+            {/* 확인 모달 */}
+            {isConfirmModalOpen && (
+                <div className="fixed inset-0 bg-gray-900 bg-opacity-20 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full text-center">
+                        {/* 줄바꿈 지원을 위해 whitespace-pre-line 적용 */}
+                        <p className="mb-6 text-lg text-gray-800 whitespace-pre-line">
+                            {confirmMessage}
+                        </p>
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                                onClick={() => {
+                                    onConfirmAction();
+                                    closeConfirmModal();
+                                }}
+                            >
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     )
 }
