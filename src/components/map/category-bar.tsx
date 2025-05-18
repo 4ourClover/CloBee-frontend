@@ -70,7 +70,7 @@ export default function CategoryBar({ selectedCategory, onCategorySelect }: Cate
 
 
   return (
-    <div className="w-full bg-transparent py-1.5 absolute top-[40px] z-10 left-0 max-w-md mx-auto right-0">
+    <div className="w-full bg-transparent py-1.5 absolute top-[40px] z-10 left-0 max-w-sm mx-auto right-0">
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex px-2 py-0.5">
           <CategoryItem icon={<Utensils size={16} />} label="음식점" category="FD6" color={categoryConfig["FD6"].color} selected={selected === "FD6"} onClick={handleClick} />

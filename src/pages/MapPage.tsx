@@ -8,6 +8,7 @@ import MapRefresh from "../components/map/map-refresh"
 import BottomSheet from "../components/map/bottom-sheet"
 import { Store, StoreCategory, categoryConfig, BenefitCard, brandCategory } from '../types/store';
 import SearchList from '../components/map/search-list';
+import { useLocationTracking, notificationUtils, fetchNearbyBenefitStores } from './Notification';
 
 declare global {
     interface Window {
@@ -33,6 +34,8 @@ export default function MapPage() {
     const [searchRadius, setSearchRadius] = useState(200); // 초기 검색 반경 (예: 1km)
     const [isNotificationOn, setIsNotificationOn] = useState(false); // 초기 알림 상태 (off)
 
+    // 알림 매장 상태 추가
+    const [nearbyNotificationStores, setNearbyNotificationStores] = useState<Store[]>([]);
 
     useEffect(() => {
         nearbyStoresRef.current = nearbyStores;
@@ -62,8 +65,7 @@ export default function MapPage() {
         "": [],
     });
 
-
-    const benefitStore = ["스타벅스", "이마트", "GS25"]
+    const benefitStore = ["스타벅스", "이마트", "GS25", "CGV 및 롯데시네마"]
 
     const starbucksBenefitCards: BenefitCard[] = [
         {
@@ -103,6 +105,51 @@ export default function MapPage() {
             image: "/placeholder.svg?height=200&width=320",
         },
     ]
+
+    const handleStoresFound = (stores: Store[]) => {
+        console.log("새로운 주변 매장 발견:", stores.length);
+        setNearbyStores(stores); // 상태 업데이트
+
+        // 필요한 추가 처리...
+        // 예: 매장 목록 UI 업데이트, 다른 컴포넌트에 데이터 전달 등
+    };
+
+    // 매장 정보 업데이트 함수
+    const handleNotificationStores = (stores: Store[]) => {
+        setNearbyNotificationStores(stores);
+        console.log("주변 혜택 매장 업데이트:", stores.length);
+    };
+
+    // 위치 추적 및 알림 기능 사용
+    const { isTracking } = useLocationTracking({
+        onLocationChange: (newPosition) => {
+            // 위치 변경 시 필요한 작업
+            setCurrentLocation(newPosition);
+        },
+        fetchNearbyStores: async (position) => {
+            // 위치 기반으로 주변 혜택 매장 검색
+            return fetchNearbyBenefitStores(position, benefitStore, kakaoMapRef.current, searchRadius);
+        },
+        sendNotification: (stores) => {
+            // 알림 전송
+            notificationUtils.sendNotification(stores);
+        },
+        showNotificationStores: (stores) => {
+            console.log(stores)
+            handleNotificationStores(stores)
+        },
+        kakaoMapRef,
+        currentMarkerRef,
+        minDistance: 100, // 100m 이상 이동 시 처리
+        isNotificationOn // 알림 설정 상태
+    });
+
+    // 알림 권한 요청 (앱 시작 시 한 번)
+    useEffect(() => {
+        if (isNotificationOn) {
+            notificationUtils.requestPermission();
+        }
+    }, [isNotificationOn]);
 
 
     // 지도 클릭 핸들러
@@ -161,7 +208,7 @@ export default function MapPage() {
                 },
                 (error) => {
                     // 실패 시: 에러 처리 및 기본 위치로 지도 로드
-                    console.error("Geolocation 에러:", error);
+                    console.log("Geolocation 에러:", error);
                     alert("현재 위치를 가져올 수 없습니다. 기본 위치로 지도를 표시합니다.");
                     // 기본 좌표 (예: 카카오 본사)
                     const defaultLat = 33.450701;
@@ -169,8 +216,8 @@ export default function MapPage() {
                     setCurrentLocation({ lat: defaultLat, lng: defaultLng });
                     loadKakaoMap(defaultLat, defaultLng);
                 }, {
-                enableHighAccuracy: true, // 높은 정확도 요청 활성화
-                timeout: 10000,          // 위치 정보를 가져오는 최대 허용 시간 (10초)
+                enableHighAccuracy: false, // 높은 정확도 요청 활성화
+                timeout: 30000,          // 위치 정보를 가져오는 최대 허용 시간 (30초)
                 maximumAge: 0            // 캐시된 위치 정보 사용 안 함 (항상 최신 정보 요청)
             }
             );
@@ -273,14 +320,16 @@ export default function MapPage() {
         // 현재 저장된 매장 ID를 빠르게 확인하기 위한 Set 생성
         const existingStoreIds = new Set(nearbyStoresRef.current.map(store => store.id));
 
+        const newSearchResults: Store[] = []; // 각 검색마다 새로운 배열 생성
+
         benefitStore.forEach((bStore) => {
             const searchPromise = new Promise<any[]>((resolve, reject) => {
                 ps.keywordSearch(bStore, (data: any, status: any, pagination: any) => {
                     if (status === window.kakao.maps.services.Status.OK) {
                         resolve(data);
                     } else {
-                        console.error(`'${bStore}' 검색 오류:`, status);
-                        reject(status);
+                        console.warn(`'${bStore}' 검색 오류:`, status);
+                        resolve([]); // 빈 배열을 반환하여 Promise.all이 계속 진행되도록 함
                     }
                 }, { location: currentPosition, size: 5 });
             });
@@ -358,16 +407,6 @@ export default function MapPage() {
                     handleMapClick(id);
                 }}
             >
-                {/* <Card
-                        key={`tooltip-${store.id}`}
-                        className="bg-white shadow-lg rounded-lg p-1 text-xs whitespace-nowrap max-w-[150px] border-none z-30"
-                    >
-                        <div className="flex justify-between items-center">
-                            <CreditCard className="h-3 w-3 text-[#00A949]" />
-                            <span className="font-bold text-[#5A3D2B]">{store.bestCard}</span>
-                            <span className="font-bold text-[#00A949]">{store.discount}</span>
-                        </div>
-                    </Card> */}
                 <div
                     className="p-2 rounded-full shadow-md relative"
                     style={{
@@ -376,7 +415,6 @@ export default function MapPage() {
                 >
                     {React.createElement(categoryConfig[place.category_group_code].icon, { className: "h-5 w-5 text-white" })}
                 </div>
-                {/* <div className="bg-transparent rounded-md text-xs max-w-[100px] text-center font-bold border border-transparent"> */}
                 <div
                     className="bg-transparent rounded-md text-xs max-w-[100px] text-center font-bold border border-transparent text-white"
                     style={{
@@ -486,6 +524,7 @@ export default function MapPage() {
                     setSelectedBrand(prev => (prev === brand ? null : brand))
                 }
                 onSearch={searchPlacesMenu}
+                nearbyNotificationStores={nearbyNotificationStores} // 추가된 prop
             />
 
             {/* 카테고리 바 */}
@@ -536,7 +575,6 @@ export default function MapPage() {
                     setShowStoreList={setSearchStoreList}
                     onSearchStoreSelect={(storeId) => {
                         selectSearchStore(storeId); // 매장 선택 시 호출되는 함수
-                        // 여기서 setSelectedStore 등 원하는 작업 수행
                     }}
                 />
             )}
