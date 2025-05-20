@@ -121,35 +121,35 @@ export default function MapPage() {
     };
 
     // 위치 추적 및 알림 기능 사용
-    const { isTracking } = useLocationTracking({
-        onLocationChange: (newPosition) => {
-            // 위치 변경 시 필요한 작업
-            setCurrentLocation(newPosition);
-        },
-        fetchNearbyStores: async (position) => {
-            // 위치 기반으로 주변 혜택 매장 검색
-            return fetchNearbyBenefitStores(position, benefitStore, kakaoMapRef.current, searchRadius);
-        },
-        sendNotification: (stores) => {
-            // 알림 전송
-            notificationUtils.sendNotification(stores);
-        },
-        showNotificationStores: (stores) => {
-            console.log(stores)
-            handleNotificationStores(stores)
-        },
-        kakaoMapRef,
-        currentMarkerRef,
-        minDistance: 100, // 100m 이상 이동 시 처리
-        isNotificationOn // 알림 설정 상태
-    });
+    // const { isTracking } = useLocationTracking({
+    //     onLocationChange: (newPosition) => {
+    //         // 위치 변경 시 필요한 작업
+    //         setCurrentLocation(newPosition);
+    //     },
+    //     fetchNearbyStores: async (position) => {
+    //         // 위치 기반으로 주변 혜택 매장 검색
+    //         return fetchNearbyBenefitStores(position, benefitStore, kakaoMapRef.current, searchRadius);
+    //     },
+    //     sendNotification: (stores) => {
+    //         // 알림 전송
+    //         notificationUtils.sendNotification(stores);
+    //     },
+    //     showNotificationStores: (stores) => {
+    //         console.log(stores)
+    //         handleNotificationStores(stores)
+    //     },
+    //     kakaoMapRef,
+    //     currentMarkerRef,
+    //     minDistance: 100, // 100m 이상 이동 시 처리
+    //     isNotificationOn // 알림 설정 상태
+    // });
 
-    // 알림 권한 요청 (앱 시작 시 한 번)
-    useEffect(() => {
-        if (isNotificationOn) {
-            notificationUtils.requestPermission();
-        }
-    }, [isNotificationOn]);
+    // // 알림 권한 요청 (앱 시작 시 한 번)
+    // useEffect(() => {
+    //     if (isNotificationOn) {
+    //         notificationUtils.requestPermission();
+    //     }
+    // }, [isNotificationOn]);
 
 
     // 지도 클릭 핸들러
