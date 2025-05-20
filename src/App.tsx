@@ -20,7 +20,7 @@ import Cookies from "js-cookie";
 import ForgotEmailPage from './pages/ForgotEmailPage';
 import { AuthProvider, AuthContext } from './contexts/AuthContext';
 
-function App() {
+export default function App() {
   return (
     <AuthProvider>
       <AppRoutes />
@@ -46,7 +46,7 @@ function AppRoutes() {
         <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/map" /> : <ForgotPasswordPage />} />
         <Route path="/forgot-email" element={isAuthenticated ? <Navigate to="/map" /> : <ForgotEmailPage />} />
         <Route path='/kakao/callback' element={<Redirection />} />
-        
+
         {/* 보호된 라우트 - 인증 필요 */}
         <Route path="/map" element={isAuthenticated ? <MapPage /> : <Navigate to="/login" />} />
         <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />} />
