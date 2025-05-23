@@ -5,7 +5,7 @@ RUN npm install -g serve
 
 # 2. 빌드된 React 정적 파일 복사
 WORKDIR /app
-COPY appdir ./appdir
+COPY . ./appdir
 
 # 3. 인증서 + nginx 설치 + 용량 최적화
 RUN apt-get update && apt-get install -y nginx openssl && rm -rf /var/lib/apt/lists/*
