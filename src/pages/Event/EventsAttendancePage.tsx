@@ -10,12 +10,15 @@ import { Link } from "react-router-dom" // <-- next/link → react-router-dom
 import BottomNavigation from "../../components/bottom-navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 
+import { useCurrentUser } from "../../hooks/use-current-user";
 import { getTotalAttend, addAttend } from "../../api/event";
 import { UserDetail } from '@/types/event';
 
 export default function AttendanceEventPage() {
+    const user = useCurrentUser();
+    const userId: number = user?.userId ?? 0;
     const detail : UserDetail = {
-        userId: 1, // 세션 로그인 불러와야 함
+        userId: userId, // 세션 로그인 불러와야 함
         month: String(new Date().getMonth() + 1).padStart(2, '0')
     };
 
