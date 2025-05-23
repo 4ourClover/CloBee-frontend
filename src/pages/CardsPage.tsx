@@ -36,6 +36,7 @@ import BottomNavigation from "../components/bottom-navigation"
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover"
 import { useCurrentUser } from "../hooks/use-current-user"
 
+
 export default function CardsPage() {
     const [activeTab, setActiveTab] = useState("my-cards")
     const [selectedCard, setSelectedCard] = useState<any>(null)
@@ -43,28 +44,26 @@ export default function CardsPage() {
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
     const { toast } = useToast()
 
-    const Component = () => {
-        const [userId, setUserId] = useState<number | null>(null)  // 초깃값은 null로
-        const user = useCurrentUser()
+    const [userId, setUserId] = useState<number | null>(null);
+    const user = useCurrentUser();
 
-        useEffect(() => {
-            if (user?.userId) {
-                setUserId(user.userId)
-            }
-        }, [user?.userId]) // user가 바뀔 때만 set
+    useEffect(() => {
+        if (user?.userId) {
+            setUserId(user.userId);
+        }
+    }, [user?.userId]);
 
-        useEffect(() => {
-            if (userId !== null) {
-                fetch(`${API_BASE_URL}/status?user_id=${userId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        console.log("Fetched data:", data)
-                    })
-            }
-        }, [userId])
-
-        return <div>userId: {userId}</div>
-    }
+    useEffect(() => {
+        if (userId !== null) {
+            api.get(`/status?user_id=${userId}`)
+                .then((res) => {
+                    console.log("Fetched data:", res.data);
+                })
+                .catch((err) => {
+                    console.error("API Error:", err);
+                });
+        }
+    }, [userId]);
 
     // 커스텀 알림 상태 추가
     const [alertOpen, setAlertOpen] = useState(false)
@@ -148,7 +147,7 @@ export default function CardsPage() {
     // 내 카드 목록 가져오기
     // 로그 추가하여 API 호출 디버깅
     useEffect(() => {
-        if (activeTab === "my-cards") {
+        if (activeTab === "my-cards" && userId !== null) {
             setIsLoadingMyCards(true)
             setIsLoadingPerformance(true)
 
@@ -469,6 +468,11 @@ export default function CardsPage() {
 
     // 카드 추가 핸들러 (모달에서 카드 선택 후)
     const handleAddUserCard = async (cardInfoId: number, cardType: number) => {
+        if (userId === null) {
+            setAlertMessage("로그인이 필요합니다");
+            setAlertOpen(true);
+            return;
+        }
         setIsAddingCard(true)
         try {
             await addUserCard(userId, cardInfoId, cardType)
@@ -503,7 +507,7 @@ export default function CardsPage() {
 
     // 카드 삭제 핸들러
     const confirmDeleteCard = async () => {
-        if (pendingDeleteCardId === null) return
+        if (pendingDeleteCardId === null || userId === null) return
         try {
             await deleteUserCard(userId, pendingDeleteCardId)
 
