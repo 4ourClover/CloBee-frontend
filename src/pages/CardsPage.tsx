@@ -14,7 +14,7 @@ import {
 import type { CardListDTO, CardBenefitDetail, UserCardPerformanceDetail, } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight, Plus, Trash2, Search, X, RotateCcw, PlusCircle, Calendar } from "lucide-react"
-
+import api from '../api/axios/index';
 import { CustomAlert } from "../components/custom-alert"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -34,6 +34,7 @@ import { useToast } from "../hooks/use-toast"
 import { Badge } from "../components/ui/badge"
 import BottomNavigation from "../components/bottom-navigation"
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover"
+import { useCurrentUser } from "../hooks/use-current-user"
 
 export default function CardsPage() {
     const [activeTab, setActiveTab] = useState("my-cards")
@@ -42,12 +43,35 @@ export default function CardsPage() {
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
     const { toast } = useToast()
 
+    const Component = () => {
+        const [userId, setUserId] = useState<number | null>(null)  // 초깃값은 null로
+        const user = useCurrentUser()
+
+        useEffect(() => {
+            if (user?.userId) {
+                setUserId(user.userId)
+            }
+        }, [user?.userId]) // user가 바뀔 때만 set
+
+        useEffect(() => {
+            if (userId !== null) {
+                fetch(`${API_BASE_URL}/status?user_id=${userId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("Fetched data:", data)
+                    })
+            }
+        }, [userId])
+
+        return <div>userId: {userId}</div>
+    }
+
     // 커스텀 알림 상태 추가
     const [alertOpen, setAlertOpen] = useState(false)
     const [alertMessage, setAlertMessage] = useState("")
 
     // 상단에 userId 상태 추가 (import 문 아래, 컴포넌트 내부 상단)
-    const [userId, setUserId] = useState<number>(1) // 임시로 userId를 1로 설정 (실제 구현 시 로그인한 사용자의 ID로 대체 필요)
+    // const [userId, setUserId] = useState<number>(1) // 임시로 userId를 1로 설정 (실제 구현 시 로그인한 사용자의 ID로 대체 필요)
     const [myCardsList, setMyCardsList] = useState<CardListDTO[]>([])
     const [isLoadingMyCards, setIsLoadingMyCards] = useState(false)
     const [cardPerformanceInfo, setCardPerformanceInfo] = useState<Record<number, UserCardPerformanceDetail>>({})
