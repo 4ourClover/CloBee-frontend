@@ -104,13 +104,13 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                             <div className="p-4 border-b">
                                 <div className="flex items-start gap-4">
                                     {/* 매장 로고/이미지 */}
-                                    <div className="relative w-16 h-16 rounded-full overflow-hidden border">
+                                    {/* <div className="relative w-16 h-16 rounded-full overflow-hidden border">
                                         <img
                                             src={"../../images/placeholder.svg"}
                                             alt={selectedStore.place_name}
                                             className="object-cover"
                                         />
-                                    </div>
+                                    </div> */}
 
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
