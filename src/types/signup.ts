@@ -8,6 +8,7 @@ export interface SignupFormData {
   phoneNumber: string;
   verificationCode: string;
   birthday: string;
+  referralCode: string;
   agreeTerms: boolean;
 }
 
