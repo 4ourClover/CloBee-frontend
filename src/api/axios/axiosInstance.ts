@@ -4,7 +4,7 @@ import Cookies from "js-cookie";
 
 const axiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
-  timeout: 5000,
+  timeout: 15000,
   withCredentials: true,
 });
 
@@ -53,7 +53,6 @@ axiosInstance.interceptors.response.use(
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        console.error("토큰 갱신 실패:", refreshError);
       }
     }
 

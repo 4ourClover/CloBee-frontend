@@ -1,19 +1,19 @@
 import React, { useState, FormEvent, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button"; 
-import { Input } from "../components/ui/input"; 
-import { Label } from "../components/ui/label"; 
-import { useToast } from "../hooks/use-toast"; 
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { useToast } from "../hooks/use-toast";
 import { CoffeeIcon as KakaoTalk } from "lucide-react";
 import rabbitClover from '../images/rabbit-clover.png';
 import axiosInstance from "../api/axios/axiosInstance";
 import { CheckBox } from "../components/ui/checkbox";
 import { containsBadWords } from "../lib/badWordFilter";
-import { 
-  SignupFormData, 
-  SignupFormErrors, 
-  SignupStates, 
-  ModalState 
+import {
+    SignupFormData,
+    SignupFormErrors,
+    SignupStates,
+    ModalState
 } from "../types/signup";
 
 interface SignupPageProps { }
@@ -28,6 +28,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
         phoneNumber: "",
         verificationCode: "",
         birthday: "",
+        referralCode: "",
         agreeTerms: false
     });
 
@@ -54,7 +55,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
     const [modal, setModal] = useState<ModalState>({
         isConfirmModalOpen: false,
         confirmMessage: "",
-        onConfirmAction: () => {},
+        onConfirmAction: () => { },
         isSuccess: false
     });
 
@@ -138,7 +139,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
         if (formData.birthday) {
             const birthdayDate = new Date(formData.birthday);
             const today = new Date();
-            
+
             if (isNaN(birthdayDate.getTime())) {
                 updateError("birthdayError", "유효한 날짜 형식이 아닙니다");
             } else if (birthdayDate > today) {
@@ -151,44 +152,63 @@ const SignupPage: React.FC<SignupPageProps> = () => {
         }
     }, [formData.birthday]);
 
-    // 이메일 중복 체크 함수
+    // 이메일 중복 체크 함수 수정
     const checkEmailExists = async (): Promise<void> => {
         if (!formData.email || errors.emailError) return;
-        
+
         try {
             updateState("isCheckingEmail", true);
             const response = await axiosInstance.get(`/user/check-email?email=${formData.email}`);
-            if (response.data) {
+
+
+            // 응답 데이터가 정확히 true 또는 존재하는 데이터가 있는지 확인
+            if (response.data === true || (Array.isArray(response.data) && response.data.length > 0)) {
                 updateError("emailError", "이미 사용중인 이메일 입니다");
+            } else {
+                updateError("emailError", ""); // 사용 가능한 경우 에러 초기화
             }
         } catch (error) {
-            console.error("이메일 중복 체크 중 오류 발생:", error);
+            
+            toast({
+                title: "오류",
+                description: "이메일 중복 확인 중 오류가 발생했습니다.",
+                variant: "destructive"
+            });
         } finally {
             updateState("isCheckingEmail", false);
         }
     };
 
-    // 전화번호 중복 체크 함수
+    // 전화번호 중복 체크 함수 수정
     const checkPhoneExists = async (): Promise<void> => {
         if (!formData.phoneNumber || formData.phoneNumber.length < 10) return;
-        
+
         try {
             updateState("isCheckingPhone", true);
             const response = await axiosInstance.get(`/user/check-phone?phone=${formData.phoneNumber}`);
-            if (response.data) {
+
+           
+
+            // 응답 데이터가 정확히 true 또는 존재하는 데이터가 있는지 확인
+            if (response.data === true || (Array.isArray(response.data) && response.data.length > 0)) {
                 updateError("phoneError", "이미 사용중인 전화번호 입니다");
             } else {
-                updateError("phoneError", "");
+                updateError("phoneError", ""); // 사용 가능한 경우 에러 초기화
             }
         } catch (error) {
-            console.error("전화번호 중복 체크 중 오류 발생:", error);
+            
+            toast({
+                title: "오류",
+                description: "전화번호 중복 확인 중 오류가 발생했습니다.",
+                variant: "destructive"
+            });
         } finally {
             updateState("isCheckingPhone", false);
         }
     };
 
     // 모달 헬퍼 함수 추가
-    const showConfirmModal = (message: string, onConfirm: () => void = () => {}, success: boolean = false): void => {
+    const showConfirmModal = (message: string, onConfirm: () => void = () => { }, success: boolean = false): void => {
         setModal({
             isConfirmModalOpen: true,
             confirmMessage: message,
@@ -229,20 +249,22 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                 userPhone: formData.phoneNumber,
                 userBirthday: formData.birthday,
                 userAgreedPrivacy: true,
+                friendInvitationCode: formData.referralCode
             });
 
             // 성공 모달 표시
             showConfirmModal(
-                "회원가입이 완료되었습니다.\n로그인 페이지로 이동합니다.", 
+                "회원가입이 완료되었습니다.\n로그인 페이지로 이동합니다.",
                 () => navigate("/login"),
                 true
             );
         } catch (error: any) {
-            console.error("회원가입 오류:", error);
             
+
+
             if (error.response && error.response.data) {
                 const errorCode = error.response.data.code;
-                
+
                 if (errorCode === "EMAIL_DUPLICATION") {
                     updateError("emailError", "이미 사용중인 이메일 입니다");
                     showConfirmModal("이미 사용중인 이메일 입니다.");
@@ -272,44 +294,44 @@ const SignupPage: React.FC<SignupPageProps> = () => {
             showConfirmModal("이미 사용중인 전화번호 입니다.");
             return;
         }
-        
+
         try {
             const response = await axiosInstance.post(
                 "/user/sendPhoneCode",
                 null,
                 { params: { user_phone: formData.phoneNumber } }
             );
-            
+
             if (response?.status === 200) {
                 updateState("showVerification", true);
                 updateState("isPhoneVerified", true);
                 toast({
-                title: "인증번호 발송",
-                description: "입력하신 전화번호로 인증번호가 발송되었습니다.",
+                    title: "인증번호 발송",
+                    description: "입력하신 전화번호로 인증번호가 발송되었습니다.",
                 });
             } else {
                 showConfirmModal("인증번호 발송에 실패했습니다.");
             }
         } catch (err: any) {
-            console.error(err);
+           
             showConfirmModal("서버 오류가 발생했습니다.");
         }
     };
-    
+
     const handleVerifyCode = async (): Promise<void> => {
         if (!formData.verificationCode) {
             showConfirmModal("인증번호를 입력해주세요.");
             return;
         }
 
-        try {      
+        try {
             const res = await axiosInstance.post("/user/verifyPhoneCode", null, {
                 params: {
                     user_phone: formData.phoneNumber,
                     code: formData.verificationCode
                 }
             });
-            
+
             if (res.status === 200) {
                 updateState("isCodeVerified", true);
                 toast({
@@ -318,7 +340,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                 });
             }
         } catch (error) {
-            console.log("error", error);
+            
             // 인증 실패 시 모달 표시
             showConfirmModal("인증번호가 일치하지 않습니다.", () => {
                 updateFormData("verificationCode", "");
@@ -334,18 +356,18 @@ const SignupPage: React.FC<SignupPageProps> = () => {
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         const newEmail = e.target.value;
         updateFormData("email", newEmail);
-        
+
         // 이메일 형식이 유효한 경우에만 중복 체크
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (emailRegex.test(newEmail)) {
             // 이전 타이머가 있으면 취소
             if (emailCheckTimer) clearTimeout(emailCheckTimer);
-            
+
             // 새로운 타이머 설정 (사용자가 타이핑을 멈추고 500ms 후 중복 체크)
             const timer = setTimeout(() => {
                 checkEmailExists();
             }, 500);
-            
+
             setEmailCheckTimer(timer);
         }
     };
@@ -354,17 +376,17 @@ const SignupPage: React.FC<SignupPageProps> = () => {
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         const newPhone = e.target.value;
         updateFormData("phoneNumber", newPhone);
-        
+
         // 전화번호 형식이 유효한 경우에만 중복 체크
         if (newPhone.length >= 10) {
             // 이전 타이머가 있으면 취소
             if (phoneCheckTimer) clearTimeout(phoneCheckTimer);
-            
+
             // 새로운 타이머 설정 (사용자가 타이핑을 멈추고 500ms 후 중복 체크)
             const timer = setTimeout(() => {
                 checkPhoneExists();
             }, 500);
-            
+
             setPhoneCheckTimer(timer);
         } else {
             updateError("phoneError", "");
@@ -476,7 +498,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                                 <p className="text-xs text-red-500 mt-1 pl-3">{errors.phoneError}</p>
                             )}
                         </div>
-                        
+
                         <div className="mt-2 space-y-2">
                             <Label htmlFor="verification-code" className="text-[#5A3D2B]">
                                 인증번호
@@ -541,7 +563,22 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                         )}
                     </div>
 
-                    <CheckBox label="약관에 동의합니다." 
+                    {/* 친구초대코드 필드 추가 */}
+                    <div className="mt-2 space-y-2">
+                        <Label htmlFor="referral-code" className="text-[#5A3D2B]">
+                            친구초대코드 <span className="text-xs text-gray-500">(선택사항)</span>
+                        </Label>
+                        <Input
+                            id="referral-code"
+                            type="text"
+                            placeholder="친구초대코드 입력"
+                            value={formData.referralCode}
+                            onChange={(e) => updateFormData("referralCode", e.target.value)}
+                            className="border-[#E5E7EB] focus-visible:ring-[#00A949] rounded-full"
+                        />
+                    </div>
+
+                    <CheckBox label="약관에 동의합니다."
                         checked={formData.agreeTerms}
                         onCheckedChange={handleCheckboxChange}
                     />
@@ -550,22 +587,22 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                         type="submit"
                         className="w-full py-5 text-base font-medium bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] text-white rounded-full"
                         disabled={
-                            !(states.isCodeVerified && formData.agreeTerms) || 
+                            !(states.isCodeVerified && formData.agreeTerms) ||
                             Boolean(errors.nicknameError || errors.emailError || errors.passwordError || errors.confirmPasswordError || errors.phoneError || errors.birthdayError) ||
-                            states.isCheckingEmail || 
+                            states.isCheckingEmail ||
                             states.isCheckingPhone ||
                             !formData.birthday // 생년월일 입력 여부 확인
-                        } 
+                        }
                     >
                         가입하기
                     </Button>
                 </form>
 
-                {/* 소셜 회원가입 */}
+                {/* 소셜 로그인 */}
                 <div className="mt-6">
                     <div className="relative flex items-center gap-4 py-2">
                         <div className="flex-grow border-t border-gray-200"></div>
-                        <div className="text-xs text-gray-400">소셜 계정으로 가입</div>
+                        <div className="text-xs text-gray-400">소셜 계정으로 로그인</div>
                         <div className="flex-grow border-t border-gray-200"></div>
                     </div>
 
@@ -588,7 +625,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                     </Link>
                 </div>
             </div>
-            
+
             {/* 확인 모달 */}
             {modal.isConfirmModalOpen && (
                 <div className="fixed inset-0 bg-gray-900 bg-opacity-20 backdrop-blur-sm z-50 flex items-center justify-center">

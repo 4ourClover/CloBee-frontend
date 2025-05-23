@@ -30,7 +30,6 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       setAuthChecked(true);
       return true;
     } catch (error) {
-      console.error("Auth check failed:", error);
       Cookies.remove("accessToken");
       Cookies.remove("refreshToken");
       setIsAuthenticated(false);
