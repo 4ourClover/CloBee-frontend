@@ -12,6 +12,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { Input } from "../ui/input";
 import { Link } from "react-router-dom";
 import { brandCategory } from "@/types/store";
+import { Store } from "../../types/store";
 
 interface MapHeaderProps {
     searchRadius: number; // 검색 반경
@@ -21,9 +22,10 @@ interface MapHeaderProps {
     selectedBrand: brandCategory | null; // 선택된 카드사
     onBrandSelect: (brand: brandCategory) => void;
     onSearch: (keyword: string) => void; // 검색어를 부모 컴포넌트로 전달하는 함수
+    nearbyNotificationStores: Store[];
 }
 
-export default function MapHeader({ searchRadius, setSearchRadius, isNotificationOn, setIsNotificationOn, selectedBrand, onBrandSelect, onSearch }: MapHeaderProps) {
+export default function MapHeader({ searchRadius, setSearchRadius, isNotificationOn, setIsNotificationOn, selectedBrand, onBrandSelect, onSearch, nearbyNotificationStores }: MapHeaderProps) {
     const [searchQuery, setSearchQuery] = useState("");
     //const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const { toast } = useToast();
@@ -111,9 +113,40 @@ export default function MapHeader({ searchRadius, setSearchRadius, isNotificatio
                         <div className="flex justify-between items-center">
                             <h3 className="text-xs font-bold text-[#5A3D2B]">주변 혜택 알림</h3>
                             {/* <Badge className="bg-red-500 text-[8px] py-0 px-1.5">{nearbyEventStores.length}개</Badge> */}
+                            {nearbyNotificationStores.length > 0 && (
+                                <Badge className="bg-red-500 text-[8px] py-0 px-1.5">
+                                    {nearbyNotificationStores.length}개
+                                </Badge>
+                            )}
                         </div>
                         <div className="max-h-60 overflow-auto space-y-2">
-                            <div className="text-xs p-2 bg-gray-50 rounded-md border-l-2 border-[#00A949]">
+                            {nearbyNotificationStores.length > 0 ? (
+                                nearbyNotificationStores.map(store => (
+                                    <div key={store.id} className="text-xs p-2 bg-gray-50 rounded-md border-l-2 border-[#00A949]">
+                                        <div className="font-medium">{store.place_name}</div>
+                                        <div className="text-gray-500 mt-1">
+                                            {/* 혜택 정보 - 임의 예시 */}
+                                            {store.place_name.includes('스타벅스')
+                                                ? '신한카드 Deep Dream 30% 할인 혜택이 있습니다.'
+                                                : store.place_name.includes('CGV')
+                                                    ? '삼성카드 taptap O 최대 8천원 할인 이벤트가 있습니다.'
+                                                    : '카드 혜택이 있는 매장입니다.'
+                                            }
+                                        </div>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <span className="text-gray-500">{store.distance}m</span>
+                                            <Badge className="text-[8px] py-0 px-1.5 bg-[#75CB3B]/20 text-[#00A949] border-none">
+                                                신규 혜택
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-xs text-center text-gray-500 py-4">
+                                    주변에 혜택 매장이 없습니다
+                                </div>
+                            )}
+                            {/* <div className="text-xs p-2 bg-gray-50 rounded-md border-l-2 border-[#00A949]">
                                 <div className="font-medium">스타벅스 강남점</div>
                                 <div className="text-gray-500 mt-1">신한카드 Deep Dream 30% 할인 혜택이 있습니다.</div>
                                 <div className="flex justify-between items-center mt-1">
@@ -122,8 +155,8 @@ export default function MapHeader({ searchRadius, setSearchRadius, isNotificatio
                                         신규 혜택
                                     </Badge>
                                 </div>
-                            </div>
-                            <div className="text-xs p-2 bg-gray-50 rounded-md border-l-2 border-orange-400">
+                            </div> */}
+                            {/* <div className="text-xs p-2 bg-gray-50 rounded-md border-l-2 border-orange-400">
                                 <div className="font-medium">CGV 강남</div>
                                 <div className="text-gray-500 mt-1">삼성카드 taptap O 최대 8천원 할인 이벤트가 오늘 마감됩니다.</div>
                                 <div className="flex justify-between items-center mt-1">
@@ -140,7 +173,7 @@ export default function MapHeader({ searchRadius, setSearchRadius, isNotificatio
                                     <span className="text-gray-500">480m</span>
                                     <Badge className="text-[8px] py-0 px-1.5 bg-blue-100 text-blue-600 border-none">새로운 매장</Badge>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </PopoverContent>

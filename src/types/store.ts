@@ -10,9 +10,10 @@ import {
 } from "lucide-react"
 
 //export type StoreCategory = "restaurant" | "cafe" | "transportation" | "gas" | "shopping" | "movie" | "convenience" | "beauty";
-
 export type StoreCategory = "FD6" | "CE7" | "SW8" | "OL7" | "MT1" | "CT1" | "CS2" | "";
 export type brandCategory = "신한카드" | "삼성카드" | "현대카드" | "KB국민카드" | "우리카드" | "";
+
+
 
 
 export type BenefitCard = {
@@ -57,17 +58,6 @@ export interface Store {
     lng: number;                     // 위도 (문자열)
 }
 
-// // 카테고리별 색상 및 아이콘 정의
-// export const categoryConfig: Record<StoreCategory, { color: string; icon: React.ElementType }> = {
-//     restaurant: { color: "#FF9E40", icon: Utensils },
-//     cafe: { color: "#8B4513", icon: Coffee },
-//     transportation: { color: "#4A90E2", icon: Train },
-//     gas: { color: "#FFD700", icon: Car },
-//     shopping: { color: "#FF66B3", icon: ShoppingCart },
-//     movie: { color: "#FF0000", icon: Film },
-//     convenience: { color: "#87CEEB", icon: Building },
-//     beauty: { color: "#9370DB", icon: Clover },
-// }
 
 export const categoryConfig: Record<StoreCategory, { color: string; icon: React.ElementType }> = {
     FD6: { color: "#FF9E40", icon: Utensils },       // 음식점
@@ -79,18 +69,6 @@ export const categoryConfig: Record<StoreCategory, { color: string; icon: React.
     CS2: { color: "#87CEEB", icon: Building },       // 편의점
     "": { color: "#A9A9A9", icon: Clover },     // 미분류/기타
 };
-
-// // 카테고리 한글명 매핑
-// export const categoryNames: Record<StoreCategory, string> = {
-//     restaurant: "음식점",
-//     cafe: "카페",
-//     transportation: "대중교통",
-//     gas: "주유소",
-//     shopping: "쇼핑",
-//     movie: "영화관",
-//     convenience: "편의점",
-//     beauty: "헤어샵",
-// }
 
 export const categoryNames: Record<StoreCategory, string> = {
     FD6: "음식점",        // restaurant
