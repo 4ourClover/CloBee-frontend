@@ -18,12 +18,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/pop
 import BottomNavigation from "../../components/bottom-navigation"
 import { CardEvent, UserDetail } from "@/types/event";
 
+import { useCurrentUser } from "../../hooks/use-current-user"
 import { getCardEvents } from "../../api/event";
 
 export default function EventsPage() {
     const [activeTab, setActiveTab] = useState("app")
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
+    const user = useCurrentUser()
+    const userId = user?.userId
 
     // 더미 데이터: 앱 이벤트
     const appEvents = [
@@ -121,24 +124,14 @@ export default function EventsPage() {
         
         const el = document.getElementById("card-events-scroll");
         if (!el) return;
-        console.log("hello", 111);
-
+        
         const handleScroll = () => {
             const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
 
             if (nearBottom) {
                 setPage(prev => prev + 1);
             }
-
-            console.log("scrollTop", el.scrollTop);
-            console.log("clientHeight", el.clientHeight);
-            console.log("scrollHeight", el.scrollHeight);
-            console.log("page", page);
         };
-        console.log("scrollHeight", el.scrollHeight);
-        console.log("clientHeight", el.clientHeight);
-        console.log("isScrollable?", el.scrollHeight > el.clientHeight);
-        console.log("hello", 222);
 
         el.addEventListener("scroll", handleScroll);
         return () => el.removeEventListener("scroll", handleScroll);

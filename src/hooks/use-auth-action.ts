@@ -1,10 +1,10 @@
-import axiosInstance from "../lib/axiosInstance";
+import axiosInstance from "../api/axios/axiosInstance";
 import { useNavigate } from "react-router-dom";
 
 import Cookies from "js-cookie";
 
-interface IUseAuth {
-    login: (email: string, password: string, autoLogin: boolean) => Promise<void>;
+export interface IUseAuth {
+    login: (email: string, password: string, autoLogin: boolean) => Promise<{ success: boolean, error?: string }>;
     logout: () => void;
 }
 
@@ -33,9 +33,12 @@ export const useAuthActions = (): IUseAuth => {
                 }
                 
                 navigate("/map");
+                return { success: true };
             }
+            return { success: false, error: "로그인에 실패했습니다." };
         } catch (error) {
             console.error("Login error:", error);
+            return { success: false, error: "이메일 또는 비밀번호가 일치하지 않습니다." };
         }
     };
 

@@ -736,7 +736,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -825,7 +825,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -1331,7 +1331,7 @@ export default function CardsPage() {
                                 <div>
                                     <h3 className="font-bold text-lg">{selectedCard.name || selectedCard.cardName}</h3>
                                     <p className="text-sm text-gray-500">
-                                        {selectedCard.cardCompany || selectedCard.cardBrand} |{" "}
+                                        {selectedCard.cardCompany || selectedCard.cardBrandName} |{" "}
                                         {selectedCard.cardType === 401 ? "신용카드" : "체크카드"}
                                     </p>
                                 </div>
