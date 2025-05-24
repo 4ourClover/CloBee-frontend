@@ -11,11 +11,11 @@ export default function BottomNavigation({ floatingActionButton }: BottomNavigat
     const location = useLocation();
     const currentPath = location.pathname;
     const isActive = [
-        "/events",
-        "/events/attendance",
-        "/events/invite",
-        "/events/clover",
-        "/events/coupon",
+        "/event",
+        "/event/attendance",
+        "/event/invite",
+        "/event/clover",
+        "/event/coupon",
     ].includes(currentPath);
 
     return (
@@ -32,13 +32,13 @@ export default function BottomNavigation({ floatingActionButton }: BottomNavigat
                     <span className="text-[10px] mt-0.5">지도</span>
                 </Button>
             </Link>
-            <Link to="/cards">
+            <Link to="/card">
                 <Button variant="ghost" className={`flex flex-col items-center h-auto py-1 rounded-full ${currentPath === "/cards" ? "text-[#00A949]" : ""}`}>
                     <CreditCard className="h-6 w-6" />
                     <span className="text-[10px] mt-0.5">내 카드</span>
                 </Button>
             </Link>
-            <Link to="/events">
+            <Link to="/event">
                 <Button variant="ghost" className={`flex flex-col items-center h-auto py-1 rounded-full ${isActive ? "text-[#00A949]" : ""}`}>
                     <Calendar className="h-6 w-6" />
                     <span className="text-[10px] mt-0.5">이벤트</span>

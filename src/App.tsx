@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import WelcomePage from './pages/WelcomePage';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
@@ -16,7 +16,6 @@ import EventsCloverPage from './pages/Event/EventsCloverPage';
 import EventsCouponPage from './pages/Event/EventsCouponPage';
 import Redirection from './pages/RedirectionPage';
 
-import Cookies from "js-cookie";
 import ForgotEmailPage from './pages/ForgotEmailPage';
 import { AuthProvider, AuthContext } from './contexts/AuthContext';
 
@@ -46,17 +45,17 @@ function AppRoutes() {
         <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/map" /> : <ForgotPasswordPage />} />
         <Route path="/forgot-email" element={isAuthenticated ? <Navigate to="/map" /> : <ForgotEmailPage />} />
         <Route path='/kakao/callback' element={<Redirection />} />
-        
+
         {/* 보호된 라우트 - 인증 필요 */}
         <Route path="/map" element={isAuthenticated ? <MapPage /> : <Navigate to="/login" />} />
         <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />} />
         <Route path="/profile/coupons" element={isAuthenticated ? <ProfileCouponsPage /> : <Navigate to="/login" />} />
-        <Route path="/cards" element={isAuthenticated ? <CardsPage /> : <Navigate to="/login" />} />
-        <Route path="/events" element={isAuthenticated ? <EventsPage /> : <Navigate to="/login" />} />
-        <Route path="/events/attendance" element={isAuthenticated ? <EventsAttendancePage /> : <Navigate to="/login" />} />
-        <Route path="/events/invite" element={isAuthenticated ? <EventsInvitePage /> : <Navigate to="/login" />} />
-        <Route path="/events/clover" element={isAuthenticated ? <EventsCloverPage /> : <Navigate to="/login" />} />
-        <Route path="/events/coupon" element={isAuthenticated ? <EventsCouponPage /> : <Navigate to="/login" />} />
+        <Route path="/card" element={isAuthenticated ? <CardsPage /> : <Navigate to="/login" />} />
+        <Route path="/event" element={isAuthenticated ? <EventsPage /> : <Navigate to="/login" />} />
+        <Route path="/event/attendance" element={isAuthenticated ? <EventsAttendancePage /> : <Navigate to="/login" />} />
+        <Route path="/event/invite" element={isAuthenticated ? <EventsInvitePage /> : <Navigate to="/login" />} />
+        <Route path="/event/clover" element={isAuthenticated ? <EventsCloverPage /> : <Navigate to="/login" />} />
+        <Route path="/event/coupon" element={isAuthenticated ? <EventsCouponPage /> : <Navigate to="/login" />} />
       </Routes>
     </div>
   );

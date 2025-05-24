@@ -220,7 +220,7 @@ export default function InviteEventPage() {
         <main className="flex flex-col h-screen max-w-sm mx-auto overflow-hidden">
             {/* 헤더 */}
             <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-3 flex items-center gap-2">
-                <Link to="/events">
+                <Link to="/event">
                     <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8">
                         <ChevronLeft className="h-4 w-4" />
                     </Button>

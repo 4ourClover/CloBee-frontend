@@ -40,11 +40,13 @@ export const applyCard = async (cardInfoId: number, cardBrand: number): Promise<
     }
 }
 
+
 // 내 카드 목록 가져오기 함수 추가
 
 export const fetchMyCards = async (userId: number): Promise<UserCardListDTO[]> => {
     const response = await api.get<UserCardListDTO[]>("/card/getMyCardList", {
         params: { userId },
+        withCredentials: true,
     })
     return response.data
 }
