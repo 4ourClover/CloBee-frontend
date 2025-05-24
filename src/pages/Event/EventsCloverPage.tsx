@@ -57,7 +57,7 @@ export default function CloverGamePage() {
         try {
             // 먼저 사용자 상태 확인
             let response = await fetch(`${API_BASE_URL}/status?user_id=${userId}`)
-            
+
             // 404 오류가 발생하면 새로운 사용자이므로 초기화
             if (response.status === 404) {
                 console.log('새로운 사용자 - 게임 초기화 진행')
@@ -67,11 +67,11 @@ export default function CloverGamePage() {
                         'Content-Type': 'application/json'
                     }
                 })
-                
+
                 if (!initResponse.ok) {
                     throw new Error('게임 초기화에 실패했습니다.')
                 }
-                
+
                 // 초기화 후 다시 상태 확인
                 response = await fetch(`${API_BASE_URL}/status?user_id=${userId}`)
             }
@@ -86,14 +86,14 @@ export default function CloverGamePage() {
             if (data.eventFindingCloverParticipationStatus === true) {
                 showConfirmModal(
                     '오늘은 이미 참여하셨습니다.',
-                    () => navigate('/events')
+                    () => navigate('/event')
                 )
                 return
             }
 
             // current stage에 따라 클로버 개수 변경
             let newClovers: Array<{ id: number; isLucky: boolean; isFlipped: boolean }> = []
-            
+
             if (data.eventFindingCloverCurrentStage === 1) {
                 newClovers = Array.from({ length: 16 }, (_, i) => ({
                     id: i,
@@ -142,12 +142,12 @@ export default function CloverGamePage() {
             .then(response => response.json())
             .then(data => {
                 setEventFindingCloverCurrentStage(data.eventFindingCloverCurrentStage)
-                
+
                 // 오늘 이미 참여한 경우 게임 종료
                 if (data.eventFindingCloverParticipationStatus === true) {
                     showConfirmModal(
                         '오늘은 이미 참여하셨습니다.',
-                        () => navigate('/events')
+                        () => navigate('/event')
                     )
                     setGameStarted(false)
                     setGameWon(true)
@@ -155,7 +155,7 @@ export default function CloverGamePage() {
                 }
 
                 let newClovers: Array<{ id: number; isLucky: boolean; isFlipped: boolean }> = [];
-                
+
                 // current stage에 따라 클로버 개수 변경
                 if (data.eventFindingCloverCurrentStage === 1) {
                     newClovers = Array.from({ length: 16 }, (_, i) => ({
@@ -223,14 +223,14 @@ export default function CloverGamePage() {
                                     setTimeout(() => {
                                         showConfirmModal(
                                             '쿠폰이 지급되었습니다!',
-                                            () => navigate('/events')
+                                            () => navigate('/event')
                                         )
                                     }, 3000)
                                 } else {
                                     setTimeout(() => {
                                         showConfirmModal(
                                             '이미 쿠폰을 지급받았습니다',
-                                            () => navigate('/events')
+                                            () => navigate('/event')
                                         )
                                     }, 3000)
                                 }
@@ -275,7 +275,7 @@ export default function CloverGamePage() {
                             if (data.eventFindingCloverParticipationStatus === true || data.eventFindingCloverAttemptsLeft === 0) {
                                 showConfirmModal(
                                     '횟수를 모두 소진하였습니다\n내일 다시 도전해주세요',
-                                    () => navigate('/events')
+                                    () => navigate('/event')
                                 )
                             }
                         })
@@ -329,7 +329,7 @@ export default function CloverGamePage() {
         <main className="flex flex-col h-screen max-w-sm mx-auto overflow-hidden">
             {/* 헤더 */}
             <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-3 flex items-center gap-2">
-                <Link to="/events">
+                <Link to="/event">
                     <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8">
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -416,7 +416,7 @@ export default function CloverGamePage() {
 
             {/* 하단 내비게이션 */}
             <BottomNavigation />
-            
+
             {/* 확인 모달 */}
             {isConfirmModalOpen && (
                 <div className="fixed inset-0 bg-gray-900 bg-opacity-20 backdrop-blur-sm z-50 flex items-center justify-center">

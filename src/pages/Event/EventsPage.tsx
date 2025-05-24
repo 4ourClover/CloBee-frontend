@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { Switch } from "../../components/ui/switch"
 import { Button } from "../../components/ui/button"
 import { useNavigate } from "react-router-dom"
@@ -18,15 +18,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/pop
 import BottomNavigation from "../../components/bottom-navigation"
 import { CardEvent, UserDetail } from "@/types/event";
 
-import { useCurrentUser } from "../../hooks/use-current-user"
+import { useCurrentUser } from "../../hooks/use-current-user";
 import { getCardEvents } from "../../api/event";
 
 export default function EventsPage() {
     const [activeTab, setActiveTab] = useState("app")
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
-    const user = useCurrentUser()
-    const userId = user?.userId
+    const user = useCurrentUser();
+    const userId: number = user?.userId ?? 0;
 
     // 더미 데이터: 앱 이벤트
     const appEvents = [
@@ -36,7 +36,7 @@ export default function EventsPage() {
             description: "매일 출석체크하고 포인트 받기",
             icon: <Check className="h-6 w-6 text-white" />,
             iconBg: "bg-blue-500",
-            link: "/events/attendance",
+            link: "/event/attendance",
         },
         {
             id: 2,
@@ -44,7 +44,7 @@ export default function EventsPage() {
             description: "친구에게 선물상자 보내기",
             icon: <Gift className="h-6 w-6 text-white" />,
             iconBg: "bg-purple-500",
-            link: "/events/invite",
+            link: "/event/invite",
         },
         {
             id: 3,
@@ -52,7 +52,7 @@ export default function EventsPage() {
             description: "행운의 클로버를 찾아보세요",
             icon: <Clover className="h-6 w-6 text-white" />,
             iconBg: "bg-green-500",
-            link: "/events/clover",
+            link: "/event/clover",
         },
         {
             id: 4,
@@ -60,7 +60,7 @@ export default function EventsPage() {
             description: "매장 방문하고 클로버 모으기",
             icon: <Ticket className="h-6 w-6 text-white" />,
             iconBg: "bg-orange-500",
-            link: "/events/coupon",
+            link: "/event/coupon",
         },
     ]
 
@@ -89,7 +89,7 @@ export default function EventsPage() {
         setIsFetching(true);
         try {
             const userDetail: UserDetail = {
-                userId: 1 // 세션 받아와야 함
+                userId: userId
             };
             const pageSize = 6;
             const response = await getCardEvents(userDetail, pageSize, page);
@@ -99,14 +99,14 @@ export default function EventsPage() {
                 eventInfoId: event.eventInfoId,
                 eventTitle: event.eventTitle,
                 eventDesc: event.eventDesc,
-                eventCardUrl : event.eventCardUrl,
+                eventCardUrl: event.eventCardUrl,
                 eventCardtype: event.eventCardtype,
                 haveCard: event.haveCard,
                 eventStartDay: event.eventStartDay,
                 eventEndDay: event.eventEndDay
             }));
             // console.log(newData)
-            
+
             setCardEvents(prevData => [...prevData, ...newData]);
         } catch (err) {
             console.error(err);
@@ -121,10 +121,10 @@ export default function EventsPage() {
 
     useEffect(() => {
         if (activeTab !== "card") return;
-        
+
         const el = document.getElementById("card-events-scroll");
         if (!el) return;
-        
+
         const handleScroll = () => {
             const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
 
@@ -136,7 +136,7 @@ export default function EventsPage() {
         el.addEventListener("scroll", handleScroll);
         return () => el.removeEventListener("scroll", handleScroll);
     }, [activeTab]);
-    
+
     return (
         <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-hidden font-gmarket">
             {/* 헤더 */}
@@ -230,7 +230,7 @@ export default function EventsPage() {
                 </TabsContent>
 
                 {/* 카드사 이벤트 콘텐츠 */}
-                <TabsContent value="card" className="flex-1 overflow-auto p-0 m-0 data-[state=inactive]:hidden">
+                <TabsContent value="card" className="flex-1 overflow-hidden p-0 m-0 data-[state=inactive]:hidden">
                     <div id="card-events-scroll" className="bg-[#F5FAF0] flex flex-col h-[90vh] overflow-y-auto">
                         <div className="p-4 border-b bg-white">
                             <div className="flex justify-between items-center">
@@ -244,17 +244,16 @@ export default function EventsPage() {
 
                         <div className="p-4 space-y-4 flex-1">
                             {cardEvents.map((event) => (
-                                <div key={event.eventInfoId} className={`relative bg-white rounded-lg overflow-hidden shadow-sm ${
-                                        event.haveCard ? 'border border-amber-400' : 'border'
+                                <div key={event.eventInfoId} className={`relative bg-white rounded-lg overflow-hidden shadow-sm ${event.haveCard ? 'border border-amber-400' : 'border'
                                     }`}
-                                    onClick={() => {window.location.href=`${event.eventCardUrl}`}}>
+                                    onClick={() => { window.location.href = `${event.eventCardUrl}` }}>
                                     {/* <div className="relative h-40">
                                         <img src={event.eventImage || "/placeholder.svg"} alt={event.eventTitle} className="w-full h-full object-cover" />
                                     </div> */}
                                     {event.haveCard && (
                                         <div className="absolute top-2 right-2">
                                             <Badge className="bg-amber-400 hover:bg-amber-400 text-amber-900 border-none font-medium">
-                                            내 카드 혜택
+                                                내 카드 혜택
                                             </Badge>
                                         </div>
                                     )}

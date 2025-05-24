@@ -191,13 +191,13 @@ export default function CouponsPage() {
                         <span className="text-xs mt-1">지도</span>
                     </Button>
                 </Link>
-                <Link to="/cards">
+                <Link to="/card">
                     <Button variant="ghost" className="flex flex-col items-center">
                         <CreditCard className="h-5 w-5" />
                         <span className="text-xs mt-1">내 카드</span>
                     </Button>
                 </Link>
-                <Link to="/events">
+                <Link to="/event">
                     <Button variant="ghost" className="flex flex-col items-center">
                         <Calendar className="h-5 w-5" />
                         <span className="text-xs mt-1">이벤트</span>
