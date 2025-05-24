@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { Switch } from "../../components/ui/switch"
 import { Button } from "../../components/ui/button"
 import { useNavigate } from "react-router-dom"
@@ -230,7 +230,7 @@ export default function EventsPage() {
                 </TabsContent>
 
                 {/* 카드사 이벤트 콘텐츠 */}
-                <TabsContent value="card" className="flex-1 overflow-auto p-0 m-0 data-[state=inactive]:hidden">
+                <TabsContent value="card" className="flex-1 overflow-hidden p-0 m-0 data-[state=inactive]:hidden">
                     <div id="card-events-scroll" className="bg-[#F5FAF0] flex flex-col h-[90vh] overflow-y-auto">
                         <div className="p-4 border-b bg-white">
                             <div className="flex justify-between items-center">
