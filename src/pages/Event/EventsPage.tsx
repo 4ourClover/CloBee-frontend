@@ -18,15 +18,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/pop
 import BottomNavigation from "../../components/bottom-navigation"
 import { CardEvent, UserDetail } from "@/types/event";
 
-import { useCurrentUser } from "../../hooks/use-current-user"
+import { useCurrentUser } from "../../hooks/use-current-user";
 import { getCardEvents } from "../../api/event";
 
 export default function EventsPage() {
     const [activeTab, setActiveTab] = useState("app")
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
-    const user = useCurrentUser()
-    const userId = user?.userId
+    const user = useCurrentUser();
+    const userId: number = user?.userId ?? 0;
 
     // 더미 데이터: 앱 이벤트
     const appEvents = [
@@ -89,7 +89,7 @@ export default function EventsPage() {
         setIsFetching(true);
         try {
             const userDetail: UserDetail = {
-                userId: 1 // 세션 받아와야 함
+                userId: userId
             };
             const pageSize = 6;
             const response = await getCardEvents(userDetail, pageSize, page);
