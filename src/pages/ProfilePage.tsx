@@ -21,14 +21,12 @@ import { AuthContext } from "../contexts/AuthContext"
 interface UserInfo {
     userId: number;
     userEmail: string;
-    userNickname: string;
-    // 서버에서 반환하는 다른 필드들도 여기에 추가할 수 있습니다
+    userNickname: string
 }
 
 export default function ProfilePage() {
     const [notificationsEnabled, setNotificationsEnabled] = useState(true)
     const { toast } = useToast()
-    const navigate = useNavigate()
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
     const [loading, setLoading] = useState(true)
     
@@ -60,18 +58,13 @@ export default function ProfilePage() {
                 setLoading(false);
             })
             .catch((error) => {
-                console.error("사용자 정보를 가져오는데 실패했습니다:", error);
                 setLoading(false);
             });
     }, []);
 
     const handleNotificationToggle = (checked: boolean) => {
         setNotificationsEnabled(checked)
-        toast({
-            title: checked ? "알림이 켜졌습니다" : "알림이 꺼졌습니다",
-            description: checked ? "혜택 및 카드 관련 알림을 받습니다" : "더 이상 알림을 받지 않습니다",
-            variant: checked ? "default" : "destructive"
-        })
+        
     }
     
     // 모달 헬퍼 함수
@@ -118,15 +111,12 @@ export default function ProfilePage() {
             localStorage.removeItem("isAuthenticated");
             sessionStorage.clear();
             
-            toast({
-                title: "로그아웃 되었습니다",
-                description: "다음에 또 만나요!"
-            });
+          
             
             // 페이지 리로드 후 리다이렉트 (중요)
-            window.location.href = "/";
+            window.location.href = "/login";
         } catch (error) {
-            console.error("로그아웃 중 오류 발생:", error);
+
             
             // 오류가 발생해도 인증 상태 업데이트
             setAuth(false);
@@ -139,14 +129,9 @@ export default function ProfilePage() {
             localStorage.removeItem("isAuthenticated");
             sessionStorage.clear();
             
-            toast({
-                title: "로그아웃 처리 중 오류가 발생했습니다",
-                description: "하지만 로그아웃은 처리되었습니다.",
-                variant: "destructive"
-            });
             
             // 페이지 리로드 후 리다이렉트 (중요)
-            window.location.href = "/";
+            window.location.href = "/logout";
         }
     }
 
