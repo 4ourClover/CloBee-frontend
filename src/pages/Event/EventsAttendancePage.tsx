@@ -17,7 +17,7 @@ import { UserDetail } from '@/types/event';
 export default function AttendanceEventPage() {
     const user = useCurrentUser();
     const userId: number = user?.userId ?? 0;
-    const detail : UserDetail = {
+    const detail: UserDetail = {
         userId: userId, // 세션 로그인 불러와야 함
         month: String(new Date().getMonth() + 1).padStart(2, '0')
     };
@@ -79,20 +79,20 @@ export default function AttendanceEventPage() {
     // 이전 달로 이동
     const goToPreviousMonth = () => {
         if (selectedMonth === 0) {
-        setSelectedMonth(11)
-        setSelectedYear(selectedYear - 1)
+            setSelectedMonth(11)
+            setSelectedYear(selectedYear - 1)
         } else {
-        setSelectedMonth(selectedMonth - 1)
+            setSelectedMonth(selectedMonth - 1)
         }
     }
 
     // 다음 달로 이동
     const goToNextMonth = () => {
         if (selectedMonth === 11) {
-        setSelectedMonth(0)
-        setSelectedYear(selectedYear + 1)
+            setSelectedMonth(0)
+            setSelectedYear(selectedYear + 1)
         } else {
-        setSelectedMonth(selectedMonth + 1)
+            setSelectedMonth(selectedMonth + 1)
         }
     }
 
@@ -103,25 +103,25 @@ export default function AttendanceEventPage() {
         let month = currentDate.getMonth()
 
         for (let i = 0; i < 6; i++) {
-        const date = new Date(year, month, 1)
-        const value = `${date.getFullYear()}-${date.getMonth()}`
-        const label = date.toLocaleString("ko-KR", { year: "numeric", month: "long" })
+            const date = new Date(year, month, 1)
+            const value = `${date.getFullYear()}-${date.getMonth()}`
+            const label = date.toLocaleString("ko-KR", { year: "numeric", month: "long" })
 
-        options.push({ value, label })
+            options.push({ value, label })
 
-        if (month === 0) {
-            month = 11
-            year--
-        } else {
-            month--
-        }
+            if (month === 0) {
+                month = 11
+                year--
+            } else {
+                month--
+            }
         }
 
         return options
     }
 
     const monthOptions = getMonthOptions();
-    
+
     // 출석 체크 상태 불러오기
     const fetchTotalAttend = async () => {
         try {
@@ -144,7 +144,7 @@ export default function AttendanceEventPage() {
         <main className="flex flex-col h-screen max-w-sm mx-auto overflow-hidden">
             {/* 헤더 */}
             <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-3 flex items-center gap-2">
-                <Link to="/events">
+                <Link to="/event">
                     <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8">
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -184,31 +184,31 @@ export default function AttendanceEventPage() {
                     {/* 월 선택 */}
                     <div className="flex items-center justify-between mb-4">
                         <Select value={`${selectedYear}-${selectedMonth}`} onValueChange={handleMonthChange}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="월 선택" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {monthOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                            </SelectItem>
-                            ))}
-                        </SelectContent>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="월 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {monthOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
 
                         <div className="flex gap-2">
-                        <Button variant="outline" size="icon" onClick={goToPreviousMonth} className="h-8 w-8 p-0">
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={goToNextMonth}
-                            disabled={!canGoToNextMonth}
-                            className="h-8 w-8 p-0"
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
+                            <Button variant="outline" size="icon" onClick={goToPreviousMonth} className="h-8 w-8 p-0">
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={goToNextMonth}
+                                disabled={!canGoToNextMonth}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
 

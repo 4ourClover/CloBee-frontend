@@ -14,7 +14,7 @@ import {
 import type { CardListDTO, CardBenefitDetail, UserCardPerformanceDetail, } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight, Plus, Trash2, Search, X, RotateCcw, PlusCircle, Calendar } from "lucide-react"
-import api from '../api/axios/index';
+
 import { CustomAlert } from "../components/custom-alert"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
@@ -34,8 +34,8 @@ import { useToast } from "../hooks/use-toast"
 import { Badge } from "../components/ui/badge"
 import BottomNavigation from "../components/bottom-navigation"
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover"
-import { useCurrentUser } from "../hooks/use-current-user"
 
+import { useCurrentUser } from "../hooks/use-current-user" // 상단에 이미 있을 것
 
 export default function CardsPage() {
     const [activeTab, setActiveTab] = useState("my-cards")
@@ -44,26 +44,9 @@ export default function CardsPage() {
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
     const { toast } = useToast()
 
-    const [userId, setUserId] = useState<number | null>(null);
     const user = useCurrentUser();
+    const userId = user?.userId ?? 0; // 값이 없으면 fallback으로 0
 
-    useEffect(() => {
-        if (user?.userId) {
-            setUserId(user.userId);
-        }
-    }, [user?.userId]);
-
-    useEffect(() => {
-        if (userId !== null) {
-            api.get(`/status?user_id=${userId}`)
-                .then((res) => {
-                    console.log("Fetched data:", res.data);
-                })
-                .catch((err) => {
-                    console.error("API Error:", err);
-                });
-        }
-    }, [userId]);
 
     // 커스텀 알림 상태 추가
     const [alertOpen, setAlertOpen] = useState(false)
@@ -147,7 +130,7 @@ export default function CardsPage() {
     // 내 카드 목록 가져오기
     // 로그 추가하여 API 호출 디버깅
     useEffect(() => {
-        if (activeTab === "my-cards" && userId !== null) {
+        if (activeTab === "my-cards") {
             setIsLoadingMyCards(true)
             setIsLoadingPerformance(true)
 
@@ -468,11 +451,6 @@ export default function CardsPage() {
 
     // 카드 추가 핸들러 (모달에서 카드 선택 후)
     const handleAddUserCard = async (cardInfoId: number, cardType: number) => {
-        if (userId === null) {
-            setAlertMessage("로그인이 필요합니다");
-            setAlertOpen(true);
-            return;
-        }
         setIsAddingCard(true)
         try {
             await addUserCard(userId, cardInfoId, cardType)
@@ -507,7 +485,7 @@ export default function CardsPage() {
 
     // 카드 삭제 핸들러
     const confirmDeleteCard = async () => {
-        if (pendingDeleteCardId === null || userId === null) return
+        if (pendingDeleteCardId === null) return
         try {
             await deleteUserCard(userId, pendingDeleteCardId)
 
@@ -740,7 +718,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -829,7 +807,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -1335,7 +1313,7 @@ export default function CardsPage() {
                                 <div>
                                     <h3 className="font-bold text-lg">{selectedCard.name || selectedCard.cardName}</h3>
                                     <p className="text-sm text-gray-500">
-                                        {selectedCard.cardCompany || selectedCard.cardBrandName} |{" "}
+                                        {selectedCard.cardCompany || selectedCard.cardBrand} |{" "}
                                         {selectedCard.cardType === 401 ? "신용카드" : "체크카드"}
                                     </p>
                                 </div>
