@@ -237,17 +237,19 @@ export const fetchNearbyBenefitStores = async (
 
     const currentPosition = new window.kakao.maps.LatLng(position.lat, position.lng);
     const ps = new window.kakao.maps.services.Places();
-    const searchPromises: Promise<any[]>[] = [];
+    const searchPromises: Promise<{ data: any[], bStore: string }>[] = [];
 
     // 혜택 매장 키워드로 검색
     benefitStores.forEach((bStore) => {
-        const searchPromise = new Promise<any[]>((resolve, reject) => {
+        const searchPromise = new Promise<{ data: any[], bStore: string }>((resolve, reject) => {
             ps.keywordSearch(bStore, (data: any, status: any) => {
                 if (status === window.kakao.maps.services.Status.OK) {
-                    resolve(data);
+                    // ✅ 데이터와 benefitStore 정보를 함께 반환
+                    resolve({ data, bStore });
                 } else {
                     console.warn(`'${bStore}' 검색 오류:`, status);
-                    resolve([]);
+                    // ✅ 오류시에도 동일한 구조로 반환
+                    resolve({ data: [], bStore });
                 }
             }, { location: currentPosition, radius: searchRadius, size: 5 });
         });
@@ -259,7 +261,9 @@ export const fetchNearbyBenefitStores = async (
         const allResults = await Promise.all(searchPromises);
         const stores: Store[] = [];
 
-        allResults.forEach(data => {
+        allResults.forEach(result => {
+            const { data, bStore } = result;
+
             data.forEach((item: any) => {
                 stores.push({
                     id: item.id,
@@ -274,6 +278,7 @@ export const fetchNearbyBenefitStores = async (
                     distance: item.distance || "",
                     lng: item.x,
                     lat: item.y,
+                    benefitStore: bStore,
                 });
             });
         });

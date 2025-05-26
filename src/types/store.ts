@@ -14,8 +14,6 @@ export type StoreCategory = "FD6" | "CE7" | "SW8" | "OL7" | "MT1" | "CT1" | "CS2
 export type brandCategory = "신한카드" | "삼성카드" | "현대카드" | "KB국민카드" | "우리카드" | "";
 
 
-
-
 export type BenefitCard = {
     id: number;
     card_name: string;
@@ -56,6 +54,7 @@ export interface Store {
     distance: number;              // 중심좌표로부터 거리 (미터, 문자열)
     lat: number;                     // 경도 (문자열)
     lng: number;                     // 위도 (문자열)
+    benefitStore: string
 }
 
 
