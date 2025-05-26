@@ -1,4 +1,4 @@
-import api from './index';
+import api from './axios/index';
 import { CardEvent } from '@/types/event';
 import { UserDetail } from '@/types/event';
 

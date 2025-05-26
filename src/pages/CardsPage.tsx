@@ -35,6 +35,8 @@ import { Badge } from "../components/ui/badge"
 import BottomNavigation from "../components/bottom-navigation"
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover"
 
+import { useCurrentUser } from "../hooks/use-current-user" // 상단에 이미 있을 것
+
 export default function CardsPage() {
     const [activeTab, setActiveTab] = useState("my-cards")
     const [selectedCard, setSelectedCard] = useState<any>(null)
@@ -42,12 +44,16 @@ export default function CardsPage() {
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
     const { toast } = useToast()
 
+    const user = useCurrentUser();
+    const userId = user?.userId ?? 0; // 값이 없으면 fallback으로 0
+
+
     // 커스텀 알림 상태 추가
     const [alertOpen, setAlertOpen] = useState(false)
     const [alertMessage, setAlertMessage] = useState("")
 
     // 상단에 userId 상태 추가 (import 문 아래, 컴포넌트 내부 상단)
-    const [userId, setUserId] = useState<number>(1) // 임시로 userId를 1로 설정 (실제 구현 시 로그인한 사용자의 ID로 대체 필요)
+    // const [userId, setUserId] = useState<number>(1) // 임시로 userId를 1로 설정 (실제 구현 시 로그인한 사용자의 ID로 대체 필요)
     const [myCardsList, setMyCardsList] = useState<CardListDTO[]>([])
     const [isLoadingMyCards, setIsLoadingMyCards] = useState(false)
     const [cardPerformanceInfo, setCardPerformanceInfo] = useState<Record<number, UserCardPerformanceDetail>>({})
@@ -712,7 +718,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -801,7 +807,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -1307,7 +1313,7 @@ export default function CardsPage() {
                                 <div>
                                     <h3 className="font-bold text-lg">{selectedCard.name || selectedCard.cardName}</h3>
                                     <p className="text-sm text-gray-500">
-                                        {selectedCard.cardCompany || selectedCard.cardBrandName} |{" "}
+                                        {selectedCard.cardCompany || selectedCard.cardBrand} |{" "}
                                         {selectedCard.cardType === 401 ? "신용카드" : "체크카드"}
                                     </p>
                                 </div>

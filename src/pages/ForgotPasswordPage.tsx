@@ -6,7 +6,7 @@ import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
 import { useToast } from "../hooks/use-toast"
 import rabbitClover from '../images/rabbit-clover.png';
-import axiosInstance from "../lib/axiosInstance"
+import axiosInstance from "../api/axios/axiosInstance"
 
 interface ErrorResponse {
     errorMessage: string;

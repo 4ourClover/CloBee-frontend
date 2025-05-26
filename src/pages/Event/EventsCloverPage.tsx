@@ -1,27 +1,23 @@
-import { useState, useEffect } from "react"
-import { data, Link, useNavigate } from "react-router-dom"
+import { useState, useEffect, useCallback } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import {
     ChevronLeft,
     Clover,
-    Gift,
 } from "lucide-react"
-import { Button } from "../../components/ui/button"       // '@/components/...' → '../components/...'
-import { useToast } from "../../hooks/use-toast"          // '@/hooks/...' → '../hooks/...'
+import { Button } from "../../components/ui/button"
+import { useToast } from "../../hooks/use-toast"
 // @ts-ignore
 import confetti from "canvas-confetti"
 import BottomNavigation from "../../components/bottom-navigation"
 import { useCurrentUser } from "../../hooks/use-current-user"
 
-
 // API URL 상수 정의
-const API_BASE_URL = 'http://localhost:8080/event/findClover'
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL + '/event/findClover'
 
 export default function CloverGamePage() {
     const [clovers, setClovers] = useState<Array<{ id: number; isLucky: boolean; isFlipped: boolean }>>([])
     const [gameStarted, setGameStarted] = useState(false)
     const [gameWon, setGameWon] = useState(false)
-    const [attempts, setAttempts] = useState(0)
-    const [eventFindingCloverParticipationStatus, setEventFindingCloverParticipationStatus] = useState(false)
     const [eventFindingCloverCurrentStage, setEventFindingCloverCurrentStage] = useState(0)
     const { toast } = useToast()
     const navigate = useNavigate()
@@ -37,39 +33,129 @@ export default function CloverGamePage() {
     const userId = user?.userId
 
     // 모달을 띄우는 헬퍼
-    const showConfirmModal = (message: string, onConfirm: () => void) => {
+    const showConfirmModal = useCallback((message: string, onConfirm: () => void) => {
         setConfirmMessage(message)
         setOnConfirmAction(() => onConfirm)
         setIsConfirmModalOpen(true)
-    }
+    }, [])
+
     const closeConfirmModal = () => {
         setIsConfirmModalOpen(false)
     }
 
+    // 게임 시작 핸들러
+    const handleStartGame = useCallback(async () => {
+        if (!userId) {
+            toast({
+                title: "오류",
+                description: "사용자 정보를 불러올 수 없습니다.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        try {
+            // 먼저 사용자 상태 확인
+            let response = await fetch(`${API_BASE_URL}/status?user_id=${userId}`)
+
+            // 404 오류가 발생하면 새로운 사용자이므로 초기화
+            if (response.status === 404) {
+                console.log('새로운 사용자 - 게임 초기화 진행')
+                const initResponse = await fetch(`${API_BASE_URL}/init?user_id=${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+
+                if (!initResponse.ok) {
+                    throw new Error('게임 초기화에 실패했습니다.')
+                }
+
+                // 초기화 후 다시 상태 확인
+                response = await fetch(`${API_BASE_URL}/status?user_id=${userId}`)
+            }
+
+            if (!response.ok) {
+                throw new Error('게임 상태를 불러오는데 실패했습니다.')
+            }
+
+            const data = await response.json()
+            console.log('게임 상태:', data)
+
+            if (data.eventFindingCloverParticipationStatus === true) {
+                showConfirmModal(
+                    '오늘은 이미 참여하셨습니다.',
+                    () => navigate('/event')
+                )
+                return
+            }
+
+            // current stage에 따라 클로버 개수 변경
+            let newClovers: Array<{ id: number; isLucky: boolean; isFlipped: boolean }> = []
+
+            if (data.eventFindingCloverCurrentStage === 1) {
+                newClovers = Array.from({ length: 16 }, (_, i) => ({
+                    id: i,
+                    isLucky: false,
+                    isFlipped: false,
+                }))
+            } else if (data.eventFindingCloverCurrentStage === 2) {
+                newClovers = Array.from({ length: 25 }, (_, i) => ({
+                    id: i,
+                    isLucky: false,
+                    isFlipped: false,
+                }))
+            } else if (data.eventFindingCloverCurrentStage === 3) {
+                newClovers = Array.from({ length: 36 }, (_, i) => ({
+                    id: i,
+                    isLucky: false,
+                    isFlipped: false,
+                }))
+            }
+
+            // 랜덤하게 하나의 클로버를 골드 네잎클로버로 지정
+            const luckyIndex = Math.floor(Math.random() * newClovers.length)
+            newClovers[luckyIndex].isLucky = true
+
+            console.log("새로운 클로버 배열:", newClovers)
+
+            setClovers(newClovers)
+            setEventFindingCloverCurrentStage(data.eventFindingCloverCurrentStage)
+            setGameStarted(true)
+            setGameWon(false)
+        } catch (error) {
+            console.error('게임 시작 실패:', error)
+            toast({
+                title: "오류 발생",
+                description: "게임을 시작하는데 실패했습니다.",
+                variant: "destructive",
+            })
+        }
+    }, [userId, navigate, showConfirmModal, toast])
+
     // 게임 초기화
     useEffect(() => {
-        if (!gameStarted) return
+        if (!gameStarted || !userId) return
 
-
-        // API 호출로 현재 스테이지 확인
         fetch(`${API_BASE_URL}/status?user_id=${userId}`)
             .then(response => response.json())
             .then(data => {
-                setEventFindingCloverParticipationStatus(data.eventFindingCloverParticipationStatus)
                 setEventFindingCloverCurrentStage(data.eventFindingCloverCurrentStage)
+
                 // 오늘 이미 참여한 경우 게임 종료
                 if (data.eventFindingCloverParticipationStatus === true) {
                     showConfirmModal(
                         '오늘은 이미 참여하셨습니다.',
-                        () => navigate('/events')
+                        () => navigate('/event')
                     )
                     setGameStarted(false)
                     setGameWon(true)
                     return
                 }
 
-
                 let newClovers: Array<{ id: number; isLucky: boolean; isFlipped: boolean }> = [];
+
                 // current stage에 따라 클로버 개수 변경
                 if (data.eventFindingCloverCurrentStage === 1) {
                     newClovers = Array.from({ length: 16 }, (_, i) => ({
@@ -97,7 +183,6 @@ export default function CloverGamePage() {
 
                 setClovers(newClovers)
                 setGameWon(false)
-                setAttempts(0)
             })
             .catch(error => {
                 console.error('Failed to fetch game status:', error)
@@ -107,11 +192,11 @@ export default function CloverGamePage() {
                     variant: "destructive",
                 })
             })
-    }, [gameStarted])
+    }, [gameStarted, userId, navigate, showConfirmModal, toast])
 
     // 클로버 클릭 핸들러
     const handleCloverClick = async (id: number) => {
-        if (!gameStarted || gameWon) return
+        if (!gameStarted || gameWon || !userId) return
 
         const updatedClovers = clovers.map((clover) => {
             if (clover.id === id && !clover.isFlipped) {
@@ -119,7 +204,6 @@ export default function CloverGamePage() {
 
                 if (newClover.isLucky) {
                     setGameWon(true)
-
 
                     // 성공 시 API 호출
                     fetch(`${API_BASE_URL}/status?user_id=${userId}`)
@@ -139,14 +223,14 @@ export default function CloverGamePage() {
                                     setTimeout(() => {
                                         showConfirmModal(
                                             '쿠폰이 지급되었습니다!',
-                                            () => navigate('/events')
+                                            () => navigate('/event')
                                         )
                                     }, 3000)
                                 } else {
                                     setTimeout(() => {
                                         showConfirmModal(
                                             '이미 쿠폰을 지급받았습니다',
-                                            () => navigate('/events')
+                                            () => navigate('/event')
                                         )
                                     }, 3000)
                                 }
@@ -161,7 +245,6 @@ export default function CloverGamePage() {
                                     setShowSuccessAlert(false)
                                     setGameStarted(false)
                                     setGameWon(false)
-                                    setAttempts(0)
                                     handleStartGame()
                                 }, 3000)
                             }
@@ -192,7 +275,7 @@ export default function CloverGamePage() {
                             if (data.eventFindingCloverParticipationStatus === true || data.eventFindingCloverAttemptsLeft === 0) {
                                 showConfirmModal(
                                     '횟수를 모두 소진하였습니다\n내일 다시 도전해주세요',
-                                    () => navigate('/events')
+                                    () => navigate('/event')
                                 )
                             }
                         })
@@ -205,80 +288,19 @@ export default function CloverGamePage() {
         })
 
         setClovers(updatedClovers)
-        setAttempts(prev => prev + 1)
-    }
-
-    // 게임 시작 핸들러
-    const handleStartGame = async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/init?user_id=${userId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            //const response = await fetch(`${API_BASE_URL}/status?user_id=18`);
-            const data = await response.json();
-            console.log(data)
-
-            if (data.eventFindingCloverParticipationStatus === true) {
-                showConfirmModal(
-                    '오늘은 이미 참여하셨습니다.',
-                    () => navigate('/events')
-                )
-                return
-            }
-
-            // current stage에 따라 클로버 개수 변경
-            if (data.eventFindingCloverCurrentStage === 1) {
-                setClovers(Array.from({ length: 16 }, (_, i) => ({
-                    id: i,
-                    isLucky: false,
-                    isFlipped: false,
-                })))
-            } else if (data.eventFindingCloverCurrentStage === 2) {
-                setClovers(Array.from({ length: 25 }, (_, i) => ({
-                    id: i,
-                    isLucky: false,
-                    isFlipped: false,
-                })))
-            } else if (data.eventFindingCloverCurrentStage === 3) {
-                setClovers(Array.from({ length: 36 }, (_, i) => ({
-                    id: i,
-                    isLucky: false,
-                    isFlipped: false,
-                })))
-            }
-
-            // 랜덤하게 하나의 클로버를 골드 네잎클로버 지정
-            const luckyIndex = Math.floor(Math.random() * clovers.length)
-            const newClovers = clovers.map((clover, index) =>
-                index === luckyIndex ? { ...clover, isLucky: true } : clover
-            )
-
-            console.log("newClovers : ", newClovers)
-            console.log("clovers : ", clovers)
-
-
-            setClovers(newClovers)
-            setGameStarted(true)
-            setGameWon(false)
-            setAttempts(0)
-        } catch (error) {
-            console.error('Failed to start game:', error)
-        }
-    }
-
-    // 게임 재시작 핸들러
-    const handleRestartGame = () => {
-        setGameStarted(false)
-        setTimeout(() => {
-            setGameStarted(true)
-        }, 100)
     }
 
     // 친구 초대 후 한판 더 진행
     const handleInviteFriend = async () => {
+        if (!userId) {
+            toast({
+                title: "오류",
+                description: "사용자 정보를 불러올 수 없습니다.",
+                variant: "destructive",
+            })
+            return
+        }
+
         try {
             const response = await fetch(`${API_BASE_URL}/init?user_id=${userId}&invited=true`, {
                 method: 'POST',
@@ -294,7 +316,6 @@ export default function CloverGamePage() {
                 // 게임 상태 초기화 후 자동으로 게임 시작
                 setGameStarted(false)
                 setGameWon(false)
-                setAttempts(0)
                 setTimeout(() => {
                     handleStartGame()
                 }, 100)
@@ -308,7 +329,7 @@ export default function CloverGamePage() {
         <main className="flex flex-col h-screen max-w-sm mx-auto overflow-hidden">
             {/* 헤더 */}
             <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-3 flex items-center gap-2">
-                <Link to="/events">
+                <Link to="/event">
                     <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8">
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -395,10 +416,11 @@ export default function CloverGamePage() {
 
             {/* 하단 내비게이션 */}
             <BottomNavigation />
+
+            {/* 확인 모달 */}
             {isConfirmModalOpen && (
                 <div className="fixed inset-0 bg-gray-900 bg-opacity-20 backdrop-blur-sm z-50 flex items-center justify-center">
                     <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full text-center">
-                        {/* 줄바꿈 지원을 위해 whitespace-pre-line 적용 */}
                         <p className="mb-6 text-lg text-gray-800 whitespace-pre-line">
                             {confirmMessage}
                         </p>
@@ -428,7 +450,6 @@ export default function CloverGamePage() {
                     </div>
                 </div>
             )}
-
         </main>
     )
 }
