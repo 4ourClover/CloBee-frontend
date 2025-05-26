@@ -19,13 +19,14 @@ export type CardPageDTO = {
 export type CardBenefitDetail = {
     cardBenefitId: number
     cardInfoId: number
-    cardBenefitCategory: number
     cardBenefitStore: string
-    cardBenefitTitle: string
     cardBenefitDesc: string
-    cardBenefitDiscntRate: number
     cardBenefitDiscntPrice: number
     cardBenefitCondition: string
+    cardName: string
+    discountPrice: number
+    cardRank: number
+    cardImageUrl: string
 }
 
 export type CardBrandUrl = {
