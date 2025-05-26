@@ -34,6 +34,17 @@ export type BenefitCard = {
     card_image_url: string | null;  // cardImageUrl
 };
 
+export type notificationStore = {
+    id: number;                 // cardBenefitId
+    storeFullName: string
+    distance: number,
+    benefit_store: string;      // cardBenefitStore
+    discount: string;           // cardBenefitDiscntPrice ("50%")
+    discountPrice: number;      // discountPrice (5000)
+    description: string;        // cardBenefitDesc ("할인")
+    card_name: string;          // cardName ("삼성카드 taptap O")
+};
+
 
 // export interface Store {
 //     id: number;

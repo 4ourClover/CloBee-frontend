@@ -6,10 +6,9 @@ import BottomNavigation from "../components/bottom-navigation"
 import MapHeader from "../components/map/map-header"
 import MapRefresh from "../components/map/map-refresh"
 import BottomSheet from "../components/map/bottom-sheet"
-import { Store, StoreCategory, categoryConfig, BenefitCard, brandCategory, validBrands } from '../types/store';
+import { Store, StoreCategory, categoryConfig, BenefitCard, brandCategory, validBrands, notificationStore } from '../types/store';
 import SearchList from '../components/map/search-list';
 import { useCurrentUser } from "../hooks/use-current-user"
-import { useLocationTracking, notificationUtils, fetchNearbyBenefitStores } from './Notification';
 
 import { getBenefitStores, getBenefitStoresBrand, getMapMyBenefits, getRecommendedCards } from '../api/map';
 
@@ -42,16 +41,17 @@ export default function MapPage() {
     const benefitStoresBrandRef = useRef<Record<string, string[]>>({});
 
     const user = useCurrentUser()
-    const userId = user?.userId
+    const userId = user?.userId //안됨 해결 필요
 
     const [benefitCards, setBenefitCards] = useState<BenefitCard[]>([]);
     const [recommendedCards, setRecommendedCards] = useState<BenefitCard[]>([]);
 
     // 알림 매장 상태 추가
-    const [nearbyNotificationStores, setNearbyNotificationStores] = useState<Store[]>([]);
+    const [nearbyNotificationStores, setNearbyNotificationStores] = useState<notificationStore[]>([]);
 
     useEffect(() => {
         nearbyStoresRef.current = nearbyStores;
+        fetchNotificationStore(11);
         // console.log("nearbyStoresRef 업데이트:", nearbyStoresRef.current);
         // console.log("nearbyStores 업데이트:", nearbyStores);
     }, [nearbyStores]);
@@ -80,9 +80,8 @@ export default function MapPage() {
 
     const fetchBenefitStores = useCallback(async () => {
         try {
-            const data = await getBenefitStores(11);
+            const data = await getBenefitStores(11);//userId!);
             benefitStoresRef.current = data;
-            console.log(benefitStoresRef);
 
             if (Array.isArray(data) && data.length === 0) {
                 console.warn("⚠️ 혜택 매장이 비어 있습니다 (빈 배열).");
@@ -94,9 +93,8 @@ export default function MapPage() {
 
     const fetchBenefitStoresBrand = useCallback(async () => {
         try {
-            const data = await getBenefitStoresBrand(11);
+            const data = await getBenefitStoresBrand(11);//userId!);
             benefitStoresBrandRef.current = data;
-            console.log(benefitStoresBrandRef);
 
             initializeMap();
 
@@ -127,29 +125,11 @@ export default function MapPage() {
         if (store) {
             setSelectedStore(store)
 
-            // const data = await getMapMyBenefits(11, benefitStoreName);
-            // setBenefitCards(data);
-
-            const rawData = await getMapMyBenefits(11, benefitStoreName);
-
-            const mapped: BenefitCard[] = rawData.map((item: any) => ({
-                id: item.cardBenefitId,
-                cardInfoId: item.cardInfoId,
-                benefit_store: item.cardBenefitStore,
-                discount: item.cardBenefitDiscntPrice,
-                discountPrice: item.discountPrice,
-                description: item.cardBenefitDesc,
-                condition: item.cardBenefitCondition,
-                card_name: item.cardName,
-                card_image_url: item.cardImageUrl,
-            }));
-
-            setBenefitCards(mapped);
+            const data = await getMapMyBenefits(11, benefitStoreName);
+            setBenefitCards(data);
 
             const cards = await getRecommendedCards(benefitStoreName);
             setRecommendedCards(cards);
-
-            console.log("바텀 시트 열기:", store.place_name);
         }
     }
 
@@ -165,7 +145,6 @@ export default function MapPage() {
             return;
         }
         mapInitializedRef.current = true;
-        console.log("맵 초기화 시작");
 
         console.log("맵 로딩");
         if (navigator.geolocation) {
@@ -175,7 +154,7 @@ export default function MapPage() {
                     // 성공 시: 위도, 경도 가져오기
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    console.log("현재 위치:", lat, lng);
+
                     setCurrentLocation({ lat, lng }); // 현재 위치 상태 업데이트
 
                     const container = document.getElementById("map");
@@ -185,7 +164,6 @@ export default function MapPage() {
                     }
 
                     window.kakao.maps.load(() => {
-                        console.log("Kakao Maps SDK 로드 완료");
                         //맵 생성
                         const options = {
                             center: new window.kakao.maps.LatLng(lat, lng),
@@ -251,7 +229,6 @@ export default function MapPage() {
     }, []); // 의존성 배열 업데이트
 
     const searchPlacesMenu = (keyword: string) => {
-        console.log("검색어:", keyword);
 
         // 장소검색 객체를 통해 키워드로 장소검색을 요청합니다
         const currentPosition = new window.kakao.maps.LatLng(currentLocation.lat, currentLocation.lng);
@@ -296,8 +273,6 @@ export default function MapPage() {
     function selectSearchStore(storeId: number) {
         const store = searchStoreList.current.find((s) => s.id === storeId);
         if (store) {
-            console.log("선택된 매장:", store);
-
             kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(store.lat, store.lng)); // 지도 중심 이동
             kakaoMapRef.current.setLevel(3); // 줌 레벨 조정
             setNearbyStores((prev) => [...prev, store]);
@@ -314,12 +289,10 @@ export default function MapPage() {
         // 현재 저장된 매장 ID를 빠르게 확인하기 위한 Set 생성
         const existingStoreIds = new Set(nearbyStoresRef.current.map(store => store.id));
 
-        console.log("혜택매장 주변 찾기", benefitStoresRef.current)
         benefitStoresRef.current.forEach((bStore) => {
             const searchPromise = new Promise<{ data: any[], bStore: string }>((resolve) => {
                 ps.keywordSearch(bStore, (data: any, status: any, pagination: any) => {
                     if (status === window.kakao.maps.services.Status.OK) {
-                        console.log(data)
                         resolve({ data, bStore });
                     } else {
                         console.warn(`'${bStore}' 검색 오류:`, status);
@@ -327,7 +300,7 @@ export default function MapPage() {
                     }
                 }, {
                     location: currentPosition,
-                    radius: 500,
+                    radius: 1000,
                     size: 5
                 });
             });
@@ -380,8 +353,6 @@ export default function MapPage() {
 
                 return updatedStores;
             });
-            //console.log("최종 주변 매장:", allNewStores);
-            //console.log("현재 매장 배열", nearbyStores);
 
             if (kakaoMapRef.current && !bounds.isEmpty()) {
                 kakaoMapRef.current.setBounds(bounds);
@@ -399,7 +370,6 @@ export default function MapPage() {
 
     // 지도에 마커를 표시하는 함수입니다
     function displayMarker(place: Store) {
-        console.log("place", place)
         const storeMarkerContent = (
             <div
                 data-id={place.id}
@@ -468,7 +438,6 @@ export default function MapPage() {
         // if (!matched) {
         //     brandMarkersRef.current[""].push(marker); // 어떤 브랜드에도 속하지 않으면 fallback
         // }
-
     }
 
 
@@ -493,12 +462,10 @@ export default function MapPage() {
     }
 
     useEffect(() => {
-        console.log("selectedCategory", selectedCategory);
         updateMarkersBySelection<StoreCategory>(categoryMarkersRef, selectedCategory, kakaoMapRef.current);
     }, [selectedCategory]);
 
     useEffect(() => {
-        console.log("selectedBrand", selectedBrand);
         updateMarkersBySelection<brandCategory>(brandMarkersRef, selectedBrand, kakaoMapRef.current);
     }, [selectedBrand]);
 
@@ -516,11 +483,54 @@ export default function MapPage() {
         kakaoMapRef.current.setLevel(5); // 줌 레벨 조정
     };
 
-    const showAroundStore = () => {
-        console.log("주변 매장 검색 시작");
+    useEffect(() => {
+        console.log("알람 매장 세팅")
+    }, [nearbyNotificationStores]);
 
+    const fetchNotificationStore = async (userId: number) => {
+        const top5Stores = [...nearbyStores]
+            .sort((a, b) => a.distance - b.distance) // 거리 오름차순 정렬
+            .slice(0, 5);
+
+
+        const benefitPromises = top5Stores.map(async (store) => {
+            const cards = await getMapMyBenefits(userId, store.benefitStore);
+            console.log(cards)
+            const bestCard = cards[0]; // 가장 혜택이 큰 카드
+            if (!bestCard) return null;
+
+            // ✅ 수동 매핑
+            const mapped: notificationStore = {
+                id: bestCard.id,
+                storeFullName: store.place_name,
+                distance: store.distance,
+                benefit_store: bestCard.benefit_store,
+                discount: bestCard.discount,
+                discountPrice: bestCard.discountPrice,
+                description: bestCard.description,
+                card_name: bestCard.card_name,
+            };
+
+            return mapped;
+        });
+
+        try {
+            const results = await Promise.all(benefitPromises);
+            const validStores = results.filter((store): store is notificationStore => store !== null);
+
+            setNearbyNotificationStores(validStores); // ✅ 상태를 한 번에 설정
+        } catch (error) {
+            console.error("❌ 혜택 카드 조회 실패:", error);
+        }
+    };
+
+
+    const showAroundStore = () => {
         setSelectedBrand(null);
         setSelectedCategory(null);
+
+        fetchNotificationStore(11);
+
         var center = kakaoMapRef.current.getCenter(); // 현재 지도 중심 좌표
         placesSearch(center); // 장소 검색 시작
     }
@@ -538,6 +548,7 @@ export default function MapPage() {
                     setSelectedBrand(prev => (prev === brand ? null : brand))
                 }
                 onSearch={searchPlacesMenu}
+
                 nearbyNotificationStores={nearbyNotificationStores} // 추가된 prop
             />
 
@@ -573,7 +584,7 @@ export default function MapPage() {
             />
 
             {/* 바텀 시트 */}
-            benefitCards? <BottomSheet
+            <BottomSheet
                 showStoreInfo={showStoreInfo}
                 setShowStoreInfo={setShowStoreInfo}
                 selectedStore={selectedStore}

@@ -119,8 +119,8 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                                             <Badge
                                                 className="flex items-center gap-1 py-1"
                                                 style={{
-                                                    backgroundColor: `${categoryConfig[selectedStore.category_group_code].color}20`,
-                                                    color: categoryConfig[selectedStore.category_group_code].color,
+                                                    backgroundColor: `${(categoryConfig[selectedStore.category_group_code] || categoryConfig[""]).color}20`,
+                                                    color: (categoryConfig[selectedStore.category_group_code] || categoryConfig[""]).color,
                                                 }}
                                             >
                                                 {getCategoryIcon(selectedStore.category_group_code)}
