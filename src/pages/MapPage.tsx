@@ -11,7 +11,7 @@ import SearchList from '../components/map/search-list';
 import { useCurrentUser } from "../hooks/use-current-user"
 import { useLocationTracking, notificationUtils, fetchNearbyBenefitStores } from './Notification';
 
-import { getBenefitStores, getBenefitStoresBrand, getMapMyBenefits } from '../api/map';
+import { getBenefitStores, getBenefitStoresBrand, getMapMyBenefits, getRecommendedCards } from '../api/map';
 
 declare global {
     interface Window {
@@ -45,6 +45,7 @@ export default function MapPage() {
     const userId = user?.userId
 
     const [benefitCards, setBenefitCards] = useState<BenefitCard[]>([]);
+    const [recommendedCards, setRecommendedCards] = useState<BenefitCard[]>([]);
 
     // 알림 매장 상태 추가
     const [nearbyNotificationStores, setNearbyNotificationStores] = useState<Store[]>([]);
@@ -115,7 +116,7 @@ export default function MapPage() {
             console.log("🟢 selectedStore 변경됨:", benefitCards);
             setShowStoreInfo(true)
         }
-    }, [selectedStore, benefitCards]);
+    }, [selectedStore, benefitCards, recommendedCards]);
 
 
     // 지도 클릭 핸들러
@@ -144,6 +145,9 @@ export default function MapPage() {
             }));
 
             setBenefitCards(mapped);
+
+            const cards = await getRecommendedCards(benefitStoreName);
+            setRecommendedCards(cards);
 
             console.log("바텀 시트 열기:", store.place_name);
         }
@@ -447,16 +451,6 @@ export default function MapPage() {
         }
 
 
-        // benefitStoresBrandRef.current.forEach([brand, storeList]) => {
-        //     if (card.benefit_store === place.benefitStore) {
-        //         //console.log("카드 마커 추가:", card.benefit_store, keyword);
-        //         brandMarkersRef.current[card.card_brand].push(marker); // 카드 마커 추가
-        //     } else {
-        //         brandMarkersRef.current[""].push(marker);
-        //     }
-        //     //console.log("카드 마커 추가:", brandMarkersRef.current);
-        // });
-
         //let matched = false;
 
         Object.entries(benefitStoresBrandRef.current).forEach(([brand, storeList]) => {
@@ -584,7 +578,7 @@ export default function MapPage() {
                 setShowStoreInfo={setShowStoreInfo}
                 selectedStore={selectedStore}
                 benefitCards={benefitCards}
-                recommendedCards={benefitCards}
+                recommendedCards={recommendedCards}
                 getCategoryIcon={getCategoryIcon} //아이콘
             />
 

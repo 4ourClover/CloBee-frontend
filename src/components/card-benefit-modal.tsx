@@ -56,10 +56,10 @@ export default function CardBenefitModal({ store, onClose, benefitCards, recomme
                 <h3 className="font-medium text-[#5A3D2B] mb-2">최고 혜택 카드</h3>
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-lg text-[#00A949]">{recommendedCards[0].card_name}</p>
-                    <p className="text-sm text-[#5A3D2B]/70">최대 할인: {recommendedCards[0].discount}</p>
+                    <p className="font-bold text-lg text-[#00A949]">{benefitCards[0].card_name}</p>
+                    <p className="text-sm text-[#5A3D2B]/70">최대 할인: {benefitCards[0].discount}</p>
                   </div>
-                  <div className="text-2xl font-bold text-[#00A949]">{recommendedCards[0].discount}</div>
+                  <div className="text-2xl font-bold text-[#00A949]">{benefitCards[0].discount}</div>
                 </div>
               </div>
 
