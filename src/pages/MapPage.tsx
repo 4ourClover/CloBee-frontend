@@ -6,11 +6,11 @@ import BottomNavigation from "../components/bottom-navigation"
 import MapHeader from "../components/map/map-header"
 import MapRefresh from "../components/map/map-refresh"
 import BottomSheet from "../components/map/bottom-sheet"
-import { Store, StoreCategory, categoryConfig, BenefitCard, brandCategory } from '../types/store';
+import { Store, StoreCategory, categoryConfig, BenefitCard, brandCategory, validBrands } from '../types/store';
 import SearchList from '../components/map/search-list';
 import { useLocationTracking, notificationUtils, fetchNearbyBenefitStores } from './Notification';
 
-import { getBenefitStores } from '../api/map';
+import { getBenefitStores, getBenefitStoresBrand } from '../api/map';
 
 declare global {
     interface Window {
@@ -75,8 +75,24 @@ export default function MapPage() {
         try {
             const data = await getBenefitStores(11);
             benefitStoresRef.current = data;
+            console.log(benefitStoresRef);
+
+            if (Array.isArray(data) && data.length === 0) {
+                console.warn("⚠️ 혜택 매장이 비어 있습니다 (빈 배열).");
+            }
+        } catch (error) {
+            console.error('조회 실패:', error);
+        }
+    }, []);
+
+    const fetchBenefitStoresBrand = useCallback(async () => {
+        try {
+            const data = await getBenefitStoresBrand(11);
+            benefitStoresBrandRef.current = data;
+            console.log(benefitStoresBrandRef);
 
             initializeMap();
+
         } catch (error) {
             console.error('조회 실패:', error);
         }
@@ -85,6 +101,7 @@ export default function MapPage() {
     // 혜택매장 데이터 먼저 로드
     useEffect(() => {
         fetchBenefitStores();
+        fetchBenefitStoresBrand()
     }, []);
 
 
@@ -437,15 +454,33 @@ export default function MapPage() {
         }
 
 
-        starbucksBenefitCards.forEach((card) => {
-            if (card.benefit_store === place.benefitStore) {
-                //console.log("카드 마커 추가:", card.benefit_store, keyword);
-                brandMarkersRef.current[card.card_brand].push(marker); // 카드 마커 추가
-            } else {
-                brandMarkersRef.current[""].push(marker);
+        // benefitStoresBrandRef.current.forEach([brand, storeList]) => {
+        //     if (card.benefit_store === place.benefitStore) {
+        //         //console.log("카드 마커 추가:", card.benefit_store, keyword);
+        //         brandMarkersRef.current[card.card_brand].push(marker); // 카드 마커 추가
+        //     } else {
+        //         brandMarkersRef.current[""].push(marker);
+        //     }
+        //     //console.log("카드 마커 추가:", brandMarkersRef.current);
+        // });
+
+        //let matched = false;
+
+        Object.entries(benefitStoresBrandRef.current).forEach(([brand, storeList]) => {
+            if (storeList.includes(place.benefitStore)) {
+                if (validBrands.includes(brand as brandCategory)) {
+                    brandMarkersRef.current[brand as brandCategory].push(marker);
+                } else {
+                    console.warn(`⚠️ '${brand}'는 유효하지 않은 브랜드입니다. fallback 키("")에 마커 등록`);
+                    brandMarkersRef.current[""].push(marker);
+                }
+                //matched = true;
             }
-            //console.log("카드 마커 추가:", brandMarkersRef.current);
         });
+
+        // if (!matched) {
+        //     brandMarkersRef.current[""].push(marker); // 어떤 브랜드에도 속하지 않으면 fallback
+        // }
 
     }
 
