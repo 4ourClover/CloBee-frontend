@@ -11,14 +11,14 @@ import BottomNavigation from "../../components/bottom-navigation"
 
 // 룰렛 상품 데이터
 const PRIZES = [
-    { name: "5,000원 할인쿠폰", textColor: "#333333" },
-    { name: "10% 할인쿠폰", textColor: "#333333" },
-    { name: "무료 배송쿠폰", textColor: "#333333" },
-    { name: "1,000P 적립", textColor: "#333333" },
-    { name: "3,000원 할인쿠폰", textColor: "#333333" },
+    { name: "5,000원 쿠폰", textColor: "#333333" },
+    { name: "2,000원 쿠폰", textColor: "#333333" },
+    { name: "3,000원 쿠폰", textColor: "#333333" },
+    { name: "1,000원 쿠폰", textColor: "#333333" },
+    { name: "3,000원 쿠폰", textColor: "#333333" },
     { name: "다음 기회에", textColor: "#333333" },
-    { name: "15% 할인쿠폰", textColor: "#333333" },
-    { name: "2,000P 적립", textColor: "#333333" },
+    { name: "1,000원 쿠폰", textColor: "#333333" },
+    { name: "500원 쿠폰", textColor: "#333333" },
 ]
 
 export default function InviteEventPage() {
