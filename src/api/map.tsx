@@ -1,4 +1,4 @@
-import api from './index'; // 기존에 만든 axios 인스턴스
+import api from './axios/index'; // 기존에 만든 axios 인스턴스
 
 export const getBenefitStores = async (userId: number): Promise<string[]> => {
     try {
@@ -12,7 +12,6 @@ export const getBenefitStores = async (userId: number): Promise<string[]> => {
     }
 };
 
-// api/card.ts
 export const getBenefitStoresBrand = async (userId: number): Promise<Record<string, string[]>> => {
     try {
         const response = await api.get<Record<string, string[]>>('/card/benefit-stores-brand', {
