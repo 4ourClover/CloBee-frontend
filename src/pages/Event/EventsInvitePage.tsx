@@ -154,12 +154,14 @@ export default function InviteEventPage() {
         const prizeIndex = Math.floor(Math.random() * PRIZES.length)
         setSelectedPrize(prizeIndex)
 
-        // 회전 각도 계산 (여러 바퀴 돌고 선택된 항목에서 멈추도록)
-        // 화살표가 위에 고정되어 있으므로, 당첨 항목이 화살표 위치에 오도록 계산
+        // 회전 각도 계산 수정
+        // 화살표가 위에 고정되어 있으므로, 당첨 항목이 화살표 위치(맨 위)에 오도록 계산
         const sliceAngle = 360 / PRIZES.length
-        const targetDegree = 360 - prizeIndex * sliceAngle // 화살표가 위에 있으므로 해당 항목이 위로 오도록
-        const spins = 5 // 5바퀴 돌기
-        const newRotationDegrees = spins * 360 + targetDegree + sliceAngle / 2 // 항목 중앙이 화살표에 오도록 조정
+
+        // prizeIndex 0이 맨 위에 오도록 조정s
+        const targetDegree = -prizeIndex * sliceAngle // 음수로 변경하여 올바른 방향으로 회전
+        const spins = 4.7 // 5바퀴 돌기
+        const newRotationDegrees = spins * 360 + targetDegree
 
         // 애니메이션 시작
         let startTime: number | null = null
@@ -220,7 +222,7 @@ export default function InviteEventPage() {
         <main className="flex flex-col h-screen max-w-sm mx-auto overflow-hidden">
             {/* 헤더 */}
             <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-3 flex items-center gap-2">
-                <Link to="/event">
+                <Link to="/events">
                     <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8">
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -231,7 +233,6 @@ export default function InviteEventPage() {
             {/* 메인 콘텐츠 */}
             <div className="flex-1 overflow-auto bg-gradient-to-b from-[#F8FFF4] to-white p-4">
                 <div className="space-y-6">
-
 
                     {/* 친구와 함께 혜택 받기 섹션 */}
                     <div className="bg-white rounded-lg p-6 text-center shadow-sm">
@@ -304,16 +305,17 @@ export default function InviteEventPage() {
                         </div>
                     </div>
 
+
                     {/* 초대 현황 */}
                     <div>
                         <h3 className="font-bold text-[#5A3D2B] mb-3">초대 현황 (3/10명)</h3>
                         <div className="border rounded-lg overflow-hidden">
-                            <table className="w-full text-[14px]">
+                            <table className="w-full text-sm">
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">이름</th>
                                         <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">가입일</th>
-                                        {/* <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">상태</th> */}
+                                        <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">상태</th>
                                         <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">리워드</th>
                                     </tr>
                                 </thead>
@@ -322,7 +324,7 @@ export default function InviteEventPage() {
                                         <tr key={index}>
                                             <td className="py-2 px-3">{invite.name}</td>
                                             <td className="py-2 px-3">{invite.date}</td>
-                                            {/* <td className="py-2 px-3 text-[#00A949]">{invite.status}</td> */}
+                                            <td className="py-2 px-3 text-[#00A949]">{invite.status}</td>
                                             <td className="py-2 px-3 text-gray-500">{invite.reward}</td>
                                         </tr>
                                     ))}
