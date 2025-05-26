@@ -11,49 +11,6 @@ type CardBenefitModalProps = {
 };
 
 export default function CardBenefitModal({ store, onClose, benefitCards, recommendedCards }: CardBenefitModalProps) {
-  // 더미 데이터: 내 카드 혜택
-  // const myCardBenefits = [
-  //   {
-  //     cardName: "신한카드 Deep Dream",
-  //     discount: "20%",
-  //     maxDiscount: "5,000원",
-  //     isRecommended: false,
-  //   },
-  //   {
-  //     cardName: "현대카드 The Green",
-  //     discount: "10%",
-  //     maxDiscount: "3,000원",
-  //     isRecommended: false,
-  //   },
-  // ]
-
-  // // 더미 데이터: 추천 카드 혜택
-  // const recommendedCards = [
-  //   {
-  //     cardName: "신한카드",
-  //     discount: "30%",
-  //     maxDiscount: "10,000원",
-  //     isRecommended: true,
-  //     image: "/placeholder.svg?height=200&width=320",
-  //   },
-  //   {
-  //     cardName: "삼성카드 taptap O",
-  //     discount: "25%",
-  //     maxDiscount: "8,000원",
-  //     isRecommended: true,
-  //     image: "/placeholder.svg?height=200&width=320",
-  //   },
-  // ]
-
-  // // 모든 카드 혜택 (내 카드 + 추천 카드)
-  // const allCardBenefits = [...myCardBenefits, ...recommendedCards]
-
-  // 혜택 순으로 정렬
-  // const sortedBenefits = [...allCardBenefits].sort((a, b) => {
-  //   const discountA = Number.parseInt(a.discount.replace("%", ""))
-  //   const discountB = Number.parseInt(b.discount.replace("%", ""))
-  //   return discountB - discountA
-  // })
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
@@ -100,7 +57,7 @@ export default function CardBenefitModal({ store, onClose, benefitCards, recomme
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-bold text-lg text-[#00A949]">{recommendedCards[0].card_name}</p>
-                    <p className="text-sm text-[#5A3D2B]/70">최대 할인: {recommendedCards[0].max_discount}</p>
+                    <p className="text-sm text-[#5A3D2B]/70">최대 할인: {recommendedCards[0].discount}</p>
                   </div>
                   <div className="text-2xl font-bold text-[#00A949]">{recommendedCards[0].discount}</div>
                 </div>
@@ -123,7 +80,7 @@ export default function CardBenefitModal({ store, onClose, benefitCards, recomme
                         <p className={`font-medium ${index === 0 ? "text-[#00A949]" : "text-[#5A3D2B]"}`}>
                           {card.card_name}
                         </p>
-                        <p className="text-xs text-[#5A3D2B]/70">최대 {card.max_discount} 할인</p>
+                        <p className="text-xs text-[#5A3D2B]/70">최대 {card.discount} 할인</p>
                       </div>
                       <div className="text-lg font-bold text-[#00A949]">{card.discount}</div>
                     </div>
@@ -158,7 +115,7 @@ export default function CardBenefitModal({ store, onClose, benefitCards, recomme
                       </div>
                       <div>
                         <p className="text-sm text-[#5A3D2B]/70">최대 할인</p>
-                        <p className="font-medium text-[#5A3D2B]">{card.max_discount}</p>
+                        <p className="font-medium text-[#5A3D2B]">{card.discount}</p>
                       </div>
                       <Button className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none">
                         신청하기

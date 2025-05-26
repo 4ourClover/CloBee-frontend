@@ -23,13 +23,15 @@ export const validBrands: brandCategory[] = [
 ];
 
 export type BenefitCard = {
-    id: number;
-    card_name: string;
-    card_brand: brandCategory;
-    benefit_store: string;
-    discount: string;
-    max_discount: string;
-    image: string;
+    id: number;                 // cardBenefitId
+    cardInfoId: number;         // cardInfoId
+    benefit_store: string;      // cardBenefitStore
+    discount: string;           // cardBenefitDiscntPrice ("50%")
+    discountPrice: number;      // discountPrice (5000)
+    description: string;        // cardBenefitDesc ("할인")
+    condition: string;          // cardBenefitCondition ("전월실적 30만원 이상")
+    card_name: string;          // cardName ("삼성카드 taptap O")
+    card_image_url: string | null;  // cardImageUrl
 };
 
 

@@ -70,9 +70,10 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
         // parentHandleReaction?.(storeId, reaction, !storeReactions[storeId]?.[reaction]);
     }, [setStoreReactions]); // 의존성 배열에 setStoreReactions 추가
 
+
     if (
         !selectedStore ||
-        !benefitCards.some((card) => card.benefit_store === selectedStore.place_name.match(/^\S+/)?.[0])
+        !benefitCards.some((card) => card.benefit_store === selectedStore.benefitStore)
     ) {
         return showStoreInfo ? (
             <div
@@ -161,7 +162,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                                     <h3 className="font-medium text-[#5A3D2B] mb-2">최고 혜택 카드</h3>
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <p className="font-bold text-lg text-[#00A949]">{benefitCards[0].name}</p>
+                                            <p className="font-bold text-lg text-[#00A949]">{benefitCards[0].card_name}</p>
                                             <p className="text-sm text-[#5A3D2B]/70">최대 할인</p>
                                         </div>
                                         <div className="text-2xl font-bold text-[#00A949]">{benefitCards[0].discount}</div>

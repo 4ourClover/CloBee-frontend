@@ -8,9 +8,10 @@ import MapRefresh from "../components/map/map-refresh"
 import BottomSheet from "../components/map/bottom-sheet"
 import { Store, StoreCategory, categoryConfig, BenefitCard, brandCategory, validBrands } from '../types/store';
 import SearchList from '../components/map/search-list';
+import { useCurrentUser } from "../hooks/use-current-user"
 import { useLocationTracking, notificationUtils, fetchNearbyBenefitStores } from './Notification';
 
-import { getBenefitStores, getBenefitStoresBrand } from '../api/map';
+import { getBenefitStores, getBenefitStoresBrand, getMapMyBenefits } from '../api/map';
 
 declare global {
     interface Window {
@@ -39,6 +40,11 @@ export default function MapPage() {
     const mapInitializedRef = useRef(false);
     const benefitStoresRef = useRef<string[]>([]);
     const benefitStoresBrandRef = useRef<Record<string, string[]>>({});
+
+    const user = useCurrentUser()
+    const userId = user?.userId
+
+    const [benefitCards, setBenefitCards] = useState<BenefitCard[]>([]);
 
     // 알림 매장 상태 추가
     const [nearbyNotificationStores, setNearbyNotificationStores] = useState<Store[]>([]);
@@ -104,56 +110,41 @@ export default function MapPage() {
         fetchBenefitStoresBrand()
     }, []);
 
+    useEffect(() => {
+        if (selectedStore && benefitCards.length > 0) {
+            console.log("🟢 selectedStore 변경됨:", benefitCards);
+            setShowStoreInfo(true)
+        }
+    }, [selectedStore, benefitCards]);
 
-    const starbucksBenefitCards: BenefitCard[] = [
-        {
-            id: 1,
-            card_name: "신한카드",
-            card_brand: "신한카드",
-            benefit_store: "스타벅스",
-            discount: "30%",
-            max_discount: "10,000원",
-            image: "/placeholder.svg?height=200&width=320",
-        },
-        {
-            id: 2,
-            card_name: "삼성카드 taptap O",
-            card_brand: "삼성카드",
-            benefit_store: "이마트",
-            discount: "25%",
-            max_discount: "10,000원",
-            image: "/placeholder.svg?height=200&width=320",
-        },
-        {
-            id: 3,
-            card_name: "신한카드 Deep Dream",
-            card_brand: "신한카드",
-            benefit_store: "GS25",
-            discount: "20%",
-            max_discount: "5,000원",
-            image: "/placeholder.svg?height=200&width=320",
-        },
-        {
-            id: 4,
-            card_name: "현대카드 The Green",
-            card_brand: "현대카드",
-            benefit_store: "스타벅스",
-            discount: "15%",
-            max_discount: "3,000원",
-            image: "/placeholder.svg?height=200&width=320",
-        },
-    ]
 
     // 지도 클릭 핸들러
-    const handleMapClick = (storeId: number) => {
+    const handleMapClick = async (storeId: number, benefitStoreName: string) => {
         console.log("지도 클릭:", typeof storeId, storeId);
         const store = nearbyStoresRef.current.find((s) => Number(s.id) == Number(storeId))
         console.log("선택된 매장:", store);
         if (store) {
             setSelectedStore(store)
 
-            // 바텀 시트 표시
-            setShowStoreInfo(true)
+            // const data = await getMapMyBenefits(11, benefitStoreName);
+            // setBenefitCards(data);
+
+            const rawData = await getMapMyBenefits(11, benefitStoreName);
+
+            const mapped: BenefitCard[] = rawData.map((item: any) => ({
+                id: item.cardBenefitId,
+                cardInfoId: item.cardInfoId,
+                benefit_store: item.cardBenefitStore,
+                discount: item.cardBenefitDiscntPrice,
+                discountPrice: item.discountPrice,
+                description: item.cardBenefitDesc,
+                condition: item.cardBenefitCondition,
+                card_name: item.cardName,
+                card_image_url: item.cardImageUrl,
+            }));
+
+            setBenefitCards(mapped);
+
             console.log("바텀 시트 열기:", store.place_name);
         }
     }
@@ -412,8 +403,10 @@ export default function MapPage() {
                 data-benefit-store={place.benefitStore}
                 className="flex flex-col items-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
                 onClick={(e) => {
-                    const id = Number((e.currentTarget as HTMLElement).dataset.id);
-                    handleMapClick(id);
+                    const el = e.currentTarget as HTMLElement;
+                    const id = Number(el.dataset.id);
+                    const benefitStoreName = el.dataset.benefitStore ?? "";
+                    handleMapClick(id, benefitStoreName);
                 }}
             >
                 <div
@@ -586,12 +579,12 @@ export default function MapPage() {
             />
 
             {/* 바텀 시트 */}
-            <BottomSheet
+            benefitCards? <BottomSheet
                 showStoreInfo={showStoreInfo}
                 setShowStoreInfo={setShowStoreInfo}
                 selectedStore={selectedStore}
-                benefitCards={starbucksBenefitCards}
-                recommendedCards={starbucksBenefitCards}
+                benefitCards={benefitCards}
+                recommendedCards={benefitCards}
                 getCategoryIcon={getCategoryIcon} //아이콘
             />
 
