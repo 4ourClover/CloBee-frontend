@@ -44,6 +44,7 @@ export const getMapMyBenefits = async (userId: number, store: string): Promise<B
             condition: item.cardBenefitCondition,
             card_name: item.cardName,
             card_image_url: item.cardImageUrl,
+            cardBrand: item.cardBrand,
         }));
 
         return mapped;
@@ -70,6 +71,7 @@ export const getRecommendedCards = async (store: string): Promise<BenefitCard[]>
             condition: item.cardBenefitCondition,
             card_name: item.cardName,
             card_image_url: item.cardImageUrl,
+            cardBrand: item.cardBrand,
         }));
 
         return mapped;
