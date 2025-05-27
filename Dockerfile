@@ -35,3 +35,4 @@ RUN echo 'server {\n\
 # 7. 포트 노출 및 CMD (serve + nginx)
 EXPOSE 443
 CMD sh -c "serve -s /app/appdir & nginx -g 'daemon off;'"
+
