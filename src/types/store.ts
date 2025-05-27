@@ -34,6 +34,7 @@ export type BenefitCard = {
     card_image_url: string | null;  // cardImageUrl
 };
 
+
 export type notificationStore = {
     id: number;                 // cardBenefitId
     storeFullName: string
@@ -45,22 +46,6 @@ export type notificationStore = {
     card_name: string;          // cardName ("삼성카드 taptap O")
 };
 
-
-// export interface Store {
-//     id: number;
-//     name: string;
-//     distance: number;
-//     address: string;
-//     bestCard: string;
-//     discount: string;
-//     lat: number;
-//     lng: number;
-//     hasEvent: boolean;
-//     category: StoreCategory;
-//     image: string;
-//     likes: number;
-//     dislikes: number;
-// }
 
 export interface Store {
     id: number;                    // 카카오 place_id (문자열)

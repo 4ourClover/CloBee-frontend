@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import {
     ChevronLeft,
     Settings,
@@ -7,14 +7,15 @@ import {
     LogOut,
     Shield,
     Ticket,
-    User
+    User,
+    Lock,
+    UserX
 } from "lucide-react"
 
 import { Button } from "../components/ui/button"
 import { Switch } from "../components/ui/switch"
 import { Label } from "../components/ui/label"
 import { Separator } from "../components/ui/separator"
-import { useToast } from "../hooks/use-toast"
 import BottomNavigation from "../components/bottom-navigation"
 import { AuthContext } from "../contexts/AuthContext"
 
@@ -26,7 +27,6 @@ interface UserInfo {
 
 export default function ProfilePage() {
     const [notificationsEnabled, setNotificationsEnabled] = useState(true)
-    const { toast } = useToast()
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
     const [loading, setLoading] = useState(true)
     
@@ -135,6 +135,24 @@ export default function ProfilePage() {
         }
     }
 
+    // 회원탈퇴 확인 모달 표시
+    const showDeleteAccountConfirmation = () => {
+        showConfirmModal("정말로 회원탈퇴를 하시겠습니까?\n탈퇴 후 모든 데이터가 삭제되며 복구할 수 없습니다.", performDeleteAccount);
+    };
+
+    // 회원탈퇴 처리 함수 (실제 동작은 구현되지 않음)
+    const performDeleteAccount = async () => {
+        console.log("회원탈퇴 처리");
+        // 실제 구현시 여기에 회원탈퇴 API 호출 로직 추가
+    };
+
+    // 비밀번호 변경 페이지로 이동
+    const handlePasswordChange = () => {
+        console.log("비밀번호 변경 페이지로 이동");
+        // 실제 구현시 여기에 라우팅 로직 추가
+        // window.location.href = "/profile/change-password";
+    };
+
     // 로딩 중 표시
     if (loading) {
         return (
@@ -170,11 +188,6 @@ export default function ProfilePage() {
                     </Button>
                 </Link>
                 <h1 className="text-base font-bold flex-1">내 정보</h1>
-                <Link to="/settings">
-                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-6 w-6">
-                        <Settings className="h-3.5 w-3.5" />
-                    </Button>
-                </Link>
             </header>
 
             {/* 메인 콘텐츠 */}
@@ -186,6 +199,36 @@ export default function ProfilePage() {
                     <div>
                         <h2 className="font-bold text-lg">{userInfo?.userNickname || "사용자"}</h2>
                         <p className="text-sm text-gray-500">{userInfo?.userEmail || "이메일 정보 없음"}</p>
+                    </div>
+                </div>
+
+                <div className="mt-4 bg-white p-4 space-y-4">
+                    <h3 className="font-medium text-[#5A3D2B]">계정 관리</h3>
+
+                    <div className="space-y-4">
+                        <button 
+                            onClick={handlePasswordChange}
+                            className="flex items-center justify-between py-1 w-full hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Lock className="h-5 w-5 text-[#00A949]" />
+                                <span className="text-sm">비밀번호 변경</span>
+                            </div>
+                            <ChevronLeft className="h-4 w-4 text-gray-400 rotate-180" />
+                        </button>
+
+                        <Separator />
+
+                        <button 
+                            onClick={showDeleteAccountConfirmation}
+                            className="flex items-center justify-between py-1 w-full hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <UserX className="h-5 w-5 text-red-500" />
+                                <span className="text-sm text-red-600">회원탈퇴</span>
+                            </div>
+                            <ChevronLeft className="h-4 w-4 text-gray-400 rotate-180" />
+                        </button>
                     </div>
                 </div>
 
@@ -261,6 +304,7 @@ export default function ProfilePage() {
                         <LogOut className="h-4 w-4 mr-2" />
                         로그아웃
                     </Button>
+                    
                 </div>
             </div>
 
