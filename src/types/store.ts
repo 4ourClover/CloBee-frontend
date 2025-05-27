@@ -13,17 +13,36 @@ import {
 export type StoreCategory = "FD6" | "CE7" | "SW8" | "OL7" | "MT1" | "CT1" | "CS2" | "";
 export type brandCategory = "신한카드" | "삼성카드" | "현대카드" | "KB국민카드" | "우리카드" | "";
 
-
-
+export const validBrands: brandCategory[] = [
+    "신한카드",
+    "삼성카드",
+    "현대카드",
+    "KB국민카드",
+    "우리카드",
+    ""
+];
 
 export type BenefitCard = {
-    id: number;
-    card_name: string;
-    card_brand: brandCategory;
-    benefit_store: string;
-    discount: string;
-    max_discount: string;
-    image: string;
+    id: number;                 // cardBenefitId
+    cardInfoId: number;         // cardInfoId
+    benefit_store: string;      // cardBenefitStore
+    discount: string;           // cardBenefitDiscntPrice ("50%")
+    discountPrice: number;      // discountPrice (5000)
+    description: string;        // cardBenefitDesc ("할인")
+    condition: string;          // cardBenefitCondition ("전월실적 30만원 이상")
+    card_name: string;          // cardName ("삼성카드 taptap O")
+    card_image_url: string | null;  // cardImageUrl
+};
+
+export type notificationStore = {
+    id: number;                 // cardBenefitId
+    storeFullName: string
+    distance: number,
+    benefit_store: string;      // cardBenefitStore
+    discount: string;           // cardBenefitDiscntPrice ("50%")
+    discountPrice: number;      // discountPrice (5000)
+    description: string;        // cardBenefitDesc ("할인")
+    card_name: string;          // cardName ("삼성카드 taptap O")
 };
 
 
@@ -56,6 +75,7 @@ export interface Store {
     distance: number;              // 중심좌표로부터 거리 (미터, 문자열)
     lat: number;                     // 경도 (문자열)
     lng: number;                     // 위도 (문자열)
+    benefitStore: string
 }
 
 
