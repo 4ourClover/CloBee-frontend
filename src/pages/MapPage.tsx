@@ -40,8 +40,8 @@ export default function MapPage() {
     const benefitStoresRef = useRef<string[]>([]);
     const benefitStoresBrandRef = useRef<Record<string, string[]>>({});
 
-    const user = useCurrentUser()
-    const userId = user?.userId //안됨 해결 필요
+    const user = useCurrentUser();
+    const userId = user?.userId; //안됨 해결 필요
 
     const [benefitCards, setBenefitCards] = useState<BenefitCard[]>([]);
     const [recommendedCards, setRecommendedCards] = useState<BenefitCard[]>([]);
@@ -80,6 +80,7 @@ export default function MapPage() {
 
     const fetchBenefitStores = useCallback(async () => {
         try {
+            console.log("userid", userId);
             const data = await getBenefitStores(11);//userId!);
             benefitStoresRef.current = data;
 
