@@ -46,22 +46,6 @@ export type notificationStore = {
 };
 
 
-// export interface Store {
-//     id: number;
-//     name: string;
-//     distance: number;
-//     address: string;
-//     bestCard: string;
-//     discount: string;
-//     lat: number;
-//     lng: number;
-//     hasEvent: boolean;
-//     category: StoreCategory;
-//     image: string;
-//     likes: number;
-//     dislikes: number;
-// }
-
 export interface Store {
     id: number;                    // 카카오 place_id (문자열)
     place_name: string;            // 장소명 (예: "올리브영 상주점")
