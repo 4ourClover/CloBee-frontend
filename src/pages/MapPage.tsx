@@ -1,6 +1,4 @@
-
 import React, { useContext } from "react"
-
 import { useState, useEffect, useCallback, useRef } from "react"
 import { createRoot } from "react-dom/client"
 import CategoryBar from "../components/map/category-bar"
@@ -21,9 +19,7 @@ import SearchList from "../components/map/search-list"
 import { useCurrentUser } from "../hooks/use-current-user"
 
 import { getBenefitStores, getBenefitStoresBrand, getMapMyBenefits, getRecommendedCards } from "../api/map"
-
 import { AuthContext } from "../contexts/AuthContext"
-
 
 declare global {
     interface Window {
@@ -56,9 +52,7 @@ export default function MapPage() {
     const benefitStoresRef = useRef<string[]>([])
     const benefitStoresBrandRef = useRef<Record<string, string[]>>({})
 
-
     const { userId } = useContext(AuthContext)
-
 
     const [benefitCards, setBenefitCards] = useState<BenefitCard[]>([])
     const [recommendedCards, setRecommendedCards] = useState<BenefitCard[]>([])
@@ -68,14 +62,12 @@ export default function MapPage() {
 
     useEffect(() => {
         nearbyStoresRef.current = nearbyStores
-
                 if (userId != null) {
             fetchNotificationStore(userId)
         }
         // console.log("nearbyStoresRef 업데이트:", nearbyStoresRef.current);
         // console.log("nearbyStores 업데이트:", nearbyStores);
     }, [nearbyStores, userId])
-
 
     // 카테고리별로 마커를 저장하는 객체
     const categoryMarkersRef = useRef<Record<StoreCategory, Array<any>>>({
@@ -102,9 +94,7 @@ export default function MapPage() {
         if (userId == null) return
         try {
             console.log("userid", userId)
-
             const data = await getBenefitStores(userId)
-
             benefitStoresRef.current = data
 
             if (Array.isArray(data) && data.length === 0) {
@@ -113,23 +103,18 @@ export default function MapPage() {
         } catch (error) {
             console.error("조회 실패:", error)
         }
-
     }, [userId])
-
 
     const fetchBenefitStoresBrand = useCallback(async () => {
         if (userId == null) return
         try {
-
             const data = await getBenefitStoresBrand(userId)
             benefitStoresBrandRef.current = data
             
-
             initializeMap()
         } catch (error) {
             console.error("조회 실패:", error)
         }
-
 }, [userId])
 
     // 혜택매장 데이터 먼저 로드
@@ -140,7 +125,6 @@ useEffect(() => {
     fetchBenefitStoresBrand()
   }
 }, [userId, fetchBenefitStores, fetchBenefitStoresBrand])
-
 
     useEffect(() => {
         if (selectedStore && benefitCards.length > 0) {
@@ -157,17 +141,13 @@ useEffect(() => {
         if (store) {
             setSelectedStore(store)
 
-
         if (userId != null) {
             const data = await getMapMyBenefits(userId, benefitStoreName)
-
             setBenefitCards(data)
 
             const cards = await getRecommendedCards(benefitStoreName)
             setRecommendedCards(cards)
-
         }
-
         }
     }
 
@@ -327,13 +307,13 @@ useEffect(() => {
 
             // 현재 저장된 매장 ID를 빠르게 확인하기 위한 Set 생성
             const existingStoreIds = new Set(nearbyStoresRef.current.map((store) => store.id))
-
+    
             benefitStoresRef.current.forEach((bStore) => {
                 const searchPromise = new Promise<{ data: any[]; bStore: string }>((resolve) => {
                     ps.keywordSearch(
                         bStore,
                         (data: any, status: any, pagination: any) => {
-
+                            
                             if (status === window.kakao.maps.services.Status.OK) {
                                 resolve({ data, bStore })
                             } else {
@@ -566,11 +546,9 @@ useEffect(() => {
         setSelectedBrand(null)
         setSelectedCategory(null)
 
-
     if (userId != null) {
         fetchNotificationStore(userId)
     }
-
 
         var center = kakaoMapRef.current.getCenter() // 현재 지도 중심 좌표
         placesSearch(center) // 장소 검색 시작
@@ -637,6 +615,4 @@ useEffect(() => {
             )}
         </main>
     )
-
 }
-

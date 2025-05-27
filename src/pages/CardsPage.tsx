@@ -631,31 +631,16 @@ export default function CardsPage() {
             return <span className="bg-gray-100 text-gray-500 text-xs px-1.5 py-0.5 rounded-full">혜택 정보 없음</span>
         }
 
-        return benefits.slice(0, 3).map((benefit, idx) => {
-            let discountText = "혜택"
-            const discountPrice = benefit.cardBenefitDiscntPrice
-
-            if (discountPrice !== null && discountPrice !== undefined) {
-                const priceStr = String(discountPrice)
-                if (priceStr.includes("%")) {
-                    discountText = priceStr
-                } else if (typeof discountPrice === "number") {
-                    discountText = `${discountPrice.toLocaleString()}원 할인`
-                } else {
-                    discountText = priceStr
-                }
-            }
-
-            return (
-                <span
-                    key={idx}
-                    className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full"
-                    title={benefit.cardBenefitDesc} // 툴팁으로 상세 설명 표시
-                >
-                    {benefit.cardBenefitStore || "일반"} {discountText}
-                </span>
-            )
-        })
+        return benefits.slice(0, 3).map((benefit, idx) => (
+            <span
+                key={idx}
+                className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full"
+                title={benefit.cardBenefitDesc} // 툴팁으로 상세 설명 표시
+            >
+                {benefit.cardBenefitStore || "일반"}{" "}
+                {benefit.cardBenefitDiscntPrice > 0 ? `${benefit.cardBenefitDiscntPrice.toLocaleString()}원 할인` : "혜택"}
+            </span>
+        ))
     }
 
     // 카드 목록 렌더링 함수
@@ -726,7 +711,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName || card.cardBrand}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -810,7 +795,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName || card.cardBrand}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -1011,7 +996,7 @@ export default function CardsPage() {
                                                 {/* 이번 달 실적 표시 */}
                                                 <div className="flex justify-between items-center text-xs">
                                                     <span className="text-gray-500">
-                                                        {selectedMonth}월 실적  :
+                                                        {selectedYear}년 {selectedMonth}월 실적
                                                     </span>
                                                     <span className="font-medium">
                                                         {monthlyAmount.toLocaleString()}원 / {DEFAULT_SPENDING_GOAL.toLocaleString()}원
@@ -1267,22 +1252,22 @@ export default function CardsPage() {
                             </Button>
                         </div>
 
-                        {/* 카드 이미지 - 높이를 더 줄임 */}
-                        <div className="relative h-20 bg-gray-100">
+                        {/* 카드 이미지 */}
+                        <div className="relative h-48 bg-gray-100">
                             <img
                                 src={selectedCard.image || selectedCard.cardImageUrl || "/placeholder.svg"}
                                 alt={selectedCard.name || selectedCard.cardName}
-                                className="w-full h-full object-contain p-1"
+                                className="w-full h-full object-contain p-4"
                             />
                         </div>
 
-                        {/* 카드 정보 - 패딩을 더 줄임 */}
-                        <div className="p-2 space-y-1">
+                        {/* 카드 정보 */}
+                        <div className="p-4 space-y-2">
                             <div className="flex justify-between items-center">
                                 <div>
                                     <h3 className="font-bold text-lg">{selectedCard.name || selectedCard.cardName}</h3>
                                     <p className="text-sm text-gray-500">
-                                        {/* {selectedCard.cardBrandName || selectedCard.cardBrand} |{" "} */}
+                                        {selectedCard.cardCompany || selectedCard.cardBrand} |{" "}
                                         {selectedCard.cardType === 401 ? "신용카드" : "체크카드"}
                                     </p>
                                 </div>
@@ -1290,60 +1275,83 @@ export default function CardsPage() {
                                     {renderAnnualFee(selectedCard.cardDomesticAnnualFee || 0, selectedCard.cardGlobalAnnualFee || 0)}
                                 </Badge>
                             </div>
-                            {/* 실적 정보는 그대로 유지 */}
+
+                            {/* 이번 달 실적 정보 표시 - 내 카드인 경우에만 표시 */}
+                            {selectedCard.userCardId && (
+                                <div className="space-y-1 mt-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">
+                                            {selectedYear}년 {selectedMonth}월 실적
+                                        </span>
+                                        <span className="font-medium">
+                                            {(selectedCard.monthlyAmount || 0).toLocaleString()}원 / {DEFAULT_SPENDING_GOAL.toLocaleString()}
+                                            원
+                                        </span>
+                                    </div>
+                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-[#75CB3B] to-[#00B959]"
+                                            style={{
+                                                width: `${((selectedCard.monthlyAmount || 0) / DEFAULT_SPENDING_GOAL) * 100}%`,
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-between text-xs mt-1">
+                                        <span className="text-gray-500">
+                                            {selectedYear}년 {selectedMonth}월 실적
+                                        </span>
+                                        <span
+                                            className={
+                                                selectedCard.monthlyAmount >= DEFAULT_SPENDING_GOAL
+                                                    ? "text-[#00A949] font-medium"
+                                                    : "text-gray-500"
+                                            }
+                                        >
+                                            {selectedCard.monthlyAmount >= DEFAULT_SPENDING_GOAL ? "실적 달성 완료" : "실적 달성 중"}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* 상세 혜택 - 더 큰 영역과 개선된 스타일 */}
-                        <div className="flex-1 overflow-auto p-4 pt-1">
-                            <h4 className="font-bold text-xl text-[#00A949] mb-4 border-b-2 border-[#75CB3B] pb-2">상세 혜택</h4>
-                            <div className="space-y-4">
+                        {/* 상세 혜택 - 백엔드에서 받은 실제 데이터 표시 */}
+                        <div className="flex-1 overflow-auto p-4 pt-0">
+                            <h4 className="font-medium text-[#5A3D2B] mt-4 mb-2">상세 혜택</h4>
+                            <div className="space-y-3">
                                 {selectedCard.benefits && selectedCard.benefits.length > 0 ? (
                                     selectedCard.benefits.map((benefit: CardBenefitDetail) => (
-                                        <div
-                                            key={benefit.cardBenefitId}
-                                            className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-5 border-l-4 border-[#75CB3B] shadow-sm"
-                                        >
-                                            <div className="flex justify-between items-start mb-3">
-                                                <h5 className="font-bold text-[#00A949] text-lg">{benefit.cardBenefitStore || "일반 혜택"}</h5>
-                                                <Badge className="bg-[#75CB3B] text-white border-none font-bold text-sm px-3 py-1">
-                                                    {benefit.cardBenefitDiscntPrice || "혜택"}
+                                        <div key={benefit.cardBenefitId} className="bg-gray-50 rounded-lg p-3">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h5 className="font-medium text-[#00A949]">
+                                                    {benefit.cardBenefitStore ? `${benefit.cardBenefitStore}` : "일반 혜택"}
+                                                </h5>
+                                                <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">
+                                                    {benefit.cardBenefitDiscntPrice > 0
+                                                        ? `${benefit.cardBenefitDiscntPrice.toLocaleString()}원 할인`
+                                                        : "혜택"}
                                                 </Badge>
                                             </div>
-                                            <p className="text-base text-gray-700 mb-3 leading-relaxed font-medium">
-                                                {benefit.cardBenefitDesc}
-                                            </p>
+                                            <p className="text-sm text-gray-700 mb-2">{benefit.cardBenefitDesc}</p>
                                             {benefit.cardBenefitCondition && (
-                                                <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                                    <p className="text-sm text-gray-600">
-                                                        <span className="font-bold text-[#00A949]">이용 조건:</span>{" "}
-                                                        {benefit.cardBenefitCondition}
-                                                    </p>
-                                                </div>
+                                                <p className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                                                    <span className="font-medium">조건:</span> {benefit.cardBenefitCondition}
+                                                </p>
                                             )}
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center text-gray-500 py-16">
-                                        {isLoadingDetail ? (
-                                            <div>
-                                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#75CB3B] mx-auto mb-3"></div>
-                                                <p className="text-lg">혜택 정보를 불러오는 중...</p>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <div className="text-6xl mb-4">📋</div>
-                                                <p className="text-lg">등록된 혜택 정보가 없습니다.</p>
-                                            </div>
-                                        )}
+                                    <div className="text-center text-gray-500 py-8">
+                                        {isLoadingDetail ? "혜택 정보를 불러오는 중..." : "등록된 혜택 정보가 없습니다."}
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         {/* 하단 버튼 */}
-                        <div className="p-4 border-t bg-gray-50">
+                        <div className="p-4 border-t">
                             <Button
-                                className="w-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none h-12 text-base font-bold"
+                                className="w-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
                                 onClick={() => setShowCardDetail(false)}
                             >
                                 확인
