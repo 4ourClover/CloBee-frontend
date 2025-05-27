@@ -27,6 +27,7 @@ export type CardBenefitDetail = {
     discountPrice: number
     cardRank: number
     cardImageUrl: string
+    cardBrand: number
 }
 
 export type CardBrandUrl = {

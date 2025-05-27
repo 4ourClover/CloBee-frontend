@@ -46,19 +46,14 @@ export default function CloverGamePage() {
     // 게임 시작 핸들러
     const handleStartGame = useCallback(async () => {
         if (!userId) {
-            toast({
-                title: "오류",
-                description: "사용자 정보를 불러올 수 없습니다.",
-                variant: "destructive",
-            })
             return
         }
 
         try {
-            // 먼저 사용자 상태 확인
+            // 사용자 상태 확인
             let response = await fetch(`${API_BASE_URL}/status?user_id=${userId}`)
 
-            // 404 오류가 발생하면 새로운 사용자이므로 초기화
+            // 오류가 발생하면 새로운 사용자이므로 초기화
             if (response.status === 404) {
                 console.log('새로운 사용자 - 게임 초기화 진행')
                 const initResponse = await fetch(`${API_BASE_URL}/init?user_id=${userId}`, {
@@ -81,7 +76,6 @@ export default function CloverGamePage() {
             }
 
             const data = await response.json()
-            console.log('게임 상태:', data)
 
             if (data.eventFindingCloverParticipationStatus === true) {
                 showConfirmModal(
@@ -118,19 +112,11 @@ export default function CloverGamePage() {
             const luckyIndex = Math.floor(Math.random() * newClovers.length)
             newClovers[luckyIndex].isLucky = true
 
-            console.log("새로운 클로버 배열:", newClovers)
-
             setClovers(newClovers)
             setEventFindingCloverCurrentStage(data.eventFindingCloverCurrentStage)
             setGameStarted(true)
             setGameWon(false)
         } catch (error) {
-            console.error('게임 시작 실패:', error)
-            toast({
-                title: "오류 발생",
-                description: "게임을 시작하는데 실패했습니다.",
-                variant: "destructive",
-            })
         }
     }, [userId, navigate, showConfirmModal, toast])
 
@@ -185,12 +171,6 @@ export default function CloverGamePage() {
                 setGameWon(false)
             })
             .catch(error => {
-                console.error('Failed to fetch game status:', error)
-                toast({
-                    title: "오류 발생",
-                    description: "게임 상태를 불러오는데 실패했습니다.",
-                    variant: "destructive",
-                })
             })
     }, [gameStarted, userId, navigate, showConfirmModal, toast])
 
@@ -290,38 +270,225 @@ export default function CloverGamePage() {
         setClovers(updatedClovers)
     }
 
-    // 친구 초대 후 한판 더 진행
+    // 친구 초대 후 한판 더 진행 - 카카오 SDK 오류 수정 버전
     const handleInviteFriend = async () => {
         if (!userId) {
-            toast({
-                title: "오류",
-                description: "사용자 정보를 불러올 수 없습니다.",
-                variant: "destructive",
-            })
             return
         }
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/init?user_id=${userId}&invited=true`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            if (response.ok) {
-                toast({
-                    title: "성공!",
-                    description: "친구 초대로 한 번 더 도전할 수 있습니다!",
+        // 공유 완료 후 게임 초기화 함수
+        const initializeGameAfterShare = async () => {
+            try {
+                console.log('게임 초기화 시작...')
+                const response = await fetch(`${API_BASE_URL}/init?user_id=${userId}&invited=true`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 })
-                // 게임 상태 초기화 후 자동으로 게임 시작
-                setGameStarted(false)
-                setGameWon(false)
-                setTimeout(() => {
-                    handleStartGame()
-                }, 100)
+
+                if (response.ok) {
+                    console.log('게임 초기화 성공')
+
+                    // 게임 상태 초기화 후 자동으로 게임 시작
+                    setGameStarted(false)
+                    setGameWon(false)
+                    setTimeout(() => {
+                        console.log('게임 시작 호출')
+                        handleStartGame()
+                    }, 100)
+                } else {
+                    throw new Error('게임 초기화에 실패했습니다.')
+                }
+            } catch (error: any) {
+                console.error('게임 초기화 중 오류 발생:', error)
+                toast({
+                    title: "오류가 발생했습니다",
+                    description: "다시 시도해주세요.",
+                })
             }
-        } catch (error) {
-            console.error('Failed to invite friend:', error)
+        }
+
+        // 카카오 SDK 로드 확인 및 초기화
+        // 수정된 ensureKakaoSDK 함수
+        const ensureKakaoSDK = (): Promise<any> => {
+            return new Promise((resolve, reject) => {
+                // 이미 Kakao 객체가 있는 경우
+                if (typeof window !== 'undefined' && (window as any).Kakao) {
+                    const Kakao = (window as any).Kakao
+                    if (!Kakao.isInitialized()) {
+                        try {
+                            // ✅ 환경변수 값을 제대로 가져오기
+                            const kakaoKey = process.env.REACT_APP_JAVASCRIPT_KEY
+
+                            if (!kakaoKey) {
+                                throw new Error('카카오 JavaScript 키가 설정되지 않았습니다.')
+                            }
+
+                            Kakao.init(kakaoKey) // 환경변수 값 사용
+                            console.log('사용된 카카오 키:', kakaoKey.substring(0, 8) + '...')
+                            console.log('카카오 SDK 초기화 완료')
+                        } catch (error) {
+                            console.error('카카오 SDK 초기화 실패:', error)
+                            reject(error)
+                            return
+                        }
+                    }
+                    resolve(Kakao)
+                    return
+                }
+
+                // Kakao 객체가 없는 경우 스크립트 로드
+                const script = document.createElement('script')
+                script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.4.0/kakao.min.js'
+                script.async = true
+
+                script.onload = () => {
+                    console.log('카카오 SDK 스크립트 로드 완료')
+                    const Kakao = (window as any).Kakao
+                    if (Kakao) {
+                        try {
+                            // ✅ 환경변수 값을 제대로 가져오기
+                            const kakaoKey = process.env.REACT_APP_JAVASCRIPT_KEY
+
+                            if (!kakaoKey) {
+                                throw new Error('카카오 JavaScript 키가 설정되지 않았습니다.')
+                            }
+
+                            Kakao.init(kakaoKey) // 환경변수 값 사용
+                            console.log('카카오 SDK 초기화 완료')
+                            resolve(Kakao)
+                        } catch (error) {
+                            console.error('카카오 SDK 초기화 실패:', error)
+                            reject(error)
+                        }
+                    } else {
+                        reject(new Error('카카오 SDK 로드 실패'))
+                    }
+                }
+
+                script.onerror = () => {
+                    console.error('카카오 SDK 스크립트 로드 실패')
+                    reject(new Error('카카오 SDK 스크립트 로드 실패'))
+                }
+
+                document.head.appendChild(script)
+            })
+        }
+
+        // 카카오톡 공유 처리
+        const handleKakaoShare = async () => {
+            try {
+                // 카카오 SDK 로드 및 초기화 확인
+                const Kakao = await ensureKakaoSDK()
+
+                const shareUrl = "http://localhost:3000" + '/event/clover'
+
+                // 공유 시작 알림
+                toast({
+                    title: "카카오톡 공유창을 여는 중...",
+                    description: "공유를 완료해주세요.",
+                })
+
+                // 카카오톡 공유 실행
+                const shareResult = Kakao.Share.sendDefault({
+                    objectType: 'feed',
+                    content: {
+                        title: '🍀 골드 네잎 클로버 찾기 게임',
+                        description: '골드 네잎 클로버를 찾아서 특별한 보상을 받아보세요! 함께 도전해요!',
+                        imageUrl: 'https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=🍀', // 실제 게임 이미지로 교체
+                        link: {
+                            mobileWebUrl: shareUrl,
+                            webUrl: shareUrl,
+                        },
+                    },
+                    buttons: [
+                        {
+                            title: '게임 하러가기',
+                            link: {
+                                mobileWebUrl: shareUrl,
+                                webUrl: shareUrl,
+                            },
+                        }
+                    ]
+                })
+
+                // Promise 형태로 반환되는지 확인
+                if (shareResult && typeof shareResult.then === 'function') {
+                    shareResult
+                        .then((result: any) => {
+                            console.log('카카오톡 공유 성공:', result)
+                            handleShareSuccess()
+                        })
+                        .catch((error: any) => {
+                            console.error('카카오톡 공유 실패:', error)
+                            handleShareError(error)
+                        })
+                } else {
+                    // Promise가 아닌 경우 (구버전 SDK)
+                    console.log('카카오톡 공유 실행됨 (구버전 SDK)')
+                    // 일정 시간 후 성공으로 간주 (실제로는 사용자가 공유를 완료했는지 확인할 수 없음)
+                    setTimeout(() => {
+                        handleShareSuccess()
+                    }, 10000)
+                }
+
+            } catch (error: any) {
+                console.error('카카오톡 공유 처리 중 오류:', error)
+                handleShareError(error)
+            }
+        }
+
+        // 공유 성공 처리
+        const handleShareSuccess = () => {
+            // 공유 성공 시 성공 모달 표시
+            showConfirmModal(
+                '공유에 성공했습니다. 3초뒤에 게임이 시작됩니다',
+                () => {
+                    // 이 함수는 호출되지 않지만 모달 구조상 필요
+                    console.log('모달 확인 버튼 클릭됨')
+                }
+            )
+
+            // 3초 후 자동으로 게임 시작
+            setTimeout(() => {
+                setIsConfirmModalOpen(false) // 모달 닫기
+                initializeGameAfterShare()
+            }, 3000)
+        }
+
+        // 공유 실패 처리
+        const handleShareError = (error: any) => {
+            if (error?.code === -2 || error?.message?.includes('cancel')) {
+                // 사용자가 공유창에서 취소한 경우
+                toast({
+                    title: "공유가 취소되었습니다",
+                    description: "친구 초대를 완료하면 추가 게임을 플레이할 수 있습니다.",
+                })
+            } else if (error?.code === -1) {
+                // 카카오톡이 설치되지 않은 경우
+                toast({
+                    title: "카카오톡이 설치되지 않았습니다",
+                    description: "카카오톡을 설치한 후 다시 시도해주세요.",
+                })
+            } else {
+                // 기타 오류
+                toast({
+                    title: "공유 중 오류가 발생했습니다",
+                    description: "다시 시도해주세요.",
+                })
+            }
+        }
+
+        // 메인 실행부
+        try {
+            await handleKakaoShare()
+        } catch (error: any) {
+            console.error('공유 처리 중 최종 오류:', error)
+            toast({
+                title: "오류가 발생했습니다",
+                description: "페이지를 새로고침 후 다시 시도해주세요.",
+            })
         }
     }
 
@@ -359,7 +526,7 @@ export default function CloverGamePage() {
                                 className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
                                 onClick={handleInviteFriend}
                             >
-                                친구 초대 후 한판 더 진행하기
+                                친구에게 공유하고 한판 더 진행하기
                             </Button>
                         </div>
                     </div>
@@ -367,7 +534,7 @@ export default function CloverGamePage() {
                     <div className="space-y-4">
                         <div className="bg-white rounded-lg p-4 text-center">
                             <h2 className="text-lg font-bold text-[#5A3D2B] mb-2">
-                                {gameWon ? "축하합니다!" : "골드 네잎 클로버를 찾아보세요!"}
+                                {gameWon ? "축하합니다!" : "골드 네잎 클로버를 5회안에 찾아보세요!"}
                             </h2>
                         </div>
 
