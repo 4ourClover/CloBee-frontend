@@ -186,12 +186,31 @@ export default function CardBenefitModal({ store, onClose, benefitCards, recomme
                           추천
                         </div>
                         <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
+                          {/* <div className="text-center">
                             <div className="text-2xl font-bold text-[#00A949] mb-1">{cardName}</div>
                             <div className="text-sm text-gray-600">
                               {"cardBenefitStore" in card ? card.cardBenefitStore : card.benefit_store}
                             </div>
-                          </div>
+                          </div> */}
+                          <img
+                            alt={"card_name" in card ? card.card_name : card.cardName}
+                            src={(card as any).card_image_url}
+                            loading="lazy"
+                            decoding="async"
+                            data-nimg="fill"
+                            className="object-contain p-4"
+                            style={{
+                              position: 'absolute',
+                              height: '100%',
+                              width: '100%',
+                              top: 0,
+                              right: 0,
+                              bottom: 0,
+                              left: 0,
+                              color: 'transparent',
+                            }}
+                          />
+
                         </div>
                       </div>
                       <div className="p-4 space-y-3">

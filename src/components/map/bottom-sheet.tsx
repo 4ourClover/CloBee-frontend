@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { type Dispatch, type SetStateAction, useState, useCallback } from "react"
 import { Button } from "../ui/button"

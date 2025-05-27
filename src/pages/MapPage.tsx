@@ -69,12 +69,12 @@ export default function MapPage() {
     useEffect(() => {
         nearbyStoresRef.current = nearbyStores
 
-                if (userId != null) {
+        if (userId != null) {
             fetchNotificationStore(userId)
         }
         // console.log("nearbyStoresRef 업데이트:", nearbyStoresRef.current);
         // console.log("nearbyStores 업데이트:", nearbyStores);
-    }, [nearbyStores, userId])
+    }, [nearbyStores])
 
 
     // 카테고리별로 마커를 저장하는 객체
@@ -114,7 +114,7 @@ export default function MapPage() {
             console.error("조회 실패:", error)
         }
 
-    }, [userId])
+    }, [])
 
 
     const fetchBenefitStoresBrand = useCallback(async () => {
@@ -123,23 +123,23 @@ export default function MapPage() {
 
             const data = await getBenefitStoresBrand(userId)
             benefitStoresBrandRef.current = data
-            
+
 
             initializeMap()
         } catch (error) {
             console.error("조회 실패:", error)
         }
 
-}, [userId])
+    }, [])
 
     // 혜택매장 데이터 먼저 로드
-useEffect(() => {
-  // userId가 올 때까지 대기
-  if (userId != null) {
-    fetchBenefitStores()
-    fetchBenefitStoresBrand()
-  }
-}, [userId, fetchBenefitStores, fetchBenefitStoresBrand])
+    useEffect(() => {
+        // userId가 올 때까지 대기
+        if (userId != null) {
+            fetchBenefitStores()
+            fetchBenefitStoresBrand()
+        }
+    }, [userId, fetchBenefitStores, fetchBenefitStoresBrand])
 
 
     useEffect(() => {
@@ -157,17 +157,12 @@ useEffect(() => {
         if (store) {
             setSelectedStore(store)
 
-
-        if (userId != null) {
-            const data = await getMapMyBenefits(userId, benefitStoreName)
-
-            setBenefitCards(data)
-
-            const cards = await getRecommendedCards(benefitStoreName)
-            setRecommendedCards(cards)
-
-        }
-
+            if (userId != null) {
+                const data = await getMapMyBenefits(userId, benefitStoreName)
+                setBenefitCards(data)
+                const cards = await getRecommendedCards(benefitStoreName)
+                setRecommendedCards(cards)
+            }
         }
     }
 
@@ -566,11 +561,9 @@ useEffect(() => {
         setSelectedBrand(null)
         setSelectedCategory(null)
 
-
-    if (userId != null) {
-        fetchNotificationStore(userId)
-    }
-
+        if (userId != null) {
+            fetchNotificationStore(userId)
+        }
 
         var center = kakaoMapRef.current.getCenter() // 현재 지도 중심 좌표
         placesSearch(center) // 장소 검색 시작
