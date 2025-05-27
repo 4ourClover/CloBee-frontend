@@ -1,0 +1,244 @@
+import { useState } from "react"
+import { Link } from "react-router-dom"
+
+import {
+    ChevronLeft,
+    Clover,
+    Camera,
+    Check,
+} from "lucide-react"
+
+import { Button } from "../../components/ui/button"      // '@/components/ui/button'
+import { useToast } from "../../hooks/use-toast"         // '@/hooks/use-toast'
+import { Badge } from "../../components/ui/badge"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "../../components/ui/dialog"
+import BottomNavigation from "../../components/bottom-navigation"
+
+
+export default function EventsCouponPage() {
+    const [cloverLeaves, setCloverLeaves] = useState(1) // 초기에는 1개의 잎만 채워짐
+    const [showCamera, setShowCamera] = useState(false)
+    const { toast } = useToast()
+
+    // 매장 인증 핸들러
+    const handleStoreVerification = () => {
+        setShowCamera(true)
+    }
+
+    // 매장 인증 완료 핸들러
+    const handleVerificationComplete = () => {
+        setShowCamera(false)
+
+        if (cloverLeaves < 4) {
+            setCloverLeaves((prev) => prev + 1)
+
+            toast({
+                title: "매장 인증 완료!",
+                description: `클로버 잎이 ${cloverLeaves + 1}개가 되었습니다.`,
+            })
+
+            if (cloverLeaves + 1 === 4) {
+                setTimeout(() => {
+                    toast({
+                        title: "축하합니다!",
+                        description: "클로버를 모두 채웠습니다. 쿠폰이 발급되었습니다!",
+                    })
+                }, 1000)
+            }
+        }
+    }
+
+    // 참여 매장 목록
+    const participatingStores = [
+        {
+            name: "스타벅스",
+            category: "카페",
+            benefit: "아메리카노 1+1",
+        },
+        {
+            name: "CGV",
+            category: "영화",
+            benefit: "팝콘 무료 업그레이드",
+        },
+        {
+            name: "올리브영",
+            category: "쇼핑",
+            benefit: "전 상품 15% 할인",
+        },
+        {
+            name: "버거킹",
+            category: "음식점",
+            benefit: "와퍼 세트 30% 할인",
+        },
+    ]
+
+    return (
+        <main className="flex flex-col h-screen max-w-sm mx-auto overflow-hidden">
+            {/* 헤더 */}
+            <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-3 flex items-center gap-2">
+                <Link to="/event">
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8">
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                </Link>
+                <h1 className="text-lg font-bold flex-1">클로버 쿠폰 받기</h1>
+            </header>
+
+            {/* 메인 콘텐츠 */}
+            <div className="flex-1 overflow-auto bg-[#F5FAF0] p-4">
+                <div className="space-y-6">
+                    {/* 클로버 상태 */}
+                    <div className="bg-white rounded-lg p-6 text-center">
+                        <h2 className="text-lg font-bold text-[#5A3D2B] mb-4">클로버 채우기</h2>
+
+                        <div className="relative w-40 h-40 mx-auto mb-4">
+                            {/* 클로버 배경 (회색) */}
+                            <div className="w-40 h-40 mx-auto mb-4">
+                            <svg viewBox="0 0 100 100" className="w-full h-full">
+                                {/* 위쪽 잎 (하트 모양) */}
+                                <path
+                                    d="M50 45 C45 35, 30 35, 30 45 C30 50, 35 55, 50 45 C65 55, 70 50, 70 45 C70 35, 55 35, 50 45 Z"
+                                    fill={cloverLeaves >= 1 ? "#00A949" : "none"}
+                                    stroke="#D1D5DB"
+                                    strokeWidth="3"
+                                />
+
+                                {/* 왼쪽 잎 (하트 모양) */}
+                                <path
+                                    d="M45 50 C35 45, 35 30, 45 30 C50 30, 55 35, 45 50 C55 65, 50 70, 45 70 C35 70, 35 55, 45 50 Z"
+                                    fill={cloverLeaves >= 2 ? "#00A949" : "none"}
+                                    stroke="#D1D5DB"
+                                    strokeWidth="3"
+                                />
+
+                                {/* 오른쪽 잎 (하트 모양) */}
+                                <path
+                                    d="M55 50 C65 45, 65 30, 55 30 C50 30, 45 35, 55 50 C45 65, 50 70, 55 70 C65 70, 65 55, 55 50 Z"
+                                    fill={cloverLeaves >= 3 ? "#00A949" : "none"}
+                                    stroke="#D1D5DB"
+                                    strokeWidth="3"
+                                />
+
+                                {/* 아래쪽 잎 (하트 모양) */}
+                                <path
+                                    d="M50 55 C45 65, 30 65, 30 55 C30 50, 35 45, 50 55 C65 45, 70 50, 70 55 C70 65, 55 65, 50 55 Z"
+                                    fill={cloverLeaves >= 4 ? "#00A949" : "none"}
+                                    stroke="#D1D5DB"
+                                    strokeWidth="3"
+                                />
+
+                                {/* 줄기 */}
+                                <rect
+                                    x="48"
+                                    y="55"
+                                    width="4"
+                                    height="30"
+                                    fill="#D1D5DB"
+                                    rx="2"
+                                />
+                            </svg>
+                        </div>
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-4">
+                            {cloverLeaves < 4
+                                ? `${cloverLeaves}/4 잎 채움 - 참여 매장을 방문하고 인증하여 클로버를 완성하세요!`
+                                : "클로버를 모두 채웠습니다! 쿠폰을 받아가세요."}
+                        </p>
+
+                        {cloverLeaves < 4 ? (
+                            <Button
+                                className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                                onClick={handleStoreVerification}
+                            >
+                                매장 인증하기
+                            </Button>
+                        ) : (
+                            <Button className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] hover:from-[#FFC000] hover:to-[#FF8C00] text-white">
+                                쿠폰 받기
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* 참여 매장 목록 */}
+                    <div>
+                        <h3 className="font-bold text-[#5A3D2B] mb-3">참여 매장</h3>
+                        <div className="space-y-3">
+                            {participatingStores.map((store, index) => (
+                                <div key={index} className="bg-white rounded-lg p-3 flex justify-between items-center">
+                                    <div>
+                                        <h4 className="font-medium text-[#5A3D2B]">{store.name}</h4>
+                                        <Badge className="mt-1 bg-[#75CB3B]/20 text-[#00A949] border-none">{store.category}</Badge>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-[#00A949] font-medium">{store.benefit}</p>
+                                        <p className="text-xs text-gray-500 mt-1">클로버 1잎 적립</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 이벤트 설명 */}
+                    <div className="bg-white rounded-lg p-4">
+                        <h3 className="font-bold text-[#5A3D2B] mb-2">이벤트 안내</h3>
+                        <ul className="space-y-2 text-sm text-gray-600">
+                            <li className="flex items-start gap-2">
+                                <span className="text-[#00A949] font-bold">•</span>
+                                <span>참여 매장을 방문하고 인증하면 클로버 잎이 하나씩 채워집니다.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-[#00A949] font-bold">•</span>
+                                <span>클로버 4잎을 모두 채우면 랜덤 쿠폰을 받을 수 있습니다.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-[#00A949] font-bold">•</span>
+                                <span>매장 인증은 매장 내에서만 가능합니다.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-[#00A949] font-bold">•</span>
+                                <span>이벤트 기간: 2024.04.01 ~ 2024.05.31</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* 매장 인증 카메라 모달 */}
+            <Dialog open={showCamera} onOpenChange={setShowCamera}>
+                <DialogContent className="max-w-sm mx-auto">
+                    <DialogHeader>
+                        <DialogTitle>매장 인증</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="bg-gray-100 rounded-lg aspect-square flex flex-col items-center justify-center">
+                            <Camera className="h-12 w-12 text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-500">매장 내 QR코드를 스캔하세요</p>
+                        </div>
+
+                        <div className="text-center">
+                            <p className="text-sm text-gray-600 mb-4">매장에 있는 QR 코드를 스캔하여 방문을 인증하세요.</p>
+
+                            {/* 데모 목적으로 인증 완료 버튼 추가 */}
+                            <Button
+                                className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                                onClick={handleVerificationComplete}
+                            >
+                                <Check className="h-4 w-4 mr-2" />
+                                인증 완료 (데모)
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* 하단 내비게이션 */}
+            <BottomNavigation />
+        </main>
+    )
+}
