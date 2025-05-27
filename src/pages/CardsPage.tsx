@@ -11,7 +11,7 @@ import {
     fetchCardPerformance,
     deleteUserCard,
 } from "../lib/card/cardApi"
-import type { CardListDTO, CardBenefitDetail, UserCardPerformanceDetail, } from "../lib/card/cardTypes"
+import type { CardListDTO, CardBenefitDetail, UserCardPerformanceDetail } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight, Trash2, Search, X, RotateCcw, PlusCircle, Calendar } from "lucide-react"
 
@@ -20,21 +20,14 @@ import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs"
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-    DialogClose,
-} from "../components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "../components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { useToast } from "../hooks/use-toast"
 import { Badge } from "../components/ui/badge"
 import BottomNavigation from "../components/bottom-navigation"
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover"
 
-import { useCurrentUser } from "../hooks/use-current-user" // 상단에 이미 있을 것
+import { useCurrentUser } from "../hooks/use-current-user"
 
 export default function CardsPage() {
     const [activeTab, setActiveTab] = useState("my-cards")
@@ -43,16 +36,13 @@ export default function CardsPage() {
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
     const { toast } = useToast()
 
-    const user = useCurrentUser();
-    const userId = user?.userId ?? 0; // 값이 없으면 fallback으로 0
-
+    const user = useCurrentUser()
+    const userId = user?.userId ?? 0
 
     // 커스텀 알림 상태 추가
     const [alertOpen, setAlertOpen] = useState(false)
     const [alertMessage, setAlertMessage] = useState("")
 
-    // 상단에 userId 상태 추가 (import 문 아래, 컴포넌트 내부 상단)
-    // const [userId, setUserId] = useState<number>(1) // 임시로 userId를 1로 설정 (실제 구현 시 로그인한 사용자의 ID로 대체 필요)
     const [myCardsList, setMyCardsList] = useState<CardListDTO[]>([])
     const [isLoadingMyCards, setIsLoadingMyCards] = useState(false)
     const [cardPerformanceInfo, setCardPerformanceInfo] = useState<Record<number, UserCardPerformanceDetail>>({})
@@ -83,7 +73,6 @@ export default function CardsPage() {
     const DEFAULT_SPENDING_GOAL = 300000
 
     // 년도와 월 선택 상태 추가
-    // 기본값을 2025년 5월로 설정 (데이터베이스에 있는 데이터에 맞춤)
     const [selectedYear, setSelectedYear] = useState(2025)
     const [selectedMonth, setSelectedMonth] = useState(5)
     const [showDateSelector, setShowDateSelector] = useState(false)
@@ -96,7 +85,7 @@ export default function CardsPage() {
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
     const [pendingDeleteCardId, setPendingDeleteCardId] = useState<number | null>(null)
 
-    // 카드 삭제 ㅇ요청 트리거 함수 
+    // 카드 삭제 요청 트리거 함수
     const requestDeleteCard = (cardId: number) => {
         setPendingDeleteCardId(cardId)
         setConfirmDeleteOpen(true)
@@ -127,7 +116,6 @@ export default function CardsPage() {
     }, [activeTab, currentPage, selectedCardType, isSearchMode])
 
     // 내 카드 목록 가져오기
-    // 로그 추가하여 API 호출 디버깅
     useEffect(() => {
         if (activeTab === "my-cards") {
             setIsLoadingMyCards(true)
@@ -141,7 +129,6 @@ export default function CardsPage() {
                     console.log("My cards data:", data)
 
                     // 카드 실적 상세 정보 가져오기
-                    // userCardId가 있는 카드만 필터링하여 실적 정보 조회
                     const cardsWithUserCardId = data.filter((card) => card.userCardId !== undefined)
                     console.log(`Cards with userCardId:`, cardsWithUserCardId)
 
@@ -171,7 +158,18 @@ export default function CardsPage() {
                             })
                     })
 
-                    const benefitPromises = data.map((card) => fetchCardDetail(card.cardInfoId).catch(() => []))
+                    // 카드 혜택 정보 가져오기 - 모든 카드에 대해
+                    const benefitPromises = data.map((card) =>
+                        fetchCardDetail(card.cardInfoId)
+                            .then((benefits) => {
+                                console.log(`Benefits for cardInfoId ${card.cardInfoId}:`, benefits)
+                                return benefits
+                            })
+                            .catch((error) => {
+                                console.error(`Error fetching benefits for cardInfoId ${card.cardInfoId}:`, error)
+                                return []
+                            }),
+                    )
 
                     // 모든 데이터를 한 번에 처리
                     return Promise.all([
@@ -182,6 +180,7 @@ export default function CardsPage() {
                 })
                 .then(([performanceInfoArray, benefitsArray, cardsList]) => {
                     console.log("All performance data:", performanceInfoArray)
+                    console.log("All benefits data:", benefitsArray)
 
                     // 실적 상세 정보 맵 생성
                     const performanceInfoMap: Record<number, UserCardPerformanceDetail> = {}
@@ -198,7 +197,10 @@ export default function CardsPage() {
                     const benefitsMap: Record<number, CardBenefitDetail[]> = {}
                     cardsList.forEach((card, index) => {
                         benefitsMap[card.cardInfoId] = benefitsArray[index]
+                        console.log(`Added benefits for cardInfoId ${card.cardInfoId}:`, benefitsArray[index])
                     })
+
+                    console.log("Benefits map:", benefitsMap)
 
                     // 모든 상태를 한 번에 업데이트 (배치 업데이트)
                     setMyCardsList(cardsList)
@@ -215,6 +217,15 @@ export default function CardsPage() {
                         toast({
                             title: "실적 정보 없음",
                             description: `${selectedYear}년 ${selectedMonth}월에 해당하는 실적 정보가 없습니다.`,
+                        })
+                    }
+
+                    // 혜택 정보 로드 완료 알림
+                    const totalBenefits = Object.values(benefitsMap).reduce((sum, benefits) => sum + benefits.length, 0)
+                    if (totalBenefits > 0) {
+                        toast({
+                            title: "카드 혜택 정보 로드 완료",
+                            description: `총 ${totalBenefits}개의 혜택 정보를 불러왔습니다.`,
                         })
                     }
                 })
@@ -315,10 +326,7 @@ export default function CardsPage() {
     // 카드 검색 핸들러
     const handleSearchCards = async () => {
         if (!searchQuery.trim()) {
-            // 검색어가 없을 때는 검색 모드를 비활성화하고 전체 카드 리스트를 보여줌
             setIsSearchMode(false)
-
-            // 커스텀 알림 표시
             setAlertMessage("검색어를 입력해주세요")
             setAlertOpen(true)
             return
@@ -331,10 +339,7 @@ export default function CardsPage() {
             const results = await searchCards(searchQuery)
             setSearchResults(results)
 
-            // 검색 결과 개수 표시 (카드 타입 필터링 전)
             const totalResults = results.length
-
-            // 현재 선택된 카드 타입에 맞는 결과 개수 계산
             const filteredResults = results.filter(
                 (card) =>
                     (selectedCardType === "credit" && card.cardType === 401) ||
@@ -348,7 +353,6 @@ export default function CardsPage() {
         } catch (error: any) {
             console.error("카드 검색 실패:", error)
 
-            // 백엔드에서 보낸 에러 메시지 처리
             if (error.response && error.response.data && error.response.data.message) {
                 toast({
                     title: "검색 실패",
@@ -370,7 +374,6 @@ export default function CardsPage() {
     // 카드 추가 모달 내 검색 핸들러
     const handleAddCardSearch = async () => {
         if (!addCardSearchQuery.trim()) {
-            // 검색어가 없을 때 커스텀 알림 표시
             setAlertMessage("검색어를 입력해주세요")
             setAlertOpen(true)
             return
@@ -382,10 +385,7 @@ export default function CardsPage() {
             const results = await searchCards(addCardSearchQuery)
             setAddCardSearchResults(results)
 
-            // 검색 결과 개수 표시 (카드 타입 필터링 전)
             const totalResults = results.length
-
-            // 현재 선택된 카드 타입에 맞는 결과 개수 계산
             const filteredResults = results.filter(
                 (card) =>
                     (addCardSelectedType === "credit" && card.cardType === 401) ||
@@ -399,7 +399,6 @@ export default function CardsPage() {
         } catch (error: any) {
             console.error("카드 검색 실패:", error)
 
-            // 백엔드에서 보낸 에러 메시지 처리
             if (error.response && error.response.data && error.response.data.message) {
                 toast({
                     title: "검색 실패",
@@ -431,16 +430,9 @@ export default function CardsPage() {
         setAddCardSearchResults([])
     }
 
-    // 카드 추가 모달 상태 변경 시 검색 결과 초기화 처리
-    // showAddCardModal 상태가 변경될 때 검색 결과를 초기화하도록 수정
-    // setShowAddCardModal 함수를 직접 사용하는 대신 handleAddCardModalChange 함수를 사용
-
-    // 다음 코드를 추가합니다 (handleAddCardModalChange 함수 추가)
-    // 기존 핸들러 근처에 추가 (예: handleResetAddCardSearch 함수 아래)
     const handleAddCardModalChange = (open: boolean) => {
         setShowAddCardModal(open)
 
-        // 모달이 열릴 때 신용카드를 기본값으로 설정하고, 닫힐 때 검색 결과 초기화
         if (open) {
             setAddCardSelectedType("credit")
         } else {
@@ -481,7 +473,6 @@ export default function CardsPage() {
         }
     }
 
-
     // 카드 삭제 핸들러
     const confirmDeleteCard = async () => {
         if (pendingDeleteCardId === null) return
@@ -497,7 +488,6 @@ export default function CardsPage() {
             setConfirmDeleteOpen(false)
             setPendingDeleteCardId(null)
 
-            // 카드 목록 갱신
             if (activeTab === "my-cards") {
                 setActiveTab("all-cards")
                 setTimeout(() => setActiveTab("my-cards"), 100)
@@ -519,21 +509,17 @@ export default function CardsPage() {
     // 카드 신청 핸들러
     const handleApplyCard = async (cardInfoId: number, cardBrand: string) => {
         try {
-            // 카드 브랜드 문자열을 숫자로 변환
             const cardBrandNum = Number.parseInt(cardBrand, 10)
             if (isNaN(cardBrandNum)) {
                 throw new Error("유효하지 않은 카드 브랜드입니다.")
             }
 
-            // 백엔드 API를 통해 카드 신청 URL 가져오기
             const url = await applyCard(cardInfoId, cardBrandNum)
 
-            // URL이 유효한지 확인
             if (!url) {
                 throw new Error("카드 신청 URL을 가져올 수 없습니다.")
             }
 
-            // 새 창에서 URL 열기
             window.open(url, "_blank")
         } catch (error) {
             console.error("카드 신청 실패:", error)
@@ -555,10 +541,8 @@ export default function CardsPage() {
     const handleFetchCardDetail = async (cardInfoId: number, cardItem: CardListDTO) => {
         setIsLoadingDetail(true)
         try {
-            // 데이터베이스에서 카드 상세 정보(혜택) 가져오기
             const cardBenefits = await fetchCardDetail(cardInfoId)
 
-            // 카드 기본 정보와 혜택 정보를 합쳐서 selectedCard에 설정
             setSelectedCard({
                 ...cardItem,
                 benefits: cardBenefits,
@@ -576,27 +560,23 @@ export default function CardsPage() {
         }
     }
 
-    // 내 카드 목록 핸들러 추가 (다른 핸들러 근처에 추가)
+    // 내 카드 목록 핸들러 추가
     const handleViewMyCardDetail = async (cardInfoId: number) => {
         setIsLoadingDetail(true)
         try {
-            // 데이터베이스에서 카드 상세 정보(혜택) 가져오기
             const cardBenefits = await fetchCardDetail(cardInfoId)
 
-            // 카드 기본 정보 찾기
             const cardItem = myCardsList.find((card) => card.cardInfoId === cardInfoId)
 
             if (!cardItem) {
                 throw new Error("카드 정보를 찾을 수 없습니다.")
             }
 
-            // 카드 실적 상세 정보 가져오기 (userCardId가 있는 경우)
             let performanceInfo = null
             if (cardItem.userCardId) {
                 performanceInfo = cardPerformanceInfo[cardItem.userCardId]
             }
 
-            // 카드 기본 정보와 혜택 정보를 합쳐서 selectedCard에 설정
             setSelectedCard({
                 ...cardItem,
                 benefits: cardBenefits,
@@ -617,7 +597,6 @@ export default function CardsPage() {
 
     // 실적 그라데이션 계산 함수
     const getProgressGradient = (percentage: number) => {
-        // 실적에 따라 그라데이션 강도 조절
         if (percentage < 30) {
             return "bg-gradient-to-r from-[#75CB3B]/30 to-[#00B959]/30"
         } else if (percentage < 60) {
@@ -646,9 +625,26 @@ export default function CardsPage() {
         return parts.join(" | ")
     }
 
+    // 혜택 요약 표시 함수 개선
+    const renderBenefitSummary = (benefits: CardBenefitDetail[]) => {
+        if (!benefits || benefits.length === 0) {
+            return <span className="bg-gray-100 text-gray-500 text-xs px-1.5 py-0.5 rounded-full">혜택 정보 없음</span>
+        }
+
+        return benefits.slice(0, 3).map((benefit, idx) => (
+            <span
+                key={idx}
+                className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full"
+                title={benefit.cardBenefitDesc} // 툴팁으로 상세 설명 표시
+            >
+                {benefit.cardBenefitStore || "일반"}{" "}
+                {benefit.cardBenefitDiscntPrice > 0 ? `${benefit.cardBenefitDiscntPrice.toLocaleString()}원 할인` : "혜택"}
+            </span>
+        ))
+    }
+
     // 카드 목록 렌더링 함수
     const renderCardList = () => {
-        // 검색 모드인 경우 검색 결과를, 아닌 경우 전체 카드 목록을 사용
         const cards = isSearchMode ? searchResults : allCards
 
         if (isSearching) {
@@ -659,9 +655,7 @@ export default function CardsPage() {
             )
         }
 
-        // 카드 타입에 따라 필터링
         const filteredCards = cards.filter((card) => {
-            // cardType이 401이면 신용카드, 402면 체크카드로 가정
             return (
                 (selectedCardType === "credit" && card.cardType === 401) ||
                 (selectedCardType === "check" && card.cardType === 402)
@@ -717,7 +711,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -751,9 +745,6 @@ export default function CardsPage() {
         ))
     }
 
-    // 카드 추가 모달 내 카드 목록 렌더링 함수 수정
-    // renderAddCardSearchResults 함수에서 상세 보기 버튼을 제거하고 카드 추가하기 버튼만 표시하도록 수정
-    // 다음 코드로 renderAddCardSearchResults 함수의 return 부분을 수정합니다:
     const renderAddCardSearchResults = () => {
         if (isAddCardSearching) {
             return (
@@ -771,7 +762,6 @@ export default function CardsPage() {
             )
         }
 
-        // 카드 타입에 따라 필터링
         const filteredCards = addCardSearchResults.filter((card) => {
             return (
                 (addCardSelectedType === "credit" && card.cardType === 401) ||
@@ -790,7 +780,6 @@ export default function CardsPage() {
             )
         }
 
-        // renderAddCardSearchResults 함수 내의 return filteredCards.map 부분을 다음과 같이 수정:
         return filteredCards.map((card) => (
             <div key={card.cardInfoId} className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-100 mb-3">
                 <div className="flex">
@@ -806,7 +795,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrand}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -861,11 +850,6 @@ export default function CardsPage() {
                     <ChevronLeft className="h-3.5 w-3.5" />
                 </Button>
                 <h1 className="text-base font-bold flex-1">카드 관리</h1>
-                {/* 카드 추가 모달 Dialog 컴포넌트의 onOpenChange 속성을 수정합니다 */}
-                {/* 다음 코드로 Dialog 컴포넌트의 onOpenChange 속성을 수정합니다: */}
-                {/* <Dialog open={showAddCardModal} onOpenChange={setShowAddCardModal}> */}
-                {/* 위 코드를 아래와 같이 변경: */}
-
             </header>
 
             <div className="bg-transparent border-b border-[#00A949]/20">
@@ -884,7 +868,7 @@ export default function CardsPage() {
             <div className="flex-1 overflow-auto p-4 bg-[#F5FAF0]">
                 {activeTab === "my-cards" ? (
                     <div className="space-y-4">
-                        {/* 날짜 선택기 추가 */}
+                        {/* 날짜 선택기 */}
                         <div className="flex justify-between items-center">
                             <h2 className="text-sm font-medium text-gray-700">내 카드 목록</h2>
                             <Popover open={showDateSelector} onOpenChange={setShowDateSelector}>
@@ -963,7 +947,6 @@ export default function CardsPage() {
                             </div>
                         ) : (
                             myCardsList.map((card) => {
-                                // 카드 실적 상세 정보 가져오기 (userCardId가 있는 경우)
                                 let performanceInfo = null
                                 if (card.userCardId) {
                                     performanceInfo = cardPerformanceInfo[card.userCardId]
@@ -972,6 +955,9 @@ export default function CardsPage() {
                                 const monthlyAmount = performanceInfo?.monthlyAmount || 0
                                 const percentage = (monthlyAmount / DEFAULT_SPENDING_GOAL) * 100
                                 const progressGradient = getProgressGradient(percentage)
+
+                                // 해당 카드의 혜택 정보 가져오기
+                                const benefits = cardBenefits[card.cardInfoId] || []
 
                                 return (
                                     <div
@@ -1007,7 +993,7 @@ export default function CardsPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* 이번 달 실적 표시 수정 */}
+                                                {/* 이번 달 실적 표시 */}
                                                 <div className="flex justify-between items-center text-xs">
                                                     <span className="text-gray-500">
                                                         {selectedYear}년 {selectedMonth}월 실적
@@ -1020,30 +1006,8 @@ export default function CardsPage() {
                                                     <div className={`h-full ${progressGradient}`} style={{ width: `${percentage}%` }}></div>
                                                 </div>
 
-                                                {/* 혜택 태그 표시 - 실제 혜택 정보 사용 */}
-                                                <div className="flex flex-wrap gap-1 mt-1">
-                                                    {cardBenefits[card.cardInfoId]?.slice(0, 3).map((benefit, idx) => (
-                                                        <span
-                                                            key={idx}
-                                                            className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full"
-                                                        >
-                                                            {benefit.cardBenefitTitle}{" "}
-                                                            {benefit.cardBenefitDiscntRate > 0
-                                                                ? `${benefit.cardBenefitDiscntRate}%`
-                                                                : benefit.cardBenefitDiscntPrice > 0
-                                                                    ? `${benefit.cardBenefitDiscntPrice.toLocaleString()}원`
-                                                                    : ""}
-                                                        </span>
-                                                    ))}
-                                                    {!cardBenefits[card.cardInfoId] || cardBenefits[card.cardInfoId].length === 0 ? (
-                                                        // 혜택 정보가 없을 경우 기본 혜택 표시
-                                                        <>
-                                                            <span className="bg-[#75CB3B]/20 text-[#00A949] text-xs px-1.5 py-0.5 rounded-full">
-                                                                혜택 정보 없음
-                                                            </span>
-                                                        </>
-                                                    ) : null}
-                                                </div>
+                                                {/* 혜택 태그 표시 - 백엔드에서 받은 실제 혜택 정보 사용 */}
+                                                <div className="flex flex-wrap gap-1 mt-1">{renderBenefitSummary(benefits)}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -1093,7 +1057,7 @@ export default function CardsPage() {
                             <Select
                                 value={selectedCardType}
                                 onValueChange={(value) => {
-                                    setSelectedCardType(value) // ✅ 선택 시 상태 변경
+                                    setSelectedCardType(value)
                                 }}
                             >
                                 <SelectTrigger id="card-type-select" className="w-full">
@@ -1121,19 +1085,14 @@ export default function CardsPage() {
                                 </button>
 
                                 {Array.from({ length: Math.min(5, Math.ceil(totalCount / 10)) }, (_, i) => {
-                                    // Calculate page number based on current page to show 5 pages at a time
                                     let pageNum: number
                                     const totalPages = Math.ceil(totalCount / 10)
 
                                     if (totalPages <= 5) {
-                                        // If total pages are 5 or less, show all pages
                                         pageNum = i + 1
                                     } else {
-                                        // If more than 5 pages, create a sliding window
                                         let startPage = Math.max(1, currentPage - 2)
                                         const endPage = Math.min(totalPages, startPage + 4)
-
-                                        // Adjust start page if we're near the end
                                         startPage = Math.max(1, endPage - 4)
                                         pageNum = startPage + i
                                     }
@@ -1166,7 +1125,6 @@ export default function CardsPage() {
             </div>
 
             {/* 하단 네비게이션 */}
-            {/* 카드 추가 버튼 - 오른쪽 하단에 배치 */}
             <BottomNavigation
                 floatingActionButton={
                     <Button
@@ -1271,10 +1229,7 @@ export default function CardsPage() {
                     >
                         취소
                     </Button>
-                    <Button
-                        className="bg-red-600 hover:bg-red-700 text-white"
-                        onClick={confirmDeleteCard}
-                    >
+                    <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDeleteCard}>
                         삭제
                     </Button>
                 </div>
@@ -1321,7 +1276,7 @@ export default function CardsPage() {
                                 </Badge>
                             </div>
 
-                            {/* 이번 달 실적 정보 표시 수정 - 내 카드인 경우에만 표시 */}
+                            {/* 이번 달 실적 정보 표시 - 내 카드인 경우에만 표시 */}
                             {selectedCard.userCardId && (
                                 <div className="space-y-1 mt-2">
                                     <div className="flex justify-between text-sm">
@@ -1342,7 +1297,6 @@ export default function CardsPage() {
                                         />
                                     </div>
 
-                                    {/* 실적 정보 추가 표시 */}
                                     <div className="flex justify-between text-xs mt-1">
                                         <span className="text-gray-500">
                                             {selectedYear}년 {selectedMonth}월 실적
@@ -1361,33 +1315,34 @@ export default function CardsPage() {
                             )}
                         </div>
 
-                        {/* 상세 혜택 */}
+                        {/* 상세 혜택 - 백엔드에서 받은 실제 데이터 표시 */}
                         <div className="flex-1 overflow-auto p-4 pt-0">
                             <h4 className="font-medium text-[#5A3D2B] mt-4 mb-2">상세 혜택</h4>
                             <div className="space-y-3">
                                 {selectedCard.benefits && selectedCard.benefits.length > 0 ? (
                                     selectedCard.benefits.map((benefit: CardBenefitDetail) => (
                                         <div key={benefit.cardBenefitId} className="bg-gray-50 rounded-lg p-3">
-                                            <div className="flex justify-between items-start">
-                                                <h5 className="font-medium text-[#00A949]">{benefit.cardBenefitTitle}</h5>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h5 className="font-medium text-[#00A949]">
+                                                    {benefit.cardBenefitStore ? `${benefit.cardBenefitStore}` : "일반 혜택"}
+                                                </h5>
                                                 <Badge className="bg-[#75CB3B]/20 text-[#00A949] border-none">
-                                                    {benefit.cardBenefitDiscntRate > 0
-                                                        ? `${benefit.cardBenefitDiscntRate}% 할인`
-                                                        : benefit.cardBenefitDiscntPrice > 0
-                                                            ? `${benefit.cardBenefitDiscntPrice.toLocaleString()}원 할인`
-                                                            : "혜택"}
+                                                    {benefit.cardBenefitDiscntPrice > 0
+                                                        ? `${benefit.cardBenefitDiscntPrice.toLocaleString()}원 할인`
+                                                        : "혜택"}
                                                 </Badge>
                                             </div>
-                                            <p className="text-sm text-gray-700 mt-1">{benefit.cardBenefitDesc}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{benefit.cardBenefitCondition}</p>
-                                            {benefit.cardBenefitStore && (
-                                                <p className="text-xs text-[#00A949] mt-1">적용 매장: {benefit.cardBenefitStore}</p>
+                                            <p className="text-sm text-gray-700 mb-2">{benefit.cardBenefitDesc}</p>
+                                            {benefit.cardBenefitCondition && (
+                                                <p className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                                                    <span className="font-medium">조건:</span> {benefit.cardBenefitCondition}
+                                                </p>
                                             )}
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center text-gray-500 py-4">
-                                        {isLoadingDetail ? "혜택 정보를 불러오는 중..." : "혜택 정보가 없습니다."}
+                                    <div className="text-center text-gray-500 py-8">
+                                        {isLoadingDetail ? "혜택 정보를 불러오는 중..." : "등록된 혜택 정보가 없습니다."}
                                     </div>
                                 )}
                             </div>
@@ -1405,7 +1360,6 @@ export default function CardsPage() {
                     </div>
                 </div>
             )}
-
         </main>
     )
 }

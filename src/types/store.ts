@@ -34,6 +34,7 @@ export type BenefitCard = {
     card_image_url: string | null;  // cardImageUrl
 };
 
+
 export type notificationStore = {
     id: number;                 // cardBenefitId
     storeFullName: string
