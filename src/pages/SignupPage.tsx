@@ -152,7 +152,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
         }
     }, [formData.birthday]);
 
-    // 이메일 중복 체크 함수 수정
+    // 이메일 중복 체크 함수
     const checkEmailExists = async (): Promise<void> => {
         if (!formData.email || errors.emailError) return;
 
@@ -160,15 +160,14 @@ const SignupPage: React.FC<SignupPageProps> = () => {
             updateState("isCheckingEmail", true);
             const response = await axiosInstance.get(`/user/check-email?email=${formData.email}`);
 
-
-            // 응답 데이터가 정확히 true 또는 존재하는 데이터가 있는지 확인
-            if (response.data === true || (Array.isArray(response.data) && response.data.length > 0)) {
+            // API는 { exists: true/false } 형태로 응답
+            if (response.data?.exists === true) {
                 updateError("emailError", "이미 사용중인 이메일 입니다");
             } else {
-                updateError("emailError", ""); // 사용 가능한 경우 에러 초기화
+                updateError("emailError", "");
             }
         } catch (error) {
-            
+            console.error("Email check error:", error);
             toast({
                 title: "오류",
                 description: "이메일 중복 확인 중 오류가 발생했습니다.",
@@ -179,7 +178,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
         }
     };
 
-    // 전화번호 중복 체크 함수 수정
+    // 전화번호 중복 체크 함수
     const checkPhoneExists = async (): Promise<void> => {
         if (!formData.phoneNumber || formData.phoneNumber.length < 10) return;
 
@@ -187,16 +186,14 @@ const SignupPage: React.FC<SignupPageProps> = () => {
             updateState("isCheckingPhone", true);
             const response = await axiosInstance.get(`/user/check-phone?phone=${formData.phoneNumber}`);
 
-           
-
-            // 응답 데이터가 정확히 true 또는 존재하는 데이터가 있는지 확인
-            if (response.data === true || (Array.isArray(response.data) && response.data.length > 0)) {
+            // API는 { exists: true/false } 형태로 응답
+            if (response.data?.exists === true) {
                 updateError("phoneError", "이미 사용중인 전화번호 입니다");
             } else {
-                updateError("phoneError", ""); // 사용 가능한 경우 에러 초기화
+                updateError("phoneError", "");
             }
         } catch (error) {
-            
+            console.error("Phone check error:", error);
             toast({
                 title: "오류",
                 description: "전화번호 중복 확인 중 오류가 발생했습니다.",
@@ -259,7 +256,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                 true
             );
         } catch (error: any) {
-            
+
 
 
             if (error.response && error.response.data) {
@@ -313,7 +310,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                 showConfirmModal("인증번호 발송에 실패했습니다.");
             }
         } catch (err: any) {
-           
+
             showConfirmModal("서버 오류가 발생했습니다.");
         }
     };
@@ -340,7 +337,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
                 });
             }
         } catch (error) {
-            
+
             // 인증 실패 시 모달 표시
             showConfirmModal("인증번호가 일치하지 않습니다.", () => {
                 updateFormData("verificationCode", "");

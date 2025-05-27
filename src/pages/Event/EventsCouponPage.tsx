@@ -98,57 +98,51 @@ export default function EventsCouponPage() {
 
                         <div className="relative w-40 h-40 mx-auto mb-4">
                             {/* 클로버 배경 (회색) */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <Clover className="w-full h-full text-gray-200" />
-                            </div>
+                            <div className="w-40 h-40 mx-auto mb-4">
+                            <svg viewBox="0 0 100 100" className="w-full h-full">
+                                {/* 위쪽 잎 (하트 모양) */}
+                                <path
+                                    d="M50 45 C45 35, 30 35, 30 45 C30 50, 35 55, 50 45 C65 55, 70 50, 70 45 C70 35, 55 35, 50 45 Z"
+                                    fill={cloverLeaves >= 1 ? "#00A949" : "none"}
+                                    stroke="#D1D5DB"
+                                    strokeWidth="3"
+                                />
 
-                            {/* 채워진 클로버 잎 */}
-                            <div className="absolute inset-0">
-                                <svg viewBox="0 0 24 24" className="w-full h-full">
-                                    {/* 왼쪽 위 잎 */}
-                                    {cloverLeaves >= 1 && (
-                                        <path
-                                            d="M12 7C12 7 10 2 7 2C4 2 2 4 2 7C2 10 7 12 7 12"
-                                            fill="#00A949"
-                                            stroke="#00A949"
-                                            strokeWidth="1"
-                                        />
-                                    )}
+                                {/* 왼쪽 잎 (하트 모양) */}
+                                <path
+                                    d="M45 50 C35 45, 35 30, 45 30 C50 30, 55 35, 45 50 C55 65, 50 70, 45 70 C35 70, 35 55, 45 50 Z"
+                                    fill={cloverLeaves >= 2 ? "#00A949" : "none"}
+                                    stroke="#D1D5DB"
+                                    strokeWidth="3"
+                                />
 
-                                    {/* 오른쪽 위 잎 */}
-                                    {cloverLeaves >= 2 && (
-                                        <path
-                                            d="M12 7C12 7 14 2 17 2C20 2 22 4 22 7C22 10 17 12 17 12"
-                                            fill="#00A949"
-                                            stroke="#00A949"
-                                            strokeWidth="1"
-                                        />
-                                    )}
+                                {/* 오른쪽 잎 (하트 모양) */}
+                                <path
+                                    d="M55 50 C65 45, 65 30, 55 30 C50 30, 45 35, 55 50 C45 65, 50 70, 55 70 C65 70, 65 55, 55 50 Z"
+                                    fill={cloverLeaves >= 3 ? "#00A949" : "none"}
+                                    stroke="#D1D5DB"
+                                    strokeWidth="3"
+                                />
 
-                                    {/* 왼쪽 아래 잎 */}
-                                    {cloverLeaves >= 3 && (
-                                        <path
-                                            d="M12 17C12 17 10 22 7 22C4 22 2 20 2 17C2 14 7 12 7 12"
-                                            fill="#00A949"
-                                            stroke="#00A949"
-                                            strokeWidth="1"
-                                        />
-                                    )}
+                                {/* 아래쪽 잎 (하트 모양) */}
+                                <path
+                                    d="M50 55 C45 65, 30 65, 30 55 C30 50, 35 45, 50 55 C65 45, 70 50, 70 55 C70 65, 55 65, 50 55 Z"
+                                    fill={cloverLeaves >= 4 ? "#00A949" : "none"}
+                                    stroke="#D1D5DB"
+                                    strokeWidth="3"
+                                />
 
-                                    {/* 오른쪽 아래 잎 */}
-                                    {cloverLeaves >= 4 && (
-                                        <path
-                                            d="M12 17C12 17 14 22 17 22C20 22 22 20 22 17C22 14 17 12 17 12"
-                                            fill="#00A949"
-                                            stroke="#00A949"
-                                            strokeWidth="1"
-                                        />
-                                    )}
-
-                                    {/* 줄기 */}
-                                    <path d="M12 12L12 22" stroke="#00A949" strokeWidth="1" fill="none" />
-                                </svg>
-                            </div>
+                                {/* 줄기 */}
+                                <rect
+                                    x="48"
+                                    y="55"
+                                    width="4"
+                                    height="30"
+                                    fill="#D1D5DB"
+                                    rx="2"
+                                />
+                            </svg>
+                        </div>
                         </div>
 
                         <p className="text-sm text-gray-600 mb-4">

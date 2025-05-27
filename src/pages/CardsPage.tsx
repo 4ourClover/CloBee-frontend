@@ -13,7 +13,7 @@ import {
 } from "../lib/card/cardApi"
 import type { CardListDTO, CardBenefitDetail, UserCardPerformanceDetail, } from "../lib/card/cardTypes"
 import { useNavigate } from "react-router-dom"
-import { ChevronLeft, ChevronRight, Plus, Trash2, Search, X, RotateCcw, PlusCircle, Calendar } from "lucide-react"
+import { ChevronLeft, ChevronRight, Trash2, Search, X, RotateCcw, PlusCircle, Calendar } from "lucide-react"
 
 import { CustomAlert } from "../components/custom-alert"
 import { Button } from "../components/ui/button"
@@ -25,7 +25,6 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
     DialogFooter,
     DialogClose,
 } from "../components/ui/dialog"
