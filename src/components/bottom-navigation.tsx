@@ -33,7 +33,7 @@ export default function BottomNavigation({ floatingActionButton }: BottomNavigat
                 </Button>
             </Link>
             <Link to="/card">
-                <Button variant="ghost" className={`flex flex-col items-center h-auto py-1 rounded-full ${currentPath === "/cards" ? "text-[#00A949]" : ""}`}>
+                <Button variant="ghost" className={`flex flex-col items-center h-auto py-1 rounded-full ${currentPath === "/card" ? "text-[#00A949]" : ""}`}>
                     <CreditCard className="h-6 w-6" />
                     <span className="text-[10px] mt-0.5">내 카드</span>
                 </Button>
