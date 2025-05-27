@@ -16,7 +16,7 @@ export default function LoginPage() {
     const { toast } = useToast()
     const navigate = useNavigate()
     const authAction = useAuthActions()
-    const { setAuth } = useContext(AuthContext) // AuthContext 사용
+    const { setAuth, checkAuth } = useContext(AuthContext) // AuthContext 사용
 
     const [autoLogin, setAutoLogin] = useState(false);
 
@@ -46,17 +46,12 @@ export default function LoginPage() {
         if (result.success) {
             // 로그인 성공 시 인증 상태 업데이트
             setAuth(true);
+            await checkAuth();
             
-            // 토스트 메시지 표시 (선택사항)
-            toast({
-                title: "로그인 성공!",
-                description: "환영합니다!",
-            });
-            
-            // 약간의 지연 후 리다이렉트
-            setTimeout(() => {
+            // 리다이렉트
+
                 navigate("/map");
-            }, 100);
+
         } else {
             showConfirmModal(result.error || "이메일 또는 비밀번호가 일치하지 않습니다.", () => { });
         }

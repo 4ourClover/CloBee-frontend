@@ -414,7 +414,7 @@ export default function CloverGamePage() {
                     // 일정 시간 후 성공으로 간주 (실제로는 사용자가 공유를 완료했는지 확인할 수 없음)
                     setTimeout(() => {
                         handleShareSuccess()
-                    }, 10000)
+                    }, 2000)
                 }
 
             } catch (error: any) {
