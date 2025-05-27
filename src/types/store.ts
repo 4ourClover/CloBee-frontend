@@ -32,8 +32,6 @@ export type BenefitCard = {
     condition: string;          // cardBenefitCondition ("전월실적 30만원 이상")
     card_name: string;          // cardName ("삼성카드 taptap O")
     card_image_url: string | null;  // cardImageUrl
-    cardBrand: number;
-
 };
 
 

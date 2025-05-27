@@ -1,6 +1,4 @@
-
 import React, { useContext } from "react"
-
 import { useState, useEffect, useCallback, useRef } from "react"
 import { createRoot } from "react-dom/client"
 import CategoryBar from "../components/map/category-bar"
@@ -21,9 +19,7 @@ import SearchList from "../components/map/search-list"
 import { useCurrentUser } from "../hooks/use-current-user"
 
 import { getBenefitStores, getBenefitStoresBrand, getMapMyBenefits, getRecommendedCards } from "../api/map"
-
 import { AuthContext } from "../contexts/AuthContext"
-
 
 declare global {
     interface Window {
@@ -56,9 +52,7 @@ export default function MapPage() {
     const benefitStoresRef = useRef<string[]>([])
     const benefitStoresBrandRef = useRef<Record<string, string[]>>({})
 
-
     const { userId } = useContext(AuthContext)
-
 
     const [benefitCards, setBenefitCards] = useState<BenefitCard[]>([])
     const [recommendedCards, setRecommendedCards] = useState<BenefitCard[]>([])
@@ -75,7 +69,6 @@ export default function MapPage() {
         // console.log("nearbyStoresRef 업데이트:", nearbyStoresRef.current);
         // console.log("nearbyStores 업데이트:", nearbyStores);
     }, [nearbyStores])
-
 
     // 카테고리별로 마커를 저장하는 객체
     const categoryMarkersRef = useRef<Record<StoreCategory, Array<any>>>({
@@ -102,9 +95,7 @@ export default function MapPage() {
         if (userId == null) return
         try {
             console.log("userid", userId)
-
             const data = await getBenefitStores(userId)
-
             benefitStoresRef.current = data
 
             if (Array.isArray(data) && data.length === 0) {
@@ -113,24 +104,18 @@ export default function MapPage() {
         } catch (error) {
             console.error("조회 실패:", error)
         }
-
-    }, [])
-
+    }, [userId])
 
     const fetchBenefitStoresBrand = useCallback(async () => {
         if (userId == null) return
         try {
-
             const data = await getBenefitStoresBrand(userId)
             benefitStoresBrandRef.current = data
-
-
             initializeMap()
         } catch (error) {
             console.error("조회 실패:", error)
         }
-
-    }, [])
+    }, [userId])
 
     // 혜택매장 데이터 먼저 로드
     useEffect(() => {
@@ -140,7 +125,6 @@ export default function MapPage() {
             fetchBenefitStoresBrand()
         }
     }, [userId, fetchBenefitStores, fetchBenefitStoresBrand])
-
 
     useEffect(() => {
         if (selectedStore && benefitCards.length > 0) {
@@ -630,6 +614,4 @@ export default function MapPage() {
             )}
         </main>
     )
-
 }
-
