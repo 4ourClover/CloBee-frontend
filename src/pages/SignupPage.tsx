@@ -17,7 +17,9 @@ import {
 } from "../types/signup";
 
 interface SignupPageProps { }
-
+interface ExistenceResponse {
+  exists: boolean;
+}
 const SignupPage: React.FC<SignupPageProps> = () => {
     // 폼 데이터 상태
     const [formData, setFormData] = useState<SignupFormData>({
@@ -158,7 +160,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
 
         try {
             updateState("isCheckingEmail", true);
-            const response = await axiosInstance.get(`/user/check-email?email=${formData.email}`);
+            const response = await axiosInstance.get<ExistenceResponse>(`/user/check-email?email=${formData.email}`);
 
             // API는 { exists: true/false } 형태로 응답
             if (response.data?.exists === true) {
@@ -184,7 +186,7 @@ const SignupPage: React.FC<SignupPageProps> = () => {
 
         try {
             updateState("isCheckingPhone", true);
-            const response = await axiosInstance.get(`/user/check-phone?phone=${formData.phoneNumber}`);
+            const response = await axiosInstance.get<ExistenceResponse>(`/user/check-phone?phone=${formData.phoneNumber}`);
 
             // API는 { exists: true/false } 형태로 응답
             if (response.data?.exists === true) {
