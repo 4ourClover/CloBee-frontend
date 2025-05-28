@@ -1,56 +1,43 @@
-"use client"
-
 import { useState } from "react"
 import { Button } from "./ui/button"
 import { X, ThumbsUp } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import { useToast } from "../hooks/use-toast"
 import type { BenefitCard, Store } from "../types/store"
-import type { CardBenefitDetail } from "../lib/card/cardTypes"
 import { applyCard } from "../lib/card/cardApi"
 
+
+
 type CardBenefitModalProps = {
-  store: Store
-  onClose: () => void
-  benefitCards: BenefitCard[]
-  recommendedCards: BenefitCard[] | CardBenefitDetail[]
-}
+  store: Store;
+  onClose: () => void;
+  benefitCards: BenefitCard[];
+  recommendedCards: BenefitCard[];
+};
 
 export default function CardBenefitModal({ store, onClose, benefitCards, recommendedCards }: CardBenefitModalProps) {
   const [isApplying, setIsApplying] = useState<number | null>(null)
   const { toast } = useToast()
 
-  const handleApplyCard = async (card: BenefitCard | CardBenefitDetail) => {
+  const handleApplyCard = async (card: BenefitCard) => {
     // 디버깅을 위한 로그 추가
     console.log("카드 데이터:", card)
-    console.log("카드 타입 확인:", {
-      hasCardInfoId: "cardInfoId" in card,
-      hasCardBrand: "cardBrand" in card,
-      hasCardBenefitId: "cardBenefitId" in card,
-      cardKeys: Object.keys(card),
-    })
+    // console.log("카드 타입 확인:", {
+    //   hasCardInfoId: "cardInfoId" in card,
+    //   hasCardBrand: "cardBrand" in card,
+    //   hasCardBenefitId: "cardBenefitId" in card,
+    //   cardKeys: Object.keys(card),
+    // })
 
-    // CardBenefitDetail 타입인지 확인하여 적절한 필드 사용
     let cardInfoId: number
     let cardBrand: number
     let cardId: number
 
-    // 더 정확한 타입 가드 사용
-    if ("cardBenefitId" in card && "cardInfoId" in card && "cardBrand" in card) {
-      // CardBenefitDetail 타입인 경우
-      cardInfoId = card.cardInfoId
-      cardBrand = card.cardBrand
-      cardId = card.cardBenefitId
-      console.log("CardBenefitDetail 타입으로 인식:", { cardInfoId, cardBrand, cardId })
-    } else {
-      // BenefitCard 타입인 경우 (기본값 사용)
-      cardInfoId = card.cardInfoId || 0
-      cardBrand = card.cardBrand // 기본값
-      cardId = card.id || 0
-      console.log("BenefitCard 타입으로 인식 (기본값 사용):", { cardInfoId, cardBrand, cardId })
-    }
-
-    console.log("최종 API 호출 파라미터:", { cardInfoId, cardBrand })
+    // // 더 정확한 타입 가드 사용
+    cardInfoId = card.cardInfoId
+    cardBrand = card.cardBrand
+    cardId = card.id
+    console.log("인식:", { cardInfoId, cardBrand, cardId })
 
     setIsApplying(cardId)
     try {
@@ -78,7 +65,6 @@ export default function CardBenefitModal({ store, onClose, benefitCards, recomme
       setIsApplying(null)
     }
   }
-
   // 컴포넌트 렌더링 시 데이터 확인
   console.log("recommendedCards 데이터:", recommendedCards)
 
@@ -171,13 +157,7 @@ export default function CardBenefitModal({ store, onClose, benefitCards, recomme
             <TabsContent value="recommended" className="p-4 pt-0 space-y-4">
               {recommendedCards.length > 0 ? (
                 recommendedCards.map((card, index) => {
-                  // 각 카드별 디버깅 로그
-                  console.log(`추천 카드 ${index}:`, card)
-
-                  // 카드 이름과 할인 정보 추출
-                  const cardName = "cardName" in card ? card.cardName : card.card_name
-                  const discount = "discount" in card ? card.discount : `${card.cardBenefitDiscntPrice}`
-                  const cardId = "cardBenefitId" in card ? card.cardBenefitId : card.id || 0
+                  console.log(`추천 카드 ${index}:`, card);
 
                   return (
                     <div key={index} className="border rounded-lg overflow-hidden">
@@ -186,36 +166,48 @@ export default function CardBenefitModal({ store, onClose, benefitCards, recomme
                           추천
                         </div>
                         <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-[#00A949] mb-1">{cardName}</div>
-                            <div className="text-sm text-gray-600">
-                              {"cardBenefitStore" in card ? card.cardBenefitStore : card.benefit_store}
-                            </div>
-                          </div>
+                          <img
+                            alt={card.card_name}
+                            src={(card as any).card_image_url}
+                            loading="lazy"
+                            decoding="async"
+                            data-nimg="fill"
+                            className="object-contain p-4"
+                            style={{
+                              position: 'absolute',
+                              height: '100%',
+                              width: '100%',
+                              top: 0,
+                              right: 0,
+                              bottom: 0,
+                              left: 0,
+                              color: 'transparent',
+                            }}
+                          />
                         </div>
                       </div>
                       <div className="p-4 space-y-3">
-                        <h3 className="font-medium text-[#5A3D2B]">{cardName}</h3>
+                        <h3 className="font-medium text-[#5A3D2B]">{card.card_name}</h3>
                         <div className="flex justify-between items-center">
                           <div>
                             <p className="text-sm text-[#5A3D2B]/70">할인율</p>
-                            <p className="font-bold text-lg text-[#00A949]">{discount}</p>
+                            <p className="font-bold text-lg text-[#00A949]">{card.discount}</p>
                           </div>
                           <div>
                             <p className="text-sm text-[#5A3D2B]/70">최대 할인</p>
-                            <p className="font-medium text-[#5A3D2B]">{discount}</p>
+                            <p className="font-medium text-[#5A3D2B]">{card.discount}</p>
                           </div>
                           <Button
                             className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
                             onClick={() => handleApplyCard(card)}
-                            disabled={isApplying === cardId}
+                            disabled={isApplying === card.id}
                           >
-                            {isApplying === cardId ? "신청 중..." : "신청하기"}
+                            {isApplying === card.id ? "신청 중..." : "신청하기"}
                           </Button>
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })
               ) : (
                 <div className="text-center py-8 text-gray-500">

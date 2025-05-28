@@ -1011,7 +1011,7 @@ export default function CardsPage() {
                                                 {/* 이번 달 실적 표시 */}
                                                 <div className="flex justify-between items-center text-xs">
                                                     <span className="text-gray-500">
-                                                        {selectedMonth}월 실적  :
+                                                        {selectedYear}년 {selectedMonth}월 실적
                                                     </span>
                                                     <span className="font-medium">
                                                         {monthlyAmount.toLocaleString()}원 / {DEFAULT_SPENDING_GOAL.toLocaleString()}원
@@ -1267,7 +1267,7 @@ export default function CardsPage() {
                             </Button>
                         </div>
 
-                        {/* 카드 이미지 - 높이를 더 줄임 */}
+                        {/* 카드 이미지 */}
                         <div className="relative h-20 bg-gray-100">
                             <img
                                 src={selectedCard.image || selectedCard.cardImageUrl || "/placeholder.svg"}
@@ -1276,7 +1276,7 @@ export default function CardsPage() {
                             />
                         </div>
 
-                        {/* 카드 정보 - 패딩을 더 줄임 */}
+                        {/* 카드 정보 */}
                         <div className="p-2 space-y-1">
                             <div className="flex justify-between items-center">
                                 <div>
@@ -1290,7 +1290,44 @@ export default function CardsPage() {
                                     {renderAnnualFee(selectedCard.cardDomesticAnnualFee || 0, selectedCard.cardGlobalAnnualFee || 0)}
                                 </Badge>
                             </div>
-                            {/* 실적 정보는 그대로 유지 */}
+
+                            {/* 이번 달 실적 정보 표시 - 내 카드인 경우에만 표시 */}
+                            {selectedCard.userCardId && (
+                                <div className="space-y-1 mt-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">
+                                            {selectedYear}년 {selectedMonth}월 실적
+                                        </span>
+                                        <span className="font-medium">
+                                            {(selectedCard.monthlyAmount || 0).toLocaleString()}원 / {DEFAULT_SPENDING_GOAL.toLocaleString()}
+                                            원
+                                        </span>
+                                    </div>
+                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-[#75CB3B] to-[#00B959]"
+                                            style={{
+                                                width: `${((selectedCard.monthlyAmount || 0) / DEFAULT_SPENDING_GOAL) * 100}%`,
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-between text-xs mt-1">
+                                        {/* <span className="text-gray-500">
+                                            {selectedYear}년 {selectedMonth}월 실적
+                                        </span>
+                                        <span
+                                            className={
+                                                selectedCard.monthlyAmount >= DEFAULT_SPENDING_GOAL
+                                                    ? "text-[#00A949] font-medium"
+                                                    : "text-gray-500"
+                                            }
+                                        >
+                                            {selectedCard.monthlyAmount >= DEFAULT_SPENDING_GOAL ? "실적 달성 완료" : "실적 달성 중"}
+                                        </span> */}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* 상세 혜택 - 더 큰 영역과 개선된 스타일 */}
@@ -1299,19 +1336,14 @@ export default function CardsPage() {
                             <div className="space-y-4">
                                 {selectedCard.benefits && selectedCard.benefits.length > 0 ? (
                                     selectedCard.benefits.map((benefit: CardBenefitDetail) => (
-                                        <div
-                                            key={benefit.cardBenefitId}
-                                            className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-5 border-l-4 border-[#75CB3B] shadow-sm"
-                                        >
+                                        <div key={benefit.cardBenefitId} className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-5 border-l-4 border-[#75CB3B] shadow-sm">
                                             <div className="flex justify-between items-start mb-3">
                                                 <h5 className="font-bold text-[#00A949] text-lg">{benefit.cardBenefitStore || "일반 혜택"}</h5>
                                                 <Badge className="bg-[#75CB3B] text-white border-none font-bold text-sm px-3 py-1">
                                                     {benefit.cardBenefitDiscntPrice || "혜택"}
                                                 </Badge>
                                             </div>
-                                            <p className="text-base text-gray-700 mb-3 leading-relaxed font-medium">
-                                                {benefit.cardBenefitDesc}
-                                            </p>
+                                            <p className="text-base text-gray-700 mb-3 leading-relaxed font-medium">{benefit.cardBenefitDesc}</p>
                                             {benefit.cardBenefitCondition && (
                                                 <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                                                     <p className="text-sm text-gray-600">

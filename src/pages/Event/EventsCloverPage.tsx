@@ -310,7 +310,6 @@ export default function CloverGamePage() {
         }
 
         // 카카오 SDK 로드 확인 및 초기화
-        // 수정된 ensureKakaoSDK 함수
         const ensureKakaoSDK = (): Promise<any> => {
             return new Promise((resolve, reject) => {
                 // 이미 Kakao 객체가 있는 경우

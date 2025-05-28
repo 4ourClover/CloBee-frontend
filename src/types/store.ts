@@ -33,7 +33,6 @@ export type BenefitCard = {
     card_name: string;          // cardName ("삼성카드 taptap O")
     card_image_url: string | null;  // cardImageUrl
     cardBrand: number;
-
 };
 
 
