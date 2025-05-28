@@ -1313,7 +1313,7 @@ export default function CardsPage() {
                                     </div>
 
                                     <div className="flex justify-between text-xs mt-1">
-                                        <span className="text-gray-500">
+                                        {/* <span className="text-gray-500">
                                             {selectedYear}년 {selectedMonth}월 실적
                                         </span>
                                         <span
@@ -1324,7 +1324,7 @@ export default function CardsPage() {
                                             }
                                         >
                                             {selectedCard.monthlyAmount >= DEFAULT_SPENDING_GOAL ? "실적 달성 완료" : "실적 달성 중"}
-                                        </span>
+                                        </span> */}
                                     </div>
                                 </div>
                             )}
