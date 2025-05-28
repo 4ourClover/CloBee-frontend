@@ -48,9 +48,14 @@ export const getMapMyBenefits = async (userId: number, store: string): Promise<B
         }));
 
         return mapped;
-    } catch (error) {
-        console.error(`❌ [getMapMyBenefits] 유저 ID ${userId}에 대한 혜택 카드 조회 실패:`, error);
-        throw error;
+    } catch (error: any) {
+        if (error.response?.status === 404) {
+            console.warn(`⚠️ [getMapMyBenefits] 유저 ID ${userId}에 대한 혜택 카드 없음`);
+
+        } else {
+            console.error(`❌ [getMapMyBenefits] 유저 ID ${userId}에 대한 혜택 카드 조회 실패:`, error);
+        }
+        return []; // 404일 경우 빈 배열 반환
     }
 };
 
@@ -75,8 +80,12 @@ export const getRecommendedCards = async (store: string): Promise<BenefitCard[]>
         }));
 
         return mapped;
-    } catch (error) {
-        console.error(`❌ [getRecommendedCards] 추천 카드 조회 실패:`, error);
-        throw error;
+    } catch (error: any) {
+        if (error.response?.status === 404) {
+            console.warn(`⚠️ [getRecommendedCards] '${store}'에 대한 추천 카드 없음`);
+        } else {
+            console.error(`❌ [getRecommendedCards] 추천 카드 조회 실패:`, error);
+        }
+        return []; // 404 시 빈 배열 반환
     }
 };

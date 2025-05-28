@@ -127,11 +127,11 @@ export default function MapPage() {
     }, [userId, fetchBenefitStores, fetchBenefitStoresBrand])
 
     useEffect(() => {
-        if (selectedStore && benefitCards.length > 0) {
+        if (selectedStore) {
             console.log("🟢 selectedStore 변경됨:", benefitCards)
             setShowStoreInfo(true)
         }
-    }, [selectedStore, benefitCards, recommendedCards])
+    }, [selectedStore])
 
     // 지도 클릭 핸들러
     const handleMapClick = async (storeId: number, benefitStoreName: string) => {
@@ -139,14 +139,13 @@ export default function MapPage() {
         const store = nearbyStoresRef.current.find((s) => Number(s.id) == Number(storeId))
         console.log("선택된 매장:", store)
         if (store) {
-            setSelectedStore(store)
-
             if (userId != null) {
                 const data = await getMapMyBenefits(userId, benefitStoreName)
                 setBenefitCards(data)
                 const cards = await getRecommendedCards(benefitStoreName)
                 setRecommendedCards(cards)
             }
+            setSelectedStore(store)
         }
     }
 
