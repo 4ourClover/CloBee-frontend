@@ -22,7 +22,7 @@ const PRIZES = [
 ]
 
 export default function InviteEventPage() {
-    const [inviteCode] = useState("FRIEND2024")
+    const [inviteCode] = useState("ADFTKMKD")
     const [copied, setCopied] = useState(false)
     const [rouletteChances, setRouletteChances] = useState(3) // 현재 보유 룰렛 기회
     const [isSpinning, setIsSpinning] = useState(false)
@@ -34,9 +34,10 @@ export default function InviteEventPage() {
 
     // 초대 현황 데이터
     const inviteData = [
-        { name: "김철수", date: "2024.04.20", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
-        { name: "이영희", date: "2024.04.18", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
-        { name: "박지민", date: "2024.04.15", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
+        { name: "민성", date: "2025.05.20", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
+        { name: "슬기", date: "2025.05.18", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
+        { name: "창성", date: "2025.05.15", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
+        { name: "소연", date: "2025.05.19", status: "가입완료", reward: "룰렛 기회 1회 지급완료" }
     ]
 
     // 룰렛 그리기
@@ -194,27 +195,191 @@ export default function InviteEventPage() {
     const handleCopyCode = () => {
         navigator.clipboard.writeText(inviteCode)
         setCopied(true)
-        toast({
-            title: "초대 코드가 복사되었습니다",
-            description: "친구에게 공유해보세요!",
-        })
-
         setTimeout(() => setCopied(false), 2000)
     }
 
     // 공유하기 핸들러
-    const handleShare = () => {
-        if (navigator.share) {
-            navigator.share({
-                title: "카드맵 친구초대",
-                text: `카드맵에서 함께해요! 내 초대 코드: ${inviteCode}를 입력하고 가입하면 특별 혜택이 제공됩니다!`,
-                url: "https://cardmap.example.com",
+    // 카카오톡 공유가 추가된 handleShare 핸들러
+    const handleShare = async () => {
+        // 카카오 SDK 로드 확인 및 초기화
+        const ensureKakaoSDK = (): Promise<any> => {
+            return new Promise((resolve, reject) => {
+                // 이미 Kakao 객체가 있는 경우
+                if (typeof window !== 'undefined' && (window as any).Kakao) {
+                    const Kakao = (window as any).Kakao
+                    if (!Kakao.isInitialized()) {
+                        try {
+                            const kakaoKey = process.env.REACT_APP_JAVASCRIPT_KEY
+
+                            if (!kakaoKey) {
+                                throw new Error('카카오 JavaScript 키가 설정되지 않았습니다.')
+                            }
+
+                            Kakao.init(kakaoKey)
+                            console.log('카카오 SDK 초기화 완료')
+                        } catch (error) {
+                            console.error('카카오 SDK 초기화 실패:', error)
+                            reject(error)
+                            return
+                        }
+                    }
+                    resolve(Kakao)
+                    return
+                }
+
+                // Kakao 객체가 없는 경우 스크립트 로드
+                const script = document.createElement('script')
+                script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.4.0/kakao.min.js'
+                script.async = true
+
+                script.onload = () => {
+                    console.log('카카오 SDK 스크립트 로드 완료')
+                    const Kakao = (window as any).Kakao
+                    if (Kakao) {
+                        try {
+                            const kakaoKey = process.env.REACT_APP_JAVASCRIPT_KEY
+
+                            if (!kakaoKey) {
+                                throw new Error('카카오 JavaScript 키가 설정되지 않았습니다.')
+                            }
+
+                            Kakao.init(kakaoKey)
+                            console.log('카카오 SDK 초기화 완료')
+                            resolve(Kakao)
+                        } catch (error) {
+                            console.error('카카오 SDK 초기화 실패:', error)
+                            reject(error)
+                        }
+                    } else {
+                        reject(new Error('카카오 SDK 로드 실패'))
+                    }
+                }
+
+                script.onerror = () => {
+                    console.error('카카오 SDK 스크립트 로드 실패')
+                    reject(new Error('카카오 SDK 스크립트 로드 실패'))
+                }
+
+                document.head.appendChild(script)
             })
-        } else {
-            toast({
-                title: "공유하기를 지원하지 않는 브라우저입니다",
-                description: "초대 코드를 복사해서 공유해주세요.",
-            })
+        }
+
+        // 카카오톡 공유 처리
+        const handleKakaoShare = async () => {
+            try {
+                const Kakao = await ensureKakaoSDK()
+
+                const shareUrl = "http://localhost:3000"
+
+                toast({
+                    title: "카카오톡 공유창을 여는 중...",
+                    description: "친구에게 공유해주세요!",
+                })
+
+                const shareResult = Kakao.Share.sendDefault({
+                    objectType: 'feed',
+                    content: {
+                        title: '🍀Clobee 친구초대 이벤트',
+                        description: `초대 코드 ${inviteCode}를 입력하고 가입하면 특별 혜택을 받을 수 있어요! 함께 Clobee를 이용해보세요! 🎁`,
+                        imageUrl: 'https://via.placeholder.com/300x200/75CB3B/FFFFFF?text=🎁', // 실제 이벤트 이미지로 교체
+                        link: {
+                            mobileWebUrl: shareUrl,
+                            webUrl: shareUrl,
+                        },
+                    },
+                    buttons: [
+                        {
+                            title: 'Clobee 가입하기',
+                            link: {
+                                mobileWebUrl: shareUrl,
+                                webUrl: shareUrl,
+                            },
+                        }
+                    ]
+                })
+
+                if (shareResult && typeof shareResult.then === 'function') {
+                    shareResult
+                        .then((result: any) => {
+                            console.log('카카오톡 공유 성공:', result)
+                            toast({
+                                title: "공유 완료! 🎉",
+                                description: "친구가 가입하면 룰렛 기회를 받을 수 있어요!",
+                            })
+                        })
+                        .catch((error: any) => {
+                            console.error('카카오톡 공유 실패:', error)
+                            handleShareError(error)
+                        })
+                } else {
+                    // Promise가 아닌 경우 (구버전 SDK)
+                    setTimeout(() => {
+                        toast({
+                            title: "공유 완료! 🎉",
+                            description: "친구가 가입하면 룰렛 기회를 받을 수 있어요!",
+                        })
+                    }, 1000)
+                }
+
+            } catch (error: any) {
+                console.error('카카오톡 공유 처리 중 오류:', error)
+                handleShareError(error)
+            }
+        }
+
+        // 공유 실패 처리
+        const handleShareError = (error: any) => {
+            if (error?.code === -2 || error?.message?.includes('cancel')) {
+                // 사용자가 공유창에서 취소한 경우
+                toast({
+                    title: "공유가 취소되었습니다",
+                    description: "다시 시도해주세요.",
+                })
+            } else if (error?.code === -1) {
+                // 카카오톡이 설치되지 않은 경우
+                toast({
+                    title: "카카오톡이 설치되지 않았습니다",
+                    description: "카카오톡을 설치한 후 다시 시도해주세요.",
+                })
+            } else {
+                // 기타 오류 - 네이티브 공유 API로 대체
+                handleNativeShare()
+            }
+        }
+
+        // 네이티브 공유 API 처리
+        const handleNativeShare = () => {
+            if (navigator.share) {
+                navigator.share({
+                    title: "Clobee 친구초대",
+                    text: `Clobee에서 함께해요! 내 초대 코드: ${inviteCode}를 입력하고 가입하면 특별 혜택이 제공됩니다!`,
+                    url: process.env.REACT_APP_API_BASE_URL?.replace('/api', '') || "http://localhost:3000",
+                }).then(() => {
+                    toast({
+                        title: "공유 완료! 🎉",
+                        description: "친구가 가입하면 룰렛 기회를 받을 수 있어요!",
+                    })
+                }).catch((error) => {
+                    if (error.name !== 'AbortError') {
+                        toast({
+                            title: "공유하기를 지원하지 않는 브라우저입니다",
+                            description: "초대 코드를 복사해서 공유해주세요.",
+                        })
+                    }
+                })
+            } else {
+                toast({
+                    title: "공유하기를 지원하지 않는 브라우저입니다",
+                    description: "초대 코드를 복사해서 공유해주세요.",
+                })
+            }
+        }
+        // 메인 실행부 - 카카오톡 공유 우선 시도
+        try {
+            await handleKakaoShare()
+        } catch (error: any) {
+            console.error('카카오톡 공유 실패, 네이티브 공유로 대체:', error)
+            handleNativeShare()
         }
     }
 

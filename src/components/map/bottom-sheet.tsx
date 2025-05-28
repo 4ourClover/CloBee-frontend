@@ -2,7 +2,7 @@ import type React from "react"
 import { type Dispatch, type SetStateAction, useState, useCallback } from "react"
 import { Button } from "../ui/button"
 import { Sheet, SheetContent } from "../ui/sheet"
-import { Badge } from "../ui/badge";
+import { Badge } from "../ui/badge"
 import CardBenefitModal from "../card-benefit-modal"
 
 import {
@@ -10,7 +10,7 @@ import {
     ThumbsDown,
 } from "lucide-react"
 
-import { Store, StoreCategory, categoryConfig, categoryNames } from '../../types/store';
+import { type Store, type StoreCategory, categoryConfig, categoryNames } from "../../types/store"
 
 interface BottomSheetProps {
     showStoreInfo: boolean;
@@ -72,14 +72,10 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
     }, [setStoreReactions]); // 의존성 배열에 setStoreReactions 추가
 
 
-    if (
-        !selectedStore ||
-        !benefitCards.some((card) => card.benefit_store === selectedStore.benefitStore)
+    if (!selectedStore || !benefitCards.some((card) => card.benefit_store === selectedStore.benefitStore)
     ) {
         return showStoreInfo ? (
-            <div
-                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-lg z-40 max-h-[50%] overflow-hidden"
-            >
+            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-lg z-40 max-h-[50%] overflow-hidden">
                 <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
                     <h3 className="text-lg font-medium text-[#5A3D2B]">매장 정보가 없습니다</h3>
                     <p className="text-sm text-[#5A3D2B]/70 mt-1">다른 매장을 선택해보세요</p>
@@ -92,7 +88,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                     </Button>
                 </div>
             </div>
-        ) : null;
+        ) : null
     }
 
     return (
@@ -173,8 +169,8 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                                 <Button
                                     className="w-full bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
                                     onClick={() => {
-                                        setShowStoreInfo(false);
-                                        handleStoreSelect(selectedStore);
+                                        setShowStoreInfo(false)
+                                        handleStoreSelect(selectedStore)
                                     }}
                                 >
                                     카드 혜택 자세히 보기
@@ -183,14 +179,14 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                         </div>
                     )}
                 </SheetContent>
-            </Sheet >
+            </Sheet>
 
             {/* 카드 혜택 모달 */}
             {showCardModal && selectedStore && (
                 <CardBenefitModal store={selectedStore} benefitCards={benefitCards} recommendedCards={recommendedCards} onClose={() => setShowCardModal(false)} />
             )}
         </div >
-    );
-};
+    )
+}
 
-export default BottomSheet;
+export default BottomSheet

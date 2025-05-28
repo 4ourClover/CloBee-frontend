@@ -317,7 +317,15 @@ export default function CloverGamePage() {
                     const Kakao = (window as any).Kakao
                     if (!Kakao.isInitialized()) {
                         try {
-                            Kakao.init('REACT_APP_JAVASCRIPT_KEY') // 실제 JavaScript 키로 교체하세요
+                            // ✅ 환경변수 값을 제대로 가져오기
+                            const kakaoKey = process.env.REACT_APP_JAVASCRIPT_KEY
+
+                            if (!kakaoKey) {
+                                throw new Error('카카오 JavaScript 키가 설정되지 않았습니다.')
+                            }
+
+                            Kakao.init(kakaoKey) // 환경변수 값 사용
+                            console.log('사용된 카카오 키:', kakaoKey.substring(0, 8) + '...')
                             console.log('카카오 SDK 초기화 완료')
                         } catch (error) {
                             console.error('카카오 SDK 초기화 실패:', error)
@@ -339,7 +347,14 @@ export default function CloverGamePage() {
                     const Kakao = (window as any).Kakao
                     if (Kakao) {
                         try {
-                            Kakao.init('REACT_APP_JAVASCRIPT_KEY') // 실제 JavaScript 키로 교체하세요
+                            // ✅ 환경변수 값을 제대로 가져오기
+                            const kakaoKey = process.env.REACT_APP_JAVASCRIPT_KEY
+
+                            if (!kakaoKey) {
+                                throw new Error('카카오 JavaScript 키가 설정되지 않았습니다.')
+                            }
+
+                            Kakao.init(kakaoKey) // 환경변수 값 사용
                             console.log('카카오 SDK 초기화 완료')
                             resolve(Kakao)
                         } catch (error) {
@@ -366,7 +381,7 @@ export default function CloverGamePage() {
                 // 카카오 SDK 로드 및 초기화 확인
                 const Kakao = await ensureKakaoSDK()
 
-                const shareUrl = window.location.origin + '/event/clover'
+                const shareUrl = "http://localhost:3000" + '/event/clover'
 
                 // 공유 시작 알림
                 toast({
@@ -414,7 +429,7 @@ export default function CloverGamePage() {
                     // 일정 시간 후 성공으로 간주 (실제로는 사용자가 공유를 완료했는지 확인할 수 없음)
                     setTimeout(() => {
                         handleShareSuccess()
-                    }, 2000)
+                    }, 10000)
                 }
 
             } catch (error: any) {
