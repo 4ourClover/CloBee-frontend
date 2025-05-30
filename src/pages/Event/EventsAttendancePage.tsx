@@ -141,7 +141,7 @@ export default function AttendanceEventPage() {
     }, [detail.userId]);
 
     return (
-        <main className="flex flex-col h-screen max-w-sm mx-auto overflow-hidden">
+        <main className="flex flex-col h-screen w-full mx-auto overflow-hidden">
             {/* 헤더 */}
             <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-3 flex items-center gap-2">
                 <Link to="/event">

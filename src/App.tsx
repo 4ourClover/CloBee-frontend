@@ -35,8 +35,8 @@ function AppRoutes() {
     return <div className="flex h-screen items-center justify-center">로딩 중...</div>;
   }
 
-  return (
-    <div className="max-w-sm mx-auto h-screen overflow-auto font-gmarket" style={{ aspectRatio: "16/7.4" }}>
+  return ( // style={{ aspectRatio: "16/7.4" }}
+    <div className="w-full mx-auto h-screen overflow-auto font-gmarket">
       <Routes>
         {/* 공개 라우트 - 인증 없이 접근 가능 */}
         <Route path="/" element={isAuthenticated ? <Navigate to="/map" /> : <WelcomePage />} />
