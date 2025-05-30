@@ -138,7 +138,7 @@ export default function EventsPage() {
     }, [activeTab]);
 
     return (
-        <main className="flex flex-col h-full max-w-[1170px] mx-auto overflow-hidden font-gmarket">
+        <main className="flex flex-col h-full w-full mx-auto overflow-hidden font-gmarket">
             {/* 헤더 */}
             <header className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] text-white p-1.5 flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-6 w-6" onClick={() => navigate(-1)}>
