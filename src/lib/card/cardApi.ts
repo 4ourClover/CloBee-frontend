@@ -25,10 +25,10 @@ export const fetchCardDetail = async (cardInfoId: number): Promise<CardBenefitDe
 }
 
 // applyCard 함수를 컨트롤러 응답 형식에 맞게 수정
-export const applyCard = async (cardInfoId: number, cardBrand: number): Promise<string> => {
+export const applyCard = async (cardInfoId: number, cardBrand: number, userId: number): Promise<string> => {
     try {
         const response = await api.get<string>("/card/apply", {
-            params: { cardInfoId, cardBrand },
+            params: { cardInfoId, cardBrand, userId },
         })
 
         // 컨트롤러에서 URL을 직접 반환하므로 response.data가 URL 문자열입니다
