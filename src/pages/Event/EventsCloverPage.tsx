@@ -218,7 +218,9 @@ export default function CloverGamePage() {
                             } else {
                                 const nextStage = data.eventFindingCloverCurrentStage + 1
                                 setNextStage(nextStage)
-                                setShowSuccessAlert(true)
+                                setTimeout(() => {
+                                    setShowSuccessAlert(true)
+                                }, 2000)
 
                                 // 3초 후 게임 상태 초기화 및 다음 단계 시작
                                 setTimeout(() => {
@@ -226,7 +228,7 @@ export default function CloverGamePage() {
                                     setGameStarted(false)
                                     setGameWon(false)
                                     handleStartGame()
-                                }, 3000)
+                                }, 4000)
                             }
 
                             // 마지막으로 시도 결과 전송
@@ -500,7 +502,7 @@ export default function CloverGamePage() {
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                 </Link>
-                <h1 className="text-lg font-bold flex-1">골드 네잎 클로버 찾기 게임</h1>
+                <h1 className="text-lg font-bold flex-1">황금 네잎 클로버 찾기 게임</h1>
             </header>
 
             {/* 메인 콘텐츠 */}
@@ -510,9 +512,9 @@ export default function CloverGamePage() {
                         <div className="w-20 h-20 bg-[#75CB3B]/20 rounded-full flex items-center justify-center mb-4">
                             <Clover className="h-10 w-10 text-[#00A949]" />
                         </div>
-                        <h2 className="text-xl font-bold text-[#5A3D2B] mb-2">골드 네잎 클로버 찾기</h2>
+                        <h2 className="text-xl font-bold text-[#5A3D2B] mb-2">황금 네잎 클로버 찾기</h2>
                         <p className="text-sm text-gray-600 mb-6 max-w-xs">
-                            많은 네잎 클로버 중에서 골드 네잎 클로버를 찾아보세요! 찾으면 특별한 보상이 기다립니다.
+                            많은 네잎 클로버 중에서 황금 네잎 클로버를 찾아보세요! 찾으면 특별한 보상이 기다립니다.
                         </p>
                         <div className="flex gap-4">
                             <Button
@@ -533,7 +535,7 @@ export default function CloverGamePage() {
                     <div className="space-y-4">
                         <div className="bg-white rounded-lg p-4 text-center">
                             <h2 className="text-lg font-bold text-[#5A3D2B] mb-2">
-                                {gameWon ? "축하합니다!" : "골드 네잎 클로버를 5회안에 찾아보세요!"}
+                                {gameWon ? "축하합니다!" : "황금 네잎 클로버를 5회안에 찾아보세요!"}
                             </h2>
                         </div>
 
