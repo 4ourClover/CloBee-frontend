@@ -507,14 +507,19 @@ export default function CardsPage() {
     }
 
     // 카드 신청 핸들러
+    const [isLoading, setIsLoading] = useState(false)
+
     const handleApplyCard = async (cardInfoId: number, cardBrand: string) => {
+        if (isLoading) return // 이미 요청 중이면 무시
+
+        setIsLoading(true)
         try {
             const cardBrandNum = Number.parseInt(cardBrand, 10)
             if (isNaN(cardBrandNum)) {
                 throw new Error("유효하지 않은 카드 브랜드입니다.")
             }
 
-            const url = await applyCard(cardInfoId, cardBrandNum)
+            const url = await applyCard(cardInfoId, cardBrandNum, userId)
 
             if (!url) {
                 throw new Error("카드 신청 URL을 가져올 수 없습니다.")
@@ -528,6 +533,8 @@ export default function CardsPage() {
                 description: "카드 신청 페이지로 이동할 수 없습니다.",
                 variant: "destructive",
             })
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -615,14 +622,25 @@ export default function CardsPage() {
         const parts = []
 
         if (domestic > 0) {
-            parts.push(`국내전용 ${domestic.toLocaleString()}원`)
+            parts.push(
+                <span key="domestic">
+                    국내전용 {domestic.toLocaleString()}원
+                </span>
+            )
         }
 
         if (global > 0) {
-            parts.push(`해외겸용 ${global.toLocaleString()}원`)
+            if (parts.length > 0) {
+                parts.push(<br key="break" />)
+            }
+            parts.push(
+                <span key="global">
+                    해외겸용 {global.toLocaleString()}원
+                </span>
+            )
         }
 
-        return parts.join(" | ")
+        return <div>{parts}</div>
     }
 
     // 혜택 요약 표시 함수 개선
@@ -726,7 +744,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName || card.cardBrand}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -745,13 +763,28 @@ export default function CardsPage() {
                                 {isLoadingDetail ? "로딩 중..." : "상세 보기"}
                             </Button>
                             <Button
-                                className="flex-1 text-xs py-1 h-7 bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149] border-none"
+                                className="
+    flex-1 
+    text-xs 
+    py-1 
+    h-7 
+    bg-gradient-to-r 
+    from-[#75CB3B] 
+    to-[#00B959] 
+    hover:from-[#00A949] 
+    hover:to-[#009149] 
+    border-none 
+    disabled:from-gray-400 
+    disabled:to-gray-400 
+    disabled:cursor-not-allowed
+  "
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     handleApplyCard(card.cardInfoId, card.cardBrand)
                                 }}
+                                disabled={isLoading}
                             >
-                                카드 신청하기
+                                {isLoading ? "신청 중..." : "카드 신청하기"}
                             </Button>
                         </div>
                     </div>
@@ -810,7 +843,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName || card.cardBrand}</p>
+                            {/* <p className="text-xs text-gray-500">{card.cardBrandName || card.cardBrand}</p> */}
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -1011,7 +1044,7 @@ export default function CardsPage() {
                                                 {/* 이번 달 실적 표시 */}
                                                 <div className="flex justify-between items-center text-xs">
                                                     <span className="text-gray-500">
-                                                        {selectedYear}년 {selectedMonth}월 실적
+                                                        {selectedMonth}월 실적  :
                                                     </span>
                                                     <span className="font-medium">
                                                         {monthlyAmount.toLocaleString()}원 / {DEFAULT_SPENDING_GOAL.toLocaleString()}원
@@ -1062,7 +1095,6 @@ export default function CardsPage() {
                                     onClick={handleResetSearch}
                                 >
                                     <RotateCcw className="h-4 w-4 mr-1" />
-                                    초기화
                                 </Button>
                             )}
                         </div>

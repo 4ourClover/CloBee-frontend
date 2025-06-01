@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import { useToast } from "../hooks/use-toast"
 import type { BenefitCard, Store } from "../types/store"
 import { applyCard } from "../lib/card/cardApi"
+import { useCurrentUser } from "../hooks/use-current-user"
 
 
 
@@ -18,6 +19,8 @@ type CardBenefitModalProps = {
 export default function CardBenefitModal({ store, onClose, benefitCards, recommendedCards }: CardBenefitModalProps) {
   const [isApplying, setIsApplying] = useState<number | null>(null)
   const { toast } = useToast()
+  const user = useCurrentUser()
+  const userId = user?.userId ?? 0
 
   const handleApplyCard = async (card: BenefitCard) => {
     // 디버깅을 위한 로그 추가
@@ -39,30 +42,33 @@ export default function CardBenefitModal({ store, onClose, benefitCards, recomme
     cardId = card.id
     console.log("인식:", { cardInfoId, cardBrand, cardId })
 
-    setIsApplying(cardId)
+    // 이미 진행 중이면 무시
+    if (isApplying === cardId) return;
+
+    setIsApplying(cardId);
+
     try {
-      const url = await applyCard(cardInfoId, cardBrand)
+      const url = await applyCard(cardInfoId, cardBrand, userId);
 
       if (url) {
-        // 새 창에서 카드 신청 페이지 열기
-        window.open(url, "_blank")
+        window.open(url, "_blank");
 
         toast({
           title: "카드 신청 페이지로 이동",
           description: "카드 신청 페이지가 새 창에서 열렸습니다.",
-        })
+        });
       } else {
-        throw new Error("카드 신청 URL이 없습니다.")
+        throw new Error("카드 신청 URL이 없습니다.");
       }
     } catch (error) {
-      console.error("카드 신청 실패:", error)
+      console.error("카드 신청 실패:", error);
       toast({
         title: "카드 신청 실패",
         description: "카드 신청 페이지로 이동할 수 없습니다. 다시 시도해주세요.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsApplying(null)
+      setIsApplying(null);
     }
   }
   // 컴포넌트 렌더링 시 데이터 확인
