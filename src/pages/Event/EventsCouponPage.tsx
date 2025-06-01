@@ -39,14 +39,14 @@ export default function EventsCouponPage() {
 
             toast({
                 title: "매장 인증 완료!",
-                description: `클로버 잎이 ${cloverLeaves + 1}개가 되었습니다.`,
+                description: `네잎 클로버의 잎이 ${cloverLeaves + 1}개가 되었습니다.`,
             })
 
             if (cloverLeaves + 1 === 4) {
                 setTimeout(() => {
                     toast({
                         title: "축하합니다!",
-                        description: "클로버를 모두 채웠습니다. 쿠폰이 발급되었습니다!",
+                        description: "네잎 클로버의 잎을 모두 채웠습니다. 쿠폰이 발급되었습니다!",
                     })
                 }, 1000)
             }
@@ -86,7 +86,7 @@ export default function EventsCouponPage() {
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                 </Link>
-                <h1 className="text-lg font-bold flex-1">클로버 쿠폰 받기</h1>
+                <h1 className="text-lg font-bold flex-1">네잎 클로버 쿠폰 받기</h1>
             </header>
 
             {/* 메인 콘텐츠 */}
@@ -94,7 +94,7 @@ export default function EventsCouponPage() {
                 <div className="space-y-6">
                     {/* 클로버 상태 */}
                     <div className="bg-white rounded-lg p-6 text-center">
-                        <h2 className="text-lg font-bold text-[#5A3D2B] mb-4">클로버 채우기</h2>
+                        <h2 className="text-lg font-bold text-[#5A3D2B] mb-4">네잎 클로버 채우기</h2>
 
                         <div className="relative w-40 h-40 mx-auto mb-4">
                             {/* 클로버 배경 (회색) */}
@@ -147,8 +147,8 @@ export default function EventsCouponPage() {
 
                         <p className="text-sm text-gray-600 mb-4">
                             {cloverLeaves < 4
-                                ? `${cloverLeaves}/4 잎 채움 - 참여 매장을 방문하고 인증하여 클로버를 완성하세요!`
-                                : "클로버를 모두 채웠습니다! 쿠폰을 받아가세요."}
+                                ? `${cloverLeaves}/4 잎 채움 - 참여 매장을 방문하고 인증하여 네잎 클로버를 완성하세요!`
+                                : "네잎 클로버의 잎을을 모두 채웠습니다! 쿠폰을 받아가세요."}
                         </p>
 
                         {cloverLeaves < 4 ? (
@@ -177,7 +177,7 @@ export default function EventsCouponPage() {
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm text-[#00A949] font-medium">{store.benefit}</p>
-                                        <p className="text-xs text-gray-500 mt-1">클로버 1잎 적립</p>
+                                        <p className="text-xs text-gray-500 mt-1">네잎 클로버 1잎 적립</p>
                                     </div>
                                 </div>
                             ))}
@@ -190,11 +190,11 @@ export default function EventsCouponPage() {
                         <ul className="space-y-2 text-sm text-gray-600">
                             <li className="flex items-start gap-2">
                                 <span className="text-[#00A949] font-bold">•</span>
-                                <span>참여 매장을 방문하고 인증하면 클로버 잎이 하나씩 채워집니다.</span>
+                                <span>참여 매장을 방문하고 인증하면 네잎 클로버 잎이 하나씩 채워집니다.</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-[#00A949] font-bold">•</span>
-                                <span>클로버 4잎을 모두 채우면 랜덤 쿠폰을 받을 수 있습니다.</span>
+                                <span>네잎 클로버의 잎을 모두 채우면 랜덤 쿠폰을 받을 수 있습니다.</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-[#00A949] font-bold">•</span>

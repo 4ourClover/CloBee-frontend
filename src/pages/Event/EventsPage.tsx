@@ -57,7 +57,7 @@ export default function EventsPage() {
         {
             id: 4,
             title: "네잎 클로버 채우기 이벤트",
-            description: "매장 방문하고 네잎 클로버 채우우기",
+            description: "매장 방문하고 네잎 클로버 채우기",
             icon: <Ticket className="h-6 w-6 text-white" />,
             iconBg: "bg-orange-500",
             link: "/event/coupon",
