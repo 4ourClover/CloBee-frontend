@@ -507,36 +507,36 @@ export default function CardsPage() {
     }
 
     // 카드 신청 핸들러
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleApplyCard = async (cardInfoId: number, cardBrand: string) => {
-        if (isLoading) return; // 이미 요청 중이면 무시
+        if (isLoading) return // 이미 요청 중이면 무시
 
-        setIsLoading(true);
+        setIsLoading(true)
         try {
-            const cardBrandNum = Number.parseInt(cardBrand, 10);
+            const cardBrandNum = Number.parseInt(cardBrand, 10)
             if (isNaN(cardBrandNum)) {
-                throw new Error("유효하지 않은 카드 브랜드입니다.");
+                throw new Error("유효하지 않은 카드 브랜드입니다.")
             }
 
-            const url = await applyCard(cardInfoId, cardBrandNum, userId);
+            const url = await applyCard(cardInfoId, cardBrandNum, userId)
 
             if (!url) {
-                throw new Error("카드 신청 URL을 가져올 수 없습니다.");
+                throw new Error("카드 신청 URL을 가져올 수 없습니다.")
             }
 
-            window.open(url, "_blank");
+            window.open(url, "_blank")
         } catch (error) {
-            console.error("카드 신청 실패:", error);
+            console.error("카드 신청 실패:", error)
             toast({
                 title: "카드 신청 실패",
                 description: "카드 신청 페이지로 이동할 수 없습니다.",
                 variant: "destructive",
-            });
+            })
         } finally {
-            setIsLoading(false);
+            setIsLoading(false)
         }
-    };
+    }
 
     // 카드 상세 정보 보기 핸들러
     const handleViewCardDetail = (card: any) => {
@@ -622,14 +622,25 @@ export default function CardsPage() {
         const parts = []
 
         if (domestic > 0) {
-            parts.push(`국내전용 ${domestic.toLocaleString()}원`)
+            parts.push(
+                <span key="domestic">
+                    국내전용 {domestic.toLocaleString()}원
+                </span>
+            )
         }
 
         if (global > 0) {
-            parts.push(`해외겸용 ${global.toLocaleString()}원`)
+            if (parts.length > 0) {
+                parts.push(<br key="break" />)
+            }
+            parts.push(
+                <span key="global">
+                    해외겸용 {global.toLocaleString()}원
+                </span>
+            )
         }
 
-        return parts.join(" | ")
+        return <div>{parts}</div>
     }
 
     // 혜택 요약 표시 함수 개선
@@ -733,7 +744,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName || card.cardBrand}</p>
+                            <p className="text-xs text-gray-500">{card.cardBrandName}</p>
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -768,8 +779,8 @@ export default function CardsPage() {
     disabled:cursor-not-allowed
   "
                                 onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleApplyCard(card.cardInfoId, card.cardBrand);
+                                    e.stopPropagation()
+                                    handleApplyCard(card.cardInfoId, card.cardBrand)
                                 }}
                                 disabled={isLoading}
                             >
@@ -832,7 +843,7 @@ export default function CardsPage() {
                     <div className="w-2/3 p-3 space-y-2">
                         <div>
                             <h3 className="font-bold text-sm">{card.cardName}</h3>
-                            <p className="text-xs text-gray-500">{card.cardBrandName || card.cardBrand}</p>
+                            {/* <p className="text-xs text-gray-500">{card.cardBrandName || card.cardBrand}</p> */}
                             <p className="text-xs text-gray-500 mt-1.5">
                                 {renderAnnualFee(card.cardDomesticAnnualFee, card.cardGlobalAnnualFee)}
                             </p>
@@ -1033,7 +1044,7 @@ export default function CardsPage() {
                                                 {/* 이번 달 실적 표시 */}
                                                 <div className="flex justify-between items-center text-xs">
                                                     <span className="text-gray-500">
-                                                        {selectedYear}년 {selectedMonth}월 실적
+                                                        {selectedMonth}월 실적  :
                                                     </span>
                                                     <span className="font-medium">
                                                         {monthlyAmount.toLocaleString()}원 / {DEFAULT_SPENDING_GOAL.toLocaleString()}원
@@ -1084,7 +1095,6 @@ export default function CardsPage() {
                                     onClick={handleResetSearch}
                                 >
                                     <RotateCcw className="h-4 w-4 mr-1" />
-                                    초기화
                                 </Button>
                             )}
                         </div>
