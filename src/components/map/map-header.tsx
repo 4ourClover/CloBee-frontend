@@ -101,22 +101,17 @@ export default function MapHeader({ searchRadius, setSearchRadius, isNotificatio
                 <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-6 w-6 relative">
                         <Bell className="h-3.5 w-3.5" />
-                        {/* {nearbyEventStores.length > 0 && (
+                        {nearbyNotificationStores.length > 0 && (
                             <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] w-3 h-3 rounded-full flex items-center justify-center">
-                                {nearbyEventStores.length}
+                                {nearbyNotificationStores.length}
                             </span>
-                        )} */}
+                        )}
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-2" align="end">
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <h3 className="text-xs font-bold text-[#5A3D2B]">주변 혜택 알림</h3>
-                            {nearbyNotificationStores.length > 0 && (
-                                <Badge className="bg-red-500 text-[8px] py-0 px-1.5">
-                                    {nearbyNotificationStores.length}개
-                                </Badge>
-                            )}
                         </div>
                         <div className="max-h-60 overflow-auto space-y-2">
                             {nearbyNotificationStores.length > 0 ? (
