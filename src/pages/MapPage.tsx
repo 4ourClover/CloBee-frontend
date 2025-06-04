@@ -131,7 +131,7 @@ export default function MapPage() {
             console.log("🟢 selectedStore 변경됨:", benefitCards)
             setShowStoreInfo(true)
         }
-    }, [selectedStore, benefitCards, recommendedCards])
+    }, [selectedStore, benefitCards, recommendedCards, userId])
 
     // 지도 클릭 핸들러
     const handleMapClick = async (storeId: number, benefitStoreName: string) => {
