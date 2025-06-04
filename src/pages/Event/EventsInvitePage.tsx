@@ -24,7 +24,7 @@ const PRIZES = [
 export default function InviteEventPage() {
     const [inviteCode] = useState("ADFTKMKD")
     const [copied, setCopied] = useState(false)
-    const [rouletteChances, setRouletteChances] = useState(3) // 현재 보유 룰렛 기회
+    const [rouletteChances, setRouletteChances] = useState(4) // 현재 보유 룰렛 기회
     const [isSpinning, setIsSpinning] = useState(false)
     const [selectedPrize, setSelectedPrize] = useState<number | null>(null)
     const [rotationDegrees, setRotationDegrees] = useState(0)
@@ -34,10 +34,10 @@ export default function InviteEventPage() {
 
     // 초대 현황 데이터
     const inviteData = [
-        { name: "민성", date: "2025.05.20", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
-        { name: "슬기", date: "2025.05.18", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
-        { name: "창성", date: "2025.05.15", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
-        { name: "소연", date: "2025.05.19", status: "가입완료", reward: "룰렛 기회 1회 지급완료" }
+        { name: "민성", date: "2025.05.26", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
+        { name: "창성", date: "2025.05.22", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
+        { name: "소연", date: "2025.05.19", status: "가입완료", reward: "룰렛 기회 1회 지급완료" },
+        { name: "슬기", date: "2025.05.18", status: "가입완료", reward: "룰렛 기회 1회 지급완료" }
     ]
 
     // 룰렛 그리기
@@ -435,7 +435,7 @@ export default function InviteEventPage() {
                     </div>
 
                     {/* 룰렛 섹션 - 베이지색 배경 적용 */}
-                    <div className="bg-[#EBE1CD] rounded-lg p-6 text-center shadow-sm">
+                    <div className="bg-[#EBE1CD] rounded-lg p-4 sm:p-6 text-center shadow-sm">
                         <h2 className="text-xl font-bold text-[#5A3D2B] mb-4">
                             <span className="text-[#75CB3B]">행</span>
                             <span className="text-[#FF5252]">운</span>
@@ -446,8 +446,8 @@ export default function InviteEventPage() {
                             <span className="text-[#FF5252]">!</span>
                         </h2>
 
-                        <div className="relative mx-auto mb-6" style={{ width: "300px", height: "300px" }}>
-                            <canvas ref={canvasRef} width={300} height={300} className="mx-auto" />
+                        <div className="relative mx-auto mb-6 w-full max-w-[300px] aspect-square">
+                            <canvas ref={canvasRef} width={300} height={300} className="mx-auto w-full h-full" />
                         </div>
 
                         <Button
@@ -473,14 +473,14 @@ export default function InviteEventPage() {
 
                     {/* 초대 현황 */}
                     <div>
-                        <h3 className="font-bold text-[#5A3D2B] mb-3">초대 현황 (3/10명)</h3>
+                        <h3 className="font-bold text-[#5A3D2B] mb-3">초대 현황 (4/10명)</h3>
                         <div className="border rounded-lg overflow-hidden">
                             <table className="w-full text-sm">
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">이름</th>
                                         <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">가입일</th>
-                                        <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">상태</th>
+                                        {/* <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">상태</th> */}
                                         <th className="py-2 px-3 text-left text-xs font-medium text-gray-500">리워드</th>
                                     </tr>
                                 </thead>
@@ -489,7 +489,7 @@ export default function InviteEventPage() {
                                         <tr key={index}>
                                             <td className="py-2 px-3">{invite.name}</td>
                                             <td className="py-2 px-3">{invite.date}</td>
-                                            <td className="py-2 px-3 text-[#00A949]">{invite.status}</td>
+                                            {/* <td className="py-2 px-3 text-[#00A949]">{invite.status}</td> */}
                                             <td className="py-2 px-3 text-gray-500">{invite.reward}</td>
                                         </tr>
                                     ))}
