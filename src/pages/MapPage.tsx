@@ -53,6 +53,11 @@ export default function MapPage() {
     const benefitStoresBrandRef = useRef<Record<string, string[]>>({})
 
     const { userId } = useContext(AuthContext)
+    const userIdRef = useRef<number | null>(null)
+
+    useEffect(() => {
+        userIdRef.current = userId
+    }, [userId])
 
     const [benefitCards, setBenefitCards] = useState<BenefitCard[]>([])
     const [recommendedCards, setRecommendedCards] = useState<BenefitCard[]>([])
@@ -131,19 +136,20 @@ export default function MapPage() {
             console.log("🟢 selectedStore 변경됨:", benefitCards)
             setShowStoreInfo(true)
         }
-    }, [selectedStore, benefitCards, recommendedCards, userId])
+    }, [selectedStore, benefitCards, recommendedCards])
 
     // 지도 클릭 핸들러
     const handleMapClick = async (storeId: number, benefitStoreName: string) => {
-        console.log("지도 클릭:", typeof storeId, storeId)
         const store = nearbyStoresRef.current.find((s) => Number(s.id) == Number(storeId))
-        console.log("선택된 매장:", store)
+
         if (store) {
-            if (userId != null) {
-                const data = await getMapMyBenefits(userId, benefitStoreName)
+            if (userIdRef.current != null) {
+                const data = await getMapMyBenefits(userIdRef.current, benefitStoreName)
                 setBenefitCards(data)
+                console.log("data", data)
                 const cards = await getRecommendedCards(benefitStoreName)
                 setRecommendedCards(cards)
+                console.log("cards", cards)
             }
             setSelectedStore(store)
         }
