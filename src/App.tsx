@@ -19,6 +19,8 @@ import Redirection from './pages/RedirectionPage';
 import ForgotEmailPage from './pages/ForgotEmailPage';
 import { AuthProvider, AuthContext } from './contexts/AuthContext';
 
+import usePageTracking from './hooks/usePageTracking';
+
 export default function App() {
   return (
     <AuthProvider>
@@ -29,6 +31,9 @@ export default function App() {
 
 function AppRoutes() {
   const { isAuthenticated } = React.useContext(AuthContext);
+
+  // 페이지 추적
+  usePageTracking();
 
   // 로딩 중일 때 표시할 컴포넌트
   if (isAuthenticated === null) {

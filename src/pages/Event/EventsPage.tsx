@@ -244,12 +244,23 @@ export default function EventsPage() {
 
                         <div className="p-4 space-y-4 flex-1">
                             {cardEvents.map((event) => (
-                                <div key={event.eventInfoId} className={`relative bg-white rounded-lg overflow-hidden shadow-sm ${event.haveCard ? 'border border-amber-400' : 'border'
-                                    }`}
-                                    onClick={() => { window.location.href = `${event.eventCardUrl}` }}>
-                                    {/* <div className="relative h-40">
-                                        <img src={event.eventImage || "/placeholder.svg"} alt={event.eventTitle} className="w-full h-full object-cover" />
-                                    </div> */}
+                                <div
+                                    key={event.eventInfoId}
+                                    className={`relative bg-white rounded-lg overflow-hidden shadow-sm ${event.haveCard ? 'border border-amber-400' : 'border'}`}
+                                    onClick={() => {
+                                        // GA4 이벤트 전송
+                                        window.gtag('event', 'card_event_click', {
+                                            event_category: 'CardEvent',
+                                            event_label: `event_${event.eventInfoId}`,
+                                            event_id: event.eventInfoId,
+                                            event_name: event.eventTitle,
+                                            event_card_url: event.eventCardUrl
+                                        });
+
+                                        // 이벤트 사이트로 이동
+                                        window.location.href = `${event.eventCardUrl}`;
+                                    }}
+                                >
                                     {event.haveCard && (
                                         <div className="absolute top-2 right-2">
                                             <Badge className="bg-amber-400 hover:bg-amber-400 text-amber-900 border-none font-medium">
