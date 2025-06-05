@@ -755,13 +755,21 @@ export default function CardsPage() {
                                 variant="outline"
                                 className="flex-1 text-xs py-1 h-7 text-[#00A949] border-[#75CB3B]/30 hover:bg-[#75CB3B]/10 hover:border-[#75CB3B]/50"
                                 onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleFetchCardDetail(card.cardInfoId, card)
+                                    e.stopPropagation();
+                                    // GA4 클릭 이벤트 전송
+                                    window.gtag('event', 'card_detail_click', {
+                                        event_category: 'Card',
+                                        event_label: `detail_${card.cardInfoId}`,
+                                        card_id: card.cardInfoId,
+                                        card_brand: card.cardBrand
+                                    });
+                                    handleFetchCardDetail(card.cardInfoId, card);
                                 }}
                                 disabled={isLoadingDetail}
                             >
                                 {isLoadingDetail ? "로딩 중..." : "상세 보기"}
                             </Button>
+
                             <Button
                                 className="
     flex-1 
@@ -779,8 +787,15 @@ export default function CardsPage() {
     disabled:cursor-not-allowed
   "
                                 onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleApplyCard(card.cardInfoId, card.cardBrand)
+                                    e.stopPropagation();
+                                    // GA4 클릭 이벤트 전송
+                                    window.gtag('event', 'card_apply_click', {
+                                        event_category: 'Card',
+                                        event_label: `apply_${card.cardInfoId}`,
+                                        card_id: card.cardInfoId,
+                                        card_brand: card.cardBrand
+                                    });
+                                    handleApplyCard(card.cardInfoId, card.cardBrand);
                                 }}
                                 disabled={isLoading}
                             >
