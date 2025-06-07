@@ -27,10 +27,10 @@ import clover3 from "../../images/clover-3.png"
 import clover4 from "../../images/clover-4.png"
 
 export default function EventsCouponPage() {
-    const [cloverLeaves, setCloverLeaves] = useState(1) // 초기에는 1개의 잎만 채워짐
+    const [cloverLeaves, setCloverLeaves] = useState(0) // 잎 채움
     const [showCamera, setShowCamera] = useState(false)
     const { toast } = useToast();
-    const [selectedStore, setSelectedStore] = useState<number | null>(null);
+    const [selectedStore, setSelectedStore] = useState<Set<number>>(new Set());
     const [storeList, setStoreList] = useState([
         { name: "스타벅스 강남점", date: "2024.06.05", status: "인증" },
         { name: "투썸플레이스 역삼점", date: "2024.06.04", status: "인증" },
@@ -45,17 +45,18 @@ export default function EventsCouponPage() {
 
     // 매장 인증 완료 핸들러
     const handleVerificationComplete = () => {
-        setShowCamera(false)
+        setShowCamera(false);
+        console.log("매장 수 : ", selectedStore);
 
         if (cloverLeaves < 4) {
-            setCloverLeaves((prev) => prev + 1)
+            setCloverLeaves((prev) => prev + selectedStore.size);
 
             toast({
                 title: "매장 인증 완료!",
-                description: `네잎 클로버의 잎이 ${cloverLeaves + 1}개가 되었습니다.`,
+                description: `네잎 클로버의 잎이 ${cloverLeaves}개가 되었습니다.`,
             })
 
-            if (cloverLeaves + 1 === 4) {
+            if (cloverLeaves + selectedStore.size === 4) {
                 setTimeout(() => {
                     toast({
                         title: "축하합니다!",
@@ -68,7 +69,15 @@ export default function EventsCouponPage() {
 
     // 매장 선택 핸들러
     const handleStoreSelect = (index : number) : void => {
-        setSelectedStore(selectedStore === index ? null : index);
+        setSelectedStore(prev => {
+            const newSelected = new Set(prev);
+            if (newSelected.has(index)) {
+                newSelected.delete(index);
+            } else {
+                newSelected.add(index);
+            }
+            return newSelected;
+        });
     };
 
     // 참여 매장 목록
@@ -93,7 +102,18 @@ export default function EventsCouponPage() {
             category: "음식점",
             benefit: "와퍼 세트 30% 할인",
         },
-    ]
+    ];
+
+    const getCloverImage = (leaves: number) => {
+        const cloverImages: Record<number, string> = {
+            0: clover0,
+            1: clover1,
+            2: clover2,
+            3: clover3,
+            4: clover4
+        };
+        return cloverImages[leaves] || clover4;
+    };
 
     return (
         <main className="flex flex-col h-screen w-full mx-auto overflow-hidden">
@@ -115,7 +135,11 @@ export default function EventsCouponPage() {
                         <h2 className="text-lg font-bold text-[#5A3D2B] mb-4">네잎 클로버 채우기</h2>
 
                         <div className="relative w-40 h-40 mx-auto mb-4">
-                            <img src={clover1} alt={"클로버"} className="w-full h-full object-cover" />
+                            <img 
+                                src={getCloverImage(cloverLeaves as number)} 
+                                alt={`클로버 ${cloverLeaves}개`} 
+                                className="w-full h-full object-cover" 
+                            />
                         </div>
 
                         <p className="text-sm text-gray-600 mb-4">
@@ -217,36 +241,39 @@ export default function EventsCouponPage() {
 
                         {/* 매장 리스트 */}
                         <div className="space-y-2">
-                            {storeList.map((store, index) => (
-                                <div 
-                                    key={index}
-                                    onClick={() => handleStoreSelect(index)}
-                                    className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${
-                                        selectedStore === index 
-                                            ? 'bg-gray-100 border-gray-300' 
-                                            : 'bg-white border-gray-200 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <div className="w-2 h-2 bg-gradient-to-r from-[#75CB3B] to-[#00B959] rounded-full"></div>
-                                                <h3 className="text-sm font-semibold text-gray-800">{store.name}</h3>
-                                            </div>
-                                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                                                <div className="flex items-center gap-1">
-                                                    {/* <Calendar className="h-3 w-3" /> */}
-                                                    <span>계산날짜: {store.date}</span>
+                            {storeList.map((store, index) => {
+                                const isSelected = selectedStore.has(index);
+
+                                return (
+                                    <div 
+                                        key={index}
+                                        onClick={() => handleStoreSelect(index)}
+                                        className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${
+                                            isSelected
+                                                ? 'bg-gray-100 border-gray-300' 
+                                                : 'bg-white border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <div className="w-2 h-2 bg-gradient-to-r from-[#75CB3B] to-[#00B959] rounded-full"></div>
+                                                    <h3 className="text-sm font-semibold text-gray-800">{store.name}</h3>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-xs text-gray-500">
+                                                    <div className="flex items-center gap-1">
+                                                        <span>계산날짜: {store.date}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                                            <span className="text-xs text-green-600 font-medium">{store.status}</span>
+                                            <div className="flex items-center gap-1">
+                                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                                <span className="text-xs text-green-600 font-medium">{store.status}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                        })}
                         </div>
                     </div>
                     <Button
