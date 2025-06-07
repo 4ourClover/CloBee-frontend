@@ -19,11 +19,24 @@ import {
 } from "../../components/ui/dialog"
 import BottomNavigation from "../../components/bottom-navigation"
 
+// 이미지 import
+import clover0 from "../../images/clover-0.png"
+import clover1 from "../../images/clover-1.png"
+import clover2 from "../../images/clover-2.png"
+import clover3 from "../../images/clover-3.png"
+import clover4 from "../../images/clover-4.png"
 
 export default function EventsCouponPage() {
-    const [cloverLeaves, setCloverLeaves] = useState(1) // 초기에는 1개의 잎만 채워짐
+    const [cloverLeaves, setCloverLeaves] = useState(0) // 잎 채움
     const [showCamera, setShowCamera] = useState(false)
-    const { toast } = useToast()
+    const { toast } = useToast();
+    const [selectedStore, setSelectedStore] = useState<Set<number>>(new Set());
+    const [storeList, setStoreList] = useState([
+        { name: "스타벅스 강남점", date: "2024.06.05", status: "인증" },
+        { name: "투썸플레이스 역삼점", date: "2024.06.04", status: "인증" },
+        { name: "컴포즈커피 선릉점", date: "2024.06.03", status: "인증" },
+        { name: "이디야커피 테헤란점", date: "2024.06.02", status: "인증" }
+    ]);
 
     // 매장 인증 핸들러
     const handleStoreVerification = () => {
@@ -32,17 +45,18 @@ export default function EventsCouponPage() {
 
     // 매장 인증 완료 핸들러
     const handleVerificationComplete = () => {
-        setShowCamera(false)
+        setShowCamera(false);
+        console.log("매장 수 : ", selectedStore);
 
         if (cloverLeaves < 4) {
-            setCloverLeaves((prev) => prev + 1)
+            setCloverLeaves((prev) => prev + selectedStore.size);
 
             toast({
                 title: "매장 인증 완료!",
-                description: `네잎 클로버의 잎이 ${cloverLeaves + 1}개가 되었습니다.`,
+                description: `네잎 클로버의 잎이 ${cloverLeaves}개가 되었습니다.`,
             })
 
-            if (cloverLeaves + 1 === 4) {
+            if (cloverLeaves + selectedStore.size === 4) {
                 setTimeout(() => {
                     toast({
                         title: "축하합니다!",
@@ -52,6 +66,19 @@ export default function EventsCouponPage() {
             }
         }
     }
+
+    // 매장 선택 핸들러
+    const handleStoreSelect = (index : number) : void => {
+        setSelectedStore(prev => {
+            const newSelected = new Set(prev);
+            if (newSelected.has(index)) {
+                newSelected.delete(index);
+            } else {
+                newSelected.add(index);
+            }
+            return newSelected;
+        });
+    };
 
     // 참여 매장 목록
     const participatingStores = [
@@ -75,7 +102,18 @@ export default function EventsCouponPage() {
             category: "음식점",
             benefit: "와퍼 세트 30% 할인",
         },
-    ]
+    ];
+
+    const getCloverImage = (leaves: number) => {
+        const cloverImages: Record<number, string> = {
+            0: clover0,
+            1: clover1,
+            2: clover2,
+            3: clover3,
+            4: clover4
+        };
+        return cloverImages[leaves] || clover4;
+    };
 
     return (
         <main className="flex flex-col h-screen w-full mx-auto overflow-hidden">
@@ -97,52 +135,11 @@ export default function EventsCouponPage() {
                         <h2 className="text-lg font-bold text-[#5A3D2B] mb-4">네잎 클로버 채우기</h2>
 
                         <div className="relative w-40 h-40 mx-auto mb-4">
-                            {/* 클로버 배경 (회색) */}
-                            <div className="w-40 h-40 mx-auto mb-4">
-                                <svg viewBox="0 0 100 100" className="w-full h-full">
-                                    {/* 위쪽 잎 (하트 모양) */}
-                                    <path
-                                        d="M50 45 C45 35, 30 35, 30 45 C30 50, 35 55, 50 45 C65 55, 70 50, 70 45 C70 35, 55 35, 50 45 Z"
-                                        fill={cloverLeaves >= 1 ? "#00A949" : "none"}
-                                        stroke="#D1D5DB"
-                                        strokeWidth="3"
-                                    />
-
-                                    {/* 왼쪽 잎 (하트 모양) */}
-                                    <path
-                                        d="M45 50 C35 45, 35 30, 45 30 C50 30, 55 35, 45 50 C55 65, 50 70, 45 70 C35 70, 35 55, 45 50 Z"
-                                        fill={cloverLeaves >= 2 ? "#00A949" : "none"}
-                                        stroke="#D1D5DB"
-                                        strokeWidth="3"
-                                    />
-
-                                    {/* 오른쪽 잎 (하트 모양) */}
-                                    <path
-                                        d="M55 50 C65 45, 65 30, 55 30 C50 30, 45 35, 55 50 C45 65, 50 70, 55 70 C65 70, 65 55, 55 50 Z"
-                                        fill={cloverLeaves >= 3 ? "#00A949" : "none"}
-                                        stroke="#D1D5DB"
-                                        strokeWidth="3"
-                                    />
-
-                                    {/* 아래쪽 잎 (하트 모양) */}
-                                    <path
-                                        d="M50 55 C45 65, 30 65, 30 55 C30 50, 35 45, 50 55 C65 45, 70 50, 70 55 C70 65, 55 65, 50 55 Z"
-                                        fill={cloverLeaves >= 4 ? "#00A949" : "none"}
-                                        stroke="#D1D5DB"
-                                        strokeWidth="3"
-                                    />
-
-                                    {/* 줄기 */}
-                                    <rect
-                                        x="48"
-                                        y="55"
-                                        width="4"
-                                        height="30"
-                                        fill="#D1D5DB"
-                                        rx="2"
-                                    />
-                                </svg>
-                            </div>
+                            <img 
+                                src={getCloverImage(cloverLeaves as number)} 
+                                alt={`클로버 ${cloverLeaves}개`} 
+                                className="w-full h-full object-cover" 
+                            />
                         </div>
 
                         <p className="text-sm text-gray-600 mb-4">
@@ -215,7 +212,7 @@ export default function EventsCouponPage() {
                     <DialogHeader>
                         <DialogTitle>매장 인증</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    {/* <div className="space-y-4 py-4">
                         <div className="bg-gray-100 rounded-lg aspect-square flex flex-col items-center justify-center">
                             <Camera className="h-12 w-12 text-gray-400 mb-2" />
                             <p className="text-sm text-gray-500">매장 내 QR코드를 스캔하세요</p>
@@ -224,7 +221,6 @@ export default function EventsCouponPage() {
                         <div className="text-center">
                             <p className="text-sm text-gray-600 mb-4">매장에 있는 QR 코드를 스캔하여 방문을 인증하세요.</p>
 
-                            {/* 데모 목적으로 인증 완료 버튼 추가 */}
                             <Button
                                 className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
                                 onClick={handleVerificationComplete}
@@ -233,7 +229,60 @@ export default function EventsCouponPage() {
                                 인증 완료 (데모)
                             </Button>
                         </div>
+                    </div> */}
+            
+                    {/* 매장 정보 리스트 */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent flex-1"></div>
+                            <span className="text-xs text-gray-500 font-medium">방문 매장</span>
+                            <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent flex-1"></div>
+                        </div>
+
+                        {/* 매장 리스트 */}
+                        <div className="space-y-2">
+                            {storeList.map((store, index) => {
+                                const isSelected = selectedStore.has(index);
+
+                                return (
+                                    <div 
+                                        key={index}
+                                        onClick={() => handleStoreSelect(index)}
+                                        className={`border rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${
+                                            isSelected
+                                                ? 'bg-gray-100 border-gray-300' 
+                                                : 'bg-white border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <div className="w-2 h-2 bg-gradient-to-r from-[#75CB3B] to-[#00B959] rounded-full"></div>
+                                                    <h3 className="text-sm font-semibold text-gray-800">{store.name}</h3>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-xs text-gray-500">
+                                                    <div className="flex items-center gap-1">
+                                                        <span>계산날짜: {store.date}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                                <span className="text-xs text-green-600 font-medium">{store.status}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                        })}
+                        </div>
                     </div>
+                    <Button
+                        className="bg-gradient-to-r from-[#75CB3B] to-[#00B959] hover:from-[#00A949] hover:to-[#009149]"
+                        onClick={handleVerificationComplete}
+                    >
+                        <Check className="h-4 w-4 mr-2" />
+                        인증 완료
+                    </Button>
                 </DialogContent>
             </Dialog>
 
