@@ -59,7 +59,7 @@ export const useAuthActions = (): IUseAuth => {
             } else if (error.response?.status >= 500) {
                 return { 
                     success: false, 
-                    error: "서버에 일시적인 문제가 발생했습니다.\n잠시 후 다시 시도해주세요." 
+                    error: "이메일 또는 비밀번호가 일치하지 않습니다." 
                 };
             } else {
                 return { 

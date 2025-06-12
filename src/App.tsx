@@ -36,7 +36,7 @@ function AppRoutes() {
   }
 
   return ( // style={{ aspectRatio: "16/7.4" }}
-    <div className="w-full mx-auto h-[100dvh] overflow-auto font-gmarket">
+    <div className="w-full mx-auto h-[100dvh] font-gmarket">
       <Routes>
         {/* 공개 라우트 - 인증 없이 접근 가능 */}
         <Route path="/" element={isAuthenticated ? <Navigate to="/map" /> : <WelcomePage />} />
